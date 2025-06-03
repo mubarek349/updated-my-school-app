@@ -11,22 +11,12 @@ export async function PATCH(
   }
 ) {
   try {
-    const { coursesPackageId } = await params; 
     // const { courseId } = await params; 
     const { chapterId } = await params; 
     
     // const userId = "clg1v2j4f0000l5v8xq3z7h4d"; // Replace with actual userId from context
     
 
-    const coursePackageOwner = await prisma.coursePackage.findUnique({
-      where: {
-        id: coursesPackageId,
-      },
-    });
-
-    if (!coursePackageOwner) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
     
     
     const unpublishedChapter = await prisma.chapter.update({
