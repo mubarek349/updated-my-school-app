@@ -9,17 +9,18 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { coursePackage } from "@prisma/client";
 
-interface AllCoursesPackage {
-  id: string;
-  name: string;
-  description: string | null;
-  userType: string;
-  isPublished: boolean;
-}
+// interface AllCoursesPackage {
+//   id: string;
+//   name: string;
+//   description: string | null;
+//   assignedSubjects: string;
+//   isPublished: boolean;
+// }
 
 interface CreatedCoursePackageListProps {
-  coursesPackages: AllCoursesPackage[];
+  coursesPackages: coursePackage[]; // Adjusted type to match the Prisma model
 }
 const lang = "en";
 
@@ -53,7 +54,7 @@ export const CreatedCoursePackageList = ({
             <CardContent>
               <div className="flex items-center justify-between mt-4">
                 <span className="text-xs text-muted-foreground">
-                  {/* {coursesPackage?.userType} */}
+                  {coursesPackage?.assignedSubjects || "No subjects assigned"}
                 </span>
                 <span className="text-xs text-blue-600 font-semibold">
                   View Details &rarr;

@@ -6,26 +6,17 @@ import prisma from "@/lib/db";
 
 export async function getCoursesPackages() {
   try {
-  
-
     const coursesPackages = await prisma.coursePackage
       .findMany({
-        where: {
-          // isPublished: true,
-        },
-        include: {
-          courses: {
-            where: {
-              // isPublished: true,
-            },
-            include: {
-              chapters: {
-                where: {
-                  // isPublished:true,
-                },
-              },
-            },
-          },
+        where: {},
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          assignedSubjects: true,
+          isPublished: true,
+          createdAt: true,
+          updatedAt: true,
         },
         orderBy: {
           createdAt: "desc",

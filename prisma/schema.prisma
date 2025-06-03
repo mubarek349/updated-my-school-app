@@ -21,7 +21,6 @@ datasource db {
 
 model coursePackage {
   id               String                @id @default(uuid())
-  userId           String                @db.Text
   name             String                @db.Text
   description      String?               @db.Text
   assignedSubjects String?               @db.Text

@@ -6,17 +6,12 @@ export async function POST(
   //   context: { params: { userId: string } }
 ) {
   try {
-    const userId = "";
-   
     // Replace with actual userId from context
-    const {name}  = await req.json();
-    // if (!userId) {
-    //   return new NextResponse("Unauthorized", { status: 401 });
-    // }
+    const { name } = await req.json();
+
     const createdCoursePackage = await prisma.coursePackage.create({
       data: {
         name,
-        userId,
       },
     });
     console.log("course : ", createdCoursePackage);

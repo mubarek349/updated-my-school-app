@@ -5,9 +5,8 @@ const prisma = new PrismaClient();
   // Seed Admin
   await prisma.admin.create({
     data: {
-      id: "clg1v2j4f0000l5v8xq3z7h4d",
       name: "System Admin",
-      phoneno: "0911223344",
+      phoneno: "0942303571",
       passcode: "admin123",
     },
   });
@@ -50,21 +49,15 @@ const prisma = new PrismaClient();
     data: [
       {
         id: "pkg_001",
-        userId: "clg1v2j4f0000l5v8xq3z7h4d",
         name: "Qaida",
-        userType: "GENERAL",
       },
       {
         id: "pkg_002",
-        userId: "clg1v2j4f0000l5v8xq3z7h4d",
         name: "Hifz",
-        userType: "GENERAL",
       },
       {
         id: "pkg_003",
-        userId: "clg1v2j4f0000l5v8xq3z7h4d",
         name: "hadis",
-        userType: "ADULT",
       },
     ],
   });
