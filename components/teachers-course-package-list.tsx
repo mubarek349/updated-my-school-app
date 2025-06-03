@@ -9,7 +9,9 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { coursePackage } from "@prisma/client";
+import { coursePackage} from "@prisma/client";
+import { getAssignedSubjects } from "@/actions/admin/packageassign";
+import useAction from "@/hooks/useAction";
 
 // interface AllCoursesPackage {
 //   id: string;
@@ -20,7 +22,7 @@ import { coursePackage } from "@prisma/client";
 // }
 
 interface CreatedCoursePackageListProps {
-  coursesPackages: coursePackage[]; // Adjusted type to match the Prisma model
+  coursesPackages: coursePackage[];
 }
 const lang = "en";
 
@@ -54,7 +56,7 @@ export const CreatedCoursePackageList = ({
             <CardContent>
               <div className="flex items-center justify-between mt-4">
                 <span className="text-xs text-muted-foreground">
-                  {coursesPackage?.assignedSubjects || "No subjects assigned"}
+                  <GetSubscject id={coursesPackage.id} />
                 </span>
                 <span className="text-xs text-blue-600 font-semibold">
                   View Details &rarr;
@@ -67,3 +69,15 @@ export const CreatedCoursePackageList = ({
     </div>
   );
 };
+
+function GetSubscject({ id }: { id: string }) {
+  const [data] = useAction(getAssignedSubjects, [true, () => {}], id);
+
+  return !data ? (
+    <p>loading</p>
+  ) : data.length > 0 ? (
+    <p>{JSON.stringify(data)}</p>
+  ) : (
+    <p>No subjects assigned</p>
+  );
+}

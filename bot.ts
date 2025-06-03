@@ -26,6 +26,7 @@ export async function startBot() {
       select: {
         wdt_ID: true,
         name: true,
+        subject: true,
         activePackage: {
           where: { isPublished: true },
           select: {
@@ -48,11 +49,46 @@ export async function startBot() {
       },
     });
 
+    // check the subjectPackage table for the channel. fristly gate the student subject   and find the active package from the that thable and re assign the package id to youtubeSubject
+
+    // Since channels is an array, iterate through each channel
+    for (const channel of channels) {
+      const subject = channel.subject;
+      if (subject) {
+        const subjectPackage = await prisma.subjectPackage.findFirst({
+          where: {
+            subject: subject,
+          },
+          select: {
+            packageId: true,
+          },
+        });
+        await prisma.wpos_wpdatatable_23.update({
+          where: {
+            wdt_ID: channel.wdt_ID,
+          },
+          data: {
+            youtubeSubject: subjectPackage?.packageId || null,
+          },
+        });
+      } else {
+        // If subject is null, set youtubeSubject to null
+        await prisma.wpos_wpdatatable_23.update({
+          where: {
+            wdt_ID: channel.wdt_ID,
+          },
+          data: {
+            youtubeSubject: null,
+          },
+        });
+      }
+    }
+
     const lang = "en";
     const stud = "student";
 
     if (channels && channels.length > 0) {
-      let sent = false;
+      let sent;
 
       for (const channel of channels) {
         const studId = channel.wdt_ID;
@@ -82,7 +118,7 @@ export async function startBot() {
           }
 
           const update = await updatePathProgressData(studId);
-          console.log("hjjgjk",update);
+          console.log("hjjgjk", update);
           const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update?.chapter.course.id}/${update?.chapter.id}`;
 
           const channelName = channel.name || "ዳሩል-ኩብራ";

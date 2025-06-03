@@ -1,14 +1,23 @@
 -- CreateTable
 CREATE TABLE `coursePackage` (
     `id` VARCHAR(191) NOT NULL,
-    `userId` VARCHAR(191) NOT NULL,
-    `title` TEXT NOT NULL,
-    `description` VARCHAR(191) NULL,
-    `userType` ENUM('KIDS', 'GENERAL', 'ADULT') NOT NULL DEFAULT 'GENERAL',
+    `name` TEXT NOT NULL,
+    `description` TEXT NULL,
+    `assignedSubjects` TEXT NULL,
     `isPublished` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `subjectPackage` (
+    `id` VARCHAR(191) NOT NULL,
+    `subject` VARCHAR(191) NOT NULL,
+    `packageId` VARCHAR(191) NOT NULL,
+
+    UNIQUE INDEX `subjectPackage_subject_key`(`subject`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -134,16 +143,16 @@ CREATE TABLE `admin` (
 -- CreateTable
 CREATE TABLE `wpos_wpdatatable_23` (
     `wdt_ID` INTEGER NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(191) NOT NULL,
-    `passcode` VARCHAR(191) NOT NULL,
-    `phoneno` VARCHAR(191) NOT NULL,
-    `status` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NULL,
+    `passcode` VARCHAR(191) NULL,
+    `phoneno` VARCHAR(191) NULL,
+    `status` VARCHAR(191) NULL,
     `subject` VARCHAR(191) NULL,
-    `chat_id` VARCHAR(191) NOT NULL,
+    `youtubeSubject` VARCHAR(191) NULL,
+    `chat_id` VARCHAR(191) NULL DEFAULT '',
 
     UNIQUE INDEX `wpos_wpdatatable_23_passcode_key`(`passcode`),
     UNIQUE INDEX `wpos_wpdatatable_23_phoneno_key`(`phoneno`),
-    UNIQUE INDEX `wpos_wpdatatable_23_chat_id_key`(`chat_id`),
     PRIMARY KEY (`wdt_ID`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -155,6 +164,9 @@ CREATE TABLE `_PackageHistory` (
     UNIQUE INDEX `_PackageHistory_AB_unique`(`A`, `B`),
     INDEX `_PackageHistory_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `subjectPackage` ADD CONSTRAINT `subjectPackage_packageId_fkey` FOREIGN KEY (`packageId`) REFERENCES `coursePackage`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `course` ADD CONSTRAINT `course_packageId_fkey` FOREIGN KEY (`packageId`) REFERENCES `coursePackage`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -193,7 +205,7 @@ ALTER TABLE `studentProgress` ADD CONSTRAINT `studentProgress_studentId_fkey` FO
 ALTER TABLE `studentProgress` ADD CONSTRAINT `studentProgress_chapterId_fkey` FOREIGN KEY (`chapterId`) REFERENCES `chapter`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `wpos_wpdatatable_23` ADD CONSTRAINT `wpos_wpdatatable_23_subject_fkey` FOREIGN KEY (`subject`) REFERENCES `coursePackage`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `wpos_wpdatatable_23` ADD CONSTRAINT `wpos_wpdatatable_23_youtubeSubject_fkey` FOREIGN KEY (`youtubeSubject`) REFERENCES `coursePackage`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_PackageHistory` ADD CONSTRAINT `_PackageHistory_A_fkey` FOREIGN KEY (`A`) REFERENCES `coursePackage`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

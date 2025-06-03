@@ -5,13 +5,14 @@ import Link from "next/link";
 const lang="en";
 const coursesPackagePage = async () => {
   const coursesPackages = await getCoursesPackages();
+ 
   return (
     <div className="p-6 overflow-auto">
       <Link href={`/${lang}/admin/create`}>
         <Button>Create Courses Package</Button>
       </Link>
       <div>
-        <CreatedCoursePackageList coursesPackages={coursesPackages} />
+        <CreatedCoursePackageList coursesPackages={coursesPackages}/>
       </div>
     </div>
   );

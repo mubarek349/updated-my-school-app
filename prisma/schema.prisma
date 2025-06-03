@@ -28,8 +28,18 @@ model coursePackage {
   isPublished      Boolean               @default(false)
   students         wpos_wpdatatable_23[] @relation("PackageHistory")
   activeStudents   wpos_wpdatatable_23[] @relation("ActivePackage")
+  subjectPackages  subjectPackage[] // <-- Add this line for the relation
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+}
+
+model subjectPackage {
+  id        String        @id @default(uuid())
+  subject   String        @unique
+  package   coursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  packageId String
+
+  // @@unique([subject, packageId])
 }
 
 model course {
