@@ -13,7 +13,6 @@ export async function getCoursesPackages() {
           id: true,
           name: true,
           description: true,
-          assignedSubjects: true,
           isPublished: true,
           createdAt: true,
           updatedAt: true,

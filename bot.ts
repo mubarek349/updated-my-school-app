@@ -1,10 +1,11 @@
 import { Bot } from "grammy";
 import prisma from "./lib/db";
+import dotenv from "dotenv";
 import { updatePathProgressData } from "./actions/student/progress";
 import { InlineKeyboard } from "grammy";
 // import { sendMessagesToAllStudents } from "./setTimeInterval";
 // import { Channel } from "diagnostics_channel";
-
+dotenv.config();
 // Replace this with your public domain or use an environment variable
 const BASE_URL = process.env.FORWARD_URL || process.env.AUTH_URL;
 
@@ -18,7 +19,8 @@ export async function startBot() {
       return ctx.reply("Unable to retrieve chat ID.");
     }
 
-    const channels = await prisma.wpos_wpdatatable_23.findMany({
+    // 1. Fetch channels
+    let channels = await prisma.wpos_wpdatatable_23.findMany({
       where: {
         chat_id: chatId.toString(),
         status: { in: ["Active", "Not yet"] },
@@ -49,40 +51,57 @@ export async function startBot() {
       },
     });
 
-    // check the subjectPackage table for the channel. fristly gate the student subject   and find the active package from the that thable and re assign the package id to youtubeSubject
-
-    // Since channels is an array, iterate through each channel
+    // 2. Update youtubeSubject for all channels
     for (const channel of channels) {
       const subject = channel.subject;
       if (subject) {
         const subjectPackage = await prisma.subjectPackage.findFirst({
-          where: {
-            subject: subject,
-          },
-          select: {
-            packageId: true,
-          },
+          where: { subject: subject },
+          select: { packageId: true },
         });
         await prisma.wpos_wpdatatable_23.update({
-          where: {
-            wdt_ID: channel.wdt_ID,
-          },
-          data: {
-            youtubeSubject: subjectPackage?.packageId || null,
-          },
+          where: { wdt_ID: channel.wdt_ID },
+          data: { youtubeSubject: subjectPackage?.packageId || null },
         });
       } else {
-        // If subject is null, set youtubeSubject to null
         await prisma.wpos_wpdatatable_23.update({
-          where: {
-            wdt_ID: channel.wdt_ID,
-          },
-          data: {
-            youtubeSubject: null,
-          },
+          where: { wdt_ID: channel.wdt_ID },
+          data: { youtubeSubject: null },
         });
       }
     }
+
+    // 3. Fetch channels again to get updated youtubeSubject
+    channels = await prisma.wpos_wpdatatable_23.findMany({
+      where: {
+        chat_id: chatId.toString(),
+        status: { in: ["Active", "Not yet"] },
+      },
+      select: {
+        wdt_ID: true,
+        name: true,
+        subject: true,
+        activePackage: {
+          where: { isPublished: true },
+          select: {
+            courses: {
+              where: { order: 1 },
+              select: {
+                id: true,
+                title: true,
+                chapters: {
+                  where: { position: 1 },
+                  select: {
+                    id: true,
+                    title: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
 
     const lang = "en";
     const stud = "student";
@@ -118,11 +137,10 @@ export async function startBot() {
           }
 
           const update = await updatePathProgressData(studId);
-          console.log("hjjgjk", update);
           const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update?.chapter.course.id}/${update?.chapter.id}`;
 
           const channelName = channel.name || "ዳሩል-ኩብራ";
-          const keyboard = new InlineKeyboard().url(
+          const keyboard = new InlineKeyboard().webApp(
             `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
             url
           );

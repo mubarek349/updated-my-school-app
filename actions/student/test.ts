@@ -19,7 +19,6 @@ export async function getQuestionForActivePackageChapterUpdate(
         select: {
           id: true,
           name: true,
-          userType: true,
           courses: {
             select: {
               id: true,
@@ -31,7 +30,7 @@ export async function getQuestionForActivePackageChapterUpdate(
                   title: true,
                   position: true,
                   videoUrl: true,
-                  isPublished: true,
+                  // isPublished: true,
                 },
                 orderBy: { position: "asc" },
               },
