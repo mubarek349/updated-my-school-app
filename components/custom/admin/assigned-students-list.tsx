@@ -38,13 +38,13 @@ function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
     fetchAssigned();
   }, [coursesPackageId, refresh]);
 
-  if (!assigned || assigned.length === 0) {
-    return (
-      <div className="text-center text-gray-500 py-8">
-        No assigned Students found.
-      </div>
-    );
-  }
+//   if (!assigned || assigned.length === 0) {
+//     return (
+//       <div className="text-center text-gray-500 py-8">
+//         No assigned Students found.
+//       </div>
+//     );
+//   }
 
   return (
     <>
@@ -53,7 +53,7 @@ function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
           Assigned Student Types
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {assigned.map((item, idx) => (
+          {assigned?.map((item, idx) => (
             <div
               key={item.package + item.subject + idx}
               className="bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 rounded-xl shadow-md p-5 flex flex-col items-center hover:shadow-lg transition"
