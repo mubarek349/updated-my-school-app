@@ -11,7 +11,7 @@ import { CoursesForm } from "@/components/custom/admin/courses-form";
 import { Banner } from "@/components/custom/admin/banner";
 import { CoursesPackageActions } from "@/components/custom/admin/courses-package-action";
 import Link from "next/link";
-import StudentAssignmentForm from "@/components/custom/admin/student-assignment-form";
+// import StudentAssignmentForm from "@/components/custom/admin/student-assignment-form";
 import AssignedStudentsList from "@/components/custom/admin/assigned-students-list";
 // import { StudentSelectionForm } from "@/components/custom/student-selection-form";
 

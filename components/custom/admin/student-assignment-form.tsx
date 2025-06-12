@@ -29,7 +29,7 @@ function StudentAssignmentForm({setRefresh}:{setRefresh:(value:number)=>void}) {
       setRefresh(Date.now())
       toast.success("Successfully assigned!");
     }
-  }, [res]);
+  }, [res,setRefresh]);
 
   const studentOptions =
     Array.isArray(packagesWithSubject) && packagesWithSubject.length > 0
