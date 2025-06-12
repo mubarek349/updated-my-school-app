@@ -34,7 +34,7 @@ model coursePackage {
 
 model subjectPackage {
   id          String        @id @default(uuid())
-  packageType String
+  packageType String?        
   subject     String?        
   package     coursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId   String
