@@ -20,23 +20,24 @@ datasource db {
 // }
 
 model coursePackage {
-  id               String                @id @default(uuid())
-  name             String                @db.Text
-  description      String?               @db.Text
-  courses          course[]
-  isPublished      Boolean               @default(false)
-  students         wpos_wpdatatable_23[] @relation("PackageHistory")
-  activeStudents   wpos_wpdatatable_23[] @relation("ActivePackage")
-  subjectPackages  subjectPackage[] // <-- Add this line for the relation
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+  id              String                @id @default(uuid())
+  name            String                @db.Text
+  description     String?               @db.Text
+  courses         course[]
+  isPublished     Boolean               @default(false)
+  students        wpos_wpdatatable_23[] @relation("PackageHistory")
+  activeStudents  wpos_wpdatatable_23[] @relation("ActivePackage")
+  subjectPackages subjectPackage[] // <-- Add this line for the relation
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
 }
 
 model subjectPackage {
-  id        String        @id @default(uuid())
-  subject   String        @unique
-  package   coursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  packageId String
+  id          String        @id @default(uuid())
+  packageType String
+  subject     String?        
+  package     coursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  packageId   String
 
   // @@unique([subject, packageId])
 }
@@ -175,14 +176,15 @@ model wpos_wpdatatable_23 {
   passcode       String?           @unique
   phoneno        String?           @unique
   status         String?
+  isKid          Boolean?           @default(false)
   // History of all packages (many-to-many)
   packages       coursePackage[]   @relation("PackageHistory")
   // Active package (one-to-one or many-to-one)
   subject        String?
+  package        String?
   youtubeSubject String?
   activePackage  coursePackage?    @relation("ActivePackage", fields: [youtubeSubject], references: [id])
   progress       studentProgress[]
   studentQuizzes studentQuiz[]
   chat_id        String?           @default("")
 }
-

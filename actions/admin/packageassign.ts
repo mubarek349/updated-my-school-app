@@ -46,6 +46,20 @@ import prisma from "@/lib/db";
 
 //   return { response: "update successfully" };
 // }
+export async function getDistinctPackagesWithSubjects() {
+  const result = await prisma.wpos_wpdatatable_23.findMany({
+    where: {
+      package: { not: null },
+      subject: { not: null },
+    },
+    select: {
+      package: true,
+      subject: true,
+    },
+    distinct: ['package', 'subject'],
+  });
+  return result;
+}
 
 export async function getStudSubject() {
   const studSubject = await prisma.wpos_wpdatatable_23.findMany({
@@ -62,55 +76,56 @@ export async function getStudSubject() {
 
 export async function assignPackage(
   coursesPackageId: string,
-  selectedStudentSubjects: string[]
+  isKid:boolean,
+  selectedStudentPackagewithSubjects: { package: string; subject: string }[],
 ) {
-  await prisma.wpos_wpdatatable_23.updateMany({
-    where: {
-      subject: { in: selectedStudentSubjects },
-    },
-    data: {
-      youtubeSubject: coursesPackageId,
-    },
-  });
+  // Update wpos_wpdatatable_23 for each subject/package pair
+  for (const { package: pkg, subject } of selectedStudentPackagewithSubjects) {
+    await prisma.wpos_wpdatatable_23.updateMany({
+      where: {
+        package: pkg,
+        subject: subject,
+        isKid:isKid,
+      },
+      data: {
+        youtubeSubject: coursesPackageId,
+      },
+    });
 
-  // await prisma.coursePackage.update({
-  //   where: {
-  //     id: coursesPackageId,
-  //   },
-  //   data: {
-  //     assignedSubjects: selectedStudentSubjects.join(", "),
-  //   },
-  // });
-
-  // Check if the subjects are already assigned to the package.is assign update it if not create it
-  for (const subject of selectedStudentSubjects) {
+    // Check if the subject is already assigned to a package
     const existingPackage = await prisma.subjectPackage.findFirst({
       where: {
         subject: subject,
+        packageType:pkg,
+        packageId: coursesPackageId,
       },
       select: {
         id: true,
         packageId: true,
         subject: true,
+        packageType:true,
       },
     });
 
     if (existingPackage) {
-      // Update the existing package if needed (optional, depending on your schema)
+      // Update the packageId if needed
       await prisma.subjectPackage.update({
         where: {
-          subject: existingPackage.subject,
+          id: existingPackage.id,
+          packageType:existingPackage.packageType,
+          subject:existingPackage.subject,
         },
         data: {
           packageId: coursesPackageId,
         },
       });
     } else {
-      // Create a new package for this subject
+      // Create a new subjectPackage entry
       await prisma.subjectPackage.create({
         data: {
-          packageId: coursesPackageId,
           subject: subject,
+          packageType:pkg,
+          packageId: coursesPackageId,
         },
       });
     }
@@ -140,18 +155,26 @@ export async function assignPackage(
 //   }
 //   return assignedSubjectsArray;
 // }
-export async function getAssignedSubjects(coursesPackageId: string) {
-  const assignedSubjects = await prisma.subjectPackage.findMany({
+export async function getAssignedPacakgesWithSubjects(coursesPackageId: string) {
+  const assignedSubjects = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      packageId: coursesPackageId,
+      youtubeSubject: coursesPackageId,
     },
     select: {
+      package: true,
       subject: true,
+      isKid: true,
     },
+    distinct: ['package', 'subject'],
   });
 
-  return assignedSubjects.map((item) => item.subject);
-};
+  // Return the unique pairs as objects
+  return assignedSubjects.map(item => ({
+    package: item.package,
+    subject: item.subject,
+    isKid: item.isKid,
+  }));
+}
 
 export async function unasignPackage(studentId: number[]) {
   await prisma.wpos_wpdatatable_23.updateMany({

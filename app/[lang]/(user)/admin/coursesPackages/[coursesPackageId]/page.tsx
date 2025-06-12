@@ -12,6 +12,7 @@ import { Banner } from "@/components/custom/admin/banner";
 import { CoursesPackageActions } from "@/components/custom/admin/courses-package-action";
 import Link from "next/link";
 import StudentAssignmentForm from "@/components/custom/admin/student-assignment-form";
+import AssignedStudentsList from "@/components/custom/admin/assigned-students-list";
 // import { StudentSelectionForm } from "@/components/custom/student-selection-form";
 
 const CoursesPackageIdPage = async ({
@@ -28,7 +29,6 @@ const CoursesPackageIdPage = async ({
 
   // const userId = session.user.id ? session.user.id : "";
   // if (!isTeacher(userId)) return redirect("/en");
-
   const coursesPackage = await prisma.coursePackage.findUnique({
     where: {
       id: coursesPackageId,
@@ -104,11 +104,10 @@ const CoursesPackageIdPage = async ({
               initialData={coursesPackage}
               coursesPackageId={coursesPackage.id}
             />
-            <div>{/* <h1>student list</h1> */}</div>
-            <StudentAssignmentForm
-            // initialData={students}
-            // coursesPackageId={coursesPackage.id}
+            <AssignedStudentsList
+              coursesPackageId={coursesPackage.id}
             />
+            
           </div>
         </div>
 

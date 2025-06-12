@@ -11,6 +11,8 @@ const prisma = new PrismaClient();
     },
   });
 
+  
+  
   // Seed Students
   await prisma.wpos_wpdatatable_23.createMany({
     data: [
@@ -86,7 +88,24 @@ const prisma = new PrismaClient();
       },
     },
   });
-
+await prisma.subjectPackage.createMany({
+    data:[ {
+      packageType: "kids",
+      subject: "nezer",
+      packageId: "pkg_001",
+    },
+    {
+      packageType: "kids",
+      subject: "nezer",
+      packageId: "pkg_001",
+    },
+    {
+      packageType: "kids",
+      subject: "nezer",
+      packageId: "pkg_003",
+    },
+  ]
+  });
   // Seed Courses for Programming Package
   await prisma.course.createMany({
     data: [
