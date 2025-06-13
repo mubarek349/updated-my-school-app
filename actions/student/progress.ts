@@ -212,7 +212,7 @@ export async function getActivePackageProgress(wdt_ID: number) {
     const student = await prisma.wpos_wpdatatable_23.findFirst({
       where: {
         wdt_ID: wdt_ID,
-        status: { in: ["Active", "Not yet"] },
+        status: { in: ["Active", "Notyet"] },
       },
       select: {
         wdt_ID: true,
@@ -507,7 +507,7 @@ export async function packageCompleted(wdt_ID: number) {
   const student = await prisma.wpos_wpdatatable_23.findFirst({
     where: {
       wdt_ID: wdt_ID,
-      status: { in: ["Active", "Not yet"] },
+      status: { in: ["Active", "Notyet"] },
     },
     select: {
       wdt_ID: true,
