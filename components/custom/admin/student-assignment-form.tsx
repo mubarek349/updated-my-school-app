@@ -78,7 +78,7 @@ function StudentAssignmentForm({setRefresh}:{setRefresh:(value:number)=>void}) {
               !selectedSubject.some(
                 (v) =>
                   v.value.subject == value.value.subject &&
-                  v.value.subject == value.value.subject
+                  v.value.package == value.value.package
               )
           )}
           value={selectedSubject}

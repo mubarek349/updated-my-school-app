@@ -34,10 +34,12 @@ model coursePackage {
 
 model subjectPackage {
   id          String        @id @default(uuid())
+  kidpackage  Boolean?       @default(false)
   packageType String?        
   subject     String?        
   package     coursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId   String
+  
 
   // @@unique([subject, packageId])
 }

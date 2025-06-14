@@ -52,6 +52,7 @@ export async function assignPackage(
       where: {
         subject: subject,
         packageType:pkg,
+        kidpackage:isKid,
         packageId: coursesPackageId,
       },
       select: {
@@ -59,6 +60,7 @@ export async function assignPackage(
         packageId: true,
         subject: true,
         packageType:true,
+        kidpackage:true
       },
     });
 
@@ -69,6 +71,7 @@ export async function assignPackage(
           id: existingPackage.id,
           packageType:existingPackage.packageType,
           subject:existingPackage.subject,
+          kidpackage:existingPackage.kidpackage,
         },
         data: {
           packageId: coursesPackageId,
@@ -80,6 +83,7 @@ export async function assignPackage(
         data: {
           subject: subject,
           packageType:pkg,
+          kidpackage:isKid,
           packageId: coursesPackageId,
         },
       });
@@ -90,23 +94,22 @@ export async function assignPackage(
 }
 
 export async function getAssignedPacakgesWithSubjects(coursesPackageId: string) {
-  const assignedSubjects = await prisma.wpos_wpdatatable_23.findMany({
+  const assignedSubjects = await prisma.subjectPackage.findMany({
     where: {
-      youtubeSubject: coursesPackageId,
+      packageId: coursesPackageId,
     },
     select: {
-      package: true,
+      packageType: true,
       subject: true,
-      isKid: true,
+      kidpackage: true,
     },
-    distinct: ['package', 'subject'],
   });
 
   // Return the unique pairs as objects
   return assignedSubjects.map(item => ({
-    package: item.package,
+    package: item.packageType,
     subject: item.subject,
-    isKid: item.isKid,
+    isKid: item.kidpackage,
   }));
 }
 
