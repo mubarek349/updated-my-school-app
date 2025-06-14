@@ -29,6 +29,8 @@ export async function startBot() {
         wdt_ID: true,
         name: true,
         subject: true,
+        package:true,
+        isKid:true,
         activePackage: {
           where: { isPublished: true },
           select: {
@@ -54,9 +56,11 @@ export async function startBot() {
     // 2. Update youtubeSubject for all channels
     for (const channel of channels) {
       const subject = channel.subject;
+      const packageType=channel.package;
+      const kidPackage=channel.isKid;
       if (subject) {
         const subjectPackage = await prisma.subjectPackage.findFirst({
-          where: { subject: subject },
+          where: { subject: subject ,packageType:packageType,kidpackage:kidPackage},
           select: { packageId: true },
         });
         await prisma.wpos_wpdatatable_23.update({
@@ -81,6 +85,8 @@ export async function startBot() {
         wdt_ID: true,
         name: true,
         subject: true,
+        package:true,
+        isKid:true,
         activePackage: {
           where: { isPublished: true },
           select: {

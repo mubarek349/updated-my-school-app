@@ -16,18 +16,7 @@ export async function getDistinctPackagesWithSubjects() {
   return result;
 }
 
-export async function getStudSubject() {
-  const studSubject = await prisma.wpos_wpdatatable_23.findMany({
-    select: {
-      subject: true,
-    },
-    distinct: ["subject"],
-  });
 
-  // Return the first unique subject or null if none
-  console.log("stud subject : ", studSubject);
-  return studSubject;
-}
 
 export async function assignPackage(
   coursesPackageId: string,
@@ -53,7 +42,6 @@ export async function assignPackage(
         subject: subject,
         packageType:pkg,
         kidpackage:isKid,
-        packageId: coursesPackageId,
       },
       select: {
         id: true,
@@ -81,10 +69,10 @@ export async function assignPackage(
       // Create a new subjectPackage entry
       await prisma.subjectPackage.create({
         data: {
-          subject: subject,
+          subject:subject,
           packageType:pkg,
           kidpackage:isKid,
-          packageId: coursesPackageId,
+          packageId:coursesPackageId,
         },
       });
     }
