@@ -1,22 +1,34 @@
-import React from "react";
+"use client";
+import React, { useEffect } from "react";
+import { redirect, useParams, useRouter } from "next/navigation";
+import { updatePathProgressData,  } from "@/actions/student/progress";
+import useAction from "@/hooks/useAction";
 
-export default async function layout({
-  children,
-}: // params,
-{
-  children: React.ReactNode;
-  params: Promise<{ wdt_ID: number; courseId: string; chapterId: string }>;
-}) {
-  // const wdt_ID
-  // const student = await prisma.wpos_wpdatatable_23.findFirst({
-  //   where: {
-  //     wdt_ID: wdt_ID,
-  //     status: { in: ["active", "notyet"] },
-  //   },
-  //   select: {
-  //     wdt_ID: true,
-  //     name: true,
-  //   },
-  // });
+export default function Layout({ children }: { children: React.ReactNode }) {
+  const { wdt_ID, courseId, chapterId } = useParams() as {
+    wdt_ID: string;
+    courseId: string;
+    chapterId: string;
+  };
+  const wdtIdNum = Number(wdt_ID);
+
+  const [update] = useAction(updatePathProgressData, [true, () => {}], wdtIdNum);
+
+  const updatedCourseId = update?.chapter?.course?.id ?? courseId;
+  const updatedChapterId = update?.chapter?.id ?? chapterId;
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (
+      (updatedCourseId && updatedCourseId !== courseId) ||
+      (updatedChapterId && updatedChapterId !== chapterId)
+    ) {
+      redirect(
+        `/en/student/${wdtIdNum}/${updatedCourseId}/${updatedChapterId}`
+      );
+    }
+  }, [updatedCourseId, updatedChapterId, wdtIdNum, courseId, chapterId, router]);
+
   return <div className="overflow-hidden grid">{children}</div>;
 }
