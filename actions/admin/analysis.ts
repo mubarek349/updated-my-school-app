@@ -1,15 +1,23 @@
 "use server";
 import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
-import {getActivePackageProgress} from "@/actions/student/progress";
+import { getActivePackageProgress } from "@/actions/student/progress";
+import { progress } from "framer-motion";
 
-export async function getStudentProgressStatus(studentId: number, activePackageId: string) {
+export async function getStudentProgressStatus(
+  studentId: number,
+  activePackageId: string
+) {
   // 1. Get all chapters for the active package
   const chapters = await prisma.chapter.findMany({
     where: { course: { packageId: activePackageId } },
-    select: { id: true, title: true, course: { select: { title: true,package:{select:{name:true}} } } },
+    select: {
+      id: true,
+      title: true,
+      course: { select: { title: true, package: { select: { name: true } } } },
+    },
   });
-  const chapterIds = chapters.map(ch => ch.id);
+  const chapterIds = chapters.map((ch) => ch.id);
 
   // 2. Get all progress records for this student and these chapters
   const progress = await prisma.studentProgress.findMany({
@@ -22,18 +30,18 @@ export async function getStudentProgressStatus(studentId: number, activePackageI
 
   // 3. Logic
   if (chapterIds.length === 0 || progress.length === 0) {
-    return "notstarted";
+    return "not-started";
   }
-  if (progress.some(p => !p.isCompleted)) {
-  // Find the first incomplete chapter's id
-  const firstIncomplete = progress.find(p => !p.isCompleted);
-  // Find the chapter details for that id
-  const chapter = chapters.find(ch => ch.id === firstIncomplete?.chapterId);
-    const chapterTitle= chapter?.title?? null;
-    const courseTitle= chapter?.course?.title ?? null;
-    const packageName= chapter?.course?.package?.name ?? null;
-  return `${packageName} > ${courseTitle} > ${chapterTitle}`;
-}
+  if (progress.some((p) => !p.isCompleted)) {
+    // Find the first incomplete chapter's id
+    const firstIncomplete = progress.find((p) => !p.isCompleted);
+    // Find the chapter details for that id
+    const chapter = chapters.find((ch) => ch.id === firstIncomplete?.chapterId);
+    const chapterTitle = chapter?.title ?? null;
+    const courseTitle = chapter?.course?.title ?? null;
+    const packageName = chapter?.course?.package?.name ?? null;
+    return `${packageName} > ${courseTitle} > ${chapterTitle}`;
+  }
   return "completed";
 }
 export async function getAllStudents() {
@@ -66,12 +74,12 @@ export async function getAllStudents() {
   //     },
   //   }
   // })
-   // For each student, get their progress data
+  // For each student, get their progress data
   const studentsWithProgress = await Promise.all(
     students.map(async (student) => {
       const progressData = await getActivePackageProgress(student.wdt_ID);
       const progressStatus = await getStudentProgressStatus(
-        student.wdt_ID, 
+        student.wdt_ID,
         student.youtubeSubject ?? ""
       );
 
@@ -281,19 +289,18 @@ export async function getPackageAnalytics() {
         },
       });
 
-      // Enrolled students: youtubeSubject == package.id
-      const enrollStudents = assignedStudents.filter(
-        (s) => s.youtubeSubject === pkg.id
-      );
+      // total Students assigned to this package
+      const assignedTotalStudents = assignedStudents.length
 
       // Not started: youtubeSubject is null
       const notStartedStudents = assignedStudents.filter(
         (s) => !s.progress || s.youtubeSubject === null
       );
 
-      // Complete: students who finished all chapters in the package
-      const completeStudents = [];
-      for (const student of enrollStudents) {
+      // Completed: students who finished all chapters in the package
+      const completedStudents = [];
+      const inProgressStudents = []; 
+      for (const student of assignedStudents) {
         // Get all chapters in the package
         const allChapters = await prisma.course.findMany({
           where: { packageId: pkg.id },
@@ -311,19 +318,21 @@ export async function getPackageAnalytics() {
           },
         });
         if (chapterIds.length > 0 && completed.length === chapterIds.length) {
-          completeStudents.push(student);
+          completedStudents.push(student);
         }
+       if (chapterIds.length > 0 && completed.length < chapterIds.length) {
+          inProgressStudents.push(student);
       }
 
       return {
         id: pkg.id,
         packageName: pkg.name,
-        totalStudents: assignedStudents.length,
-        enrollStudent: enrollStudents.length,
-        completeStudent: completeStudents.length,
-        notStartStudent: notStartedStudents.length,
+        totalStudents: assignedTotalStudents,
+        inProgressStudents: inProgressStudents.length,
+        completeStudents: completedStudents.length,
+        notStartedStudents: notStartedStudents.length,
       };
-    })
+    }})
   );
 
   return analytics;
@@ -334,7 +343,8 @@ export async function getStudentAnalyticsperchapter(
   chapterId: string | number,
   searchTerm?: string,
   currentPage?: number,
-  itemsPerPage?: number
+  itemsPerPage?: number,
+  progressFilter?: "not-started" | "in-progress" | "completed" // <-- Add this
 ) {
   const page = currentPage && currentPage > 0 ? currentPage : 1;
   const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
@@ -359,7 +369,7 @@ export async function getStudentAnalyticsperchapter(
   });
 
   // 3. Build OR filter for students matching any subjectPackage
-  const subjectPackageFilters = subjectPackages.map(sp => ({
+  const subjectPackageFilters = subjectPackages.map((sp) => ({
     subject: sp.subject,
     package: sp.packageType,
     isKid: sp.kidpackage,
@@ -369,8 +379,12 @@ export async function getStudentAnalyticsperchapter(
   const searchFilter = searchTerm
     ? {
         OR: [
-          { name: { contains: searchTerm, mode: "insensitive" } },
-          { phoneno: { contains: searchTerm, mode: "insensitive" } },
+          { name: { contains: searchTerm } },
+          { phoneno: { contains: searchTerm } },
+          // Only add wdt_ID filter if searchTerm is a valid number
+          ...(Number.isNaN(Number(searchTerm))
+            ? []
+            : [{ wdt_ID: Number(searchTerm) }]),
         ],
       }
     : {};
@@ -403,7 +417,7 @@ export async function getStudentAnalyticsperchapter(
   });
 
   // 7. For each student, get their progress for this chapter
-  const studentsWithProgress = await Promise.all(
+  let studentsWithProgress = await Promise.all(
     students.map(async (student) => {
       const progress = await prisma.studentProgress.findFirst({
         where: {
@@ -413,9 +427,10 @@ export async function getStudentAnalyticsperchapter(
         select: { isCompleted: true },
       });
 
-      let studentProgress: "notstart" | "onprogress" | "complete" = "notstart";
+      let studentProgress: "not-started" | "in-progress" | "completed" =
+        "not-started";
       if (progress) {
-        studentProgress = progress.isCompleted ? "complete" : "onprogress";
+        studentProgress = progress.isCompleted ? "completed" : "in-progress";
       }
 
       return {
@@ -429,8 +444,14 @@ export async function getStudentAnalyticsperchapter(
       };
     })
   );
-
+  if (progressFilter) {
+    studentsWithProgress = studentsWithProgress.filter(
+      (student) => student.studentProgress === progressFilter
+    );
+  }
   const totalPages = Math.ceil(totalRecords / take);
+// const totalPages = Math.ceil(studentsWithProgress.length / take);
+
 
   return {
     data: studentsWithProgress,
@@ -439,6 +460,7 @@ export async function getStudentAnalyticsperchapter(
       totalPages,
       itemsPerPage: take,
       totalRecords,
+      // totalRecords:studentsWithProgress.length ,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     },
@@ -449,7 +471,9 @@ export async function getStudentAnalyticsperPackage(
   // chapterId: string | number,
   searchTerm?: string,
   currentPage?: number,
-  itemsPerPage?: number
+  itemsPerPage?: number,
+  progressFilter?: "not-started" | "in-progress" | "completed" // <-- Add this
+
 ) {
   const page = currentPage && currentPage > 0 ? currentPage : 1;
   const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
@@ -474,7 +498,7 @@ export async function getStudentAnalyticsperPackage(
   });
 
   // 3. Build OR filter for students matching any subjectPackage
-  const subjectPackageFilters = subjectPackages.map(sp => ({
+  const subjectPackageFilters = subjectPackages.map((sp) => ({
     subject: sp.subject,
     package: sp.packageType,
     isKid: sp.kidpackage,
@@ -485,8 +509,11 @@ export async function getStudentAnalyticsperPackage(
     ? {
         OR: [
           { name: { contains: searchTerm } },
-          { phoneno: { contains: searchTerm} },
-          {}
+          { phoneno: { contains: searchTerm } },
+          // Only add wdt_ID filter if searchTerm is a valid number
+          ...(Number.isNaN(Number(searchTerm))
+            ? []
+            : [{ wdt_ID: Number(searchTerm) }]),
         ],
       }
     : {};
@@ -521,11 +548,11 @@ export async function getStudentAnalyticsperPackage(
   });
 
   // 7. For each student, find their subjectPackage and get progress
-  const studentsWithProgress = await Promise.all(
+  let studentsWithProgress = await Promise.all(
     students.map(async (student) => {
       // Find the subjectPackage for this student
       const matchedSubjectPackage = subjectPackages.find(
-        sp =>
+        (sp) =>
           sp.subject === student.subject &&
           sp.packageType === student.package &&
           sp.kidpackage === student.isKid
@@ -536,6 +563,7 @@ export async function getStudentAnalyticsperPackage(
         student.wdt_ID,
         activePackageId
       );
+
 
       const activePackage = await prisma.coursePackage.findUnique({
         where: { id: activePackageId },
@@ -551,43 +579,43 @@ export async function getStudentAnalyticsperPackage(
         let countryCode = "+251"; // Default Ethiopia
         switch ((student.country || "").toLowerCase()) {
           case "ethiopia":
-        countryCode = "+251";
-        break;
+            countryCode = "+251";
+            break;
           case "saudiarabia":
           case "saudi arabia":
-        countryCode = "+966";
-        break;
+            countryCode = "+966";
+            break;
           case "canada":
-        countryCode = "+1";
-        break;
+            countryCode = "+1";
+            break;
           case "dubai":
           case "uae":
-        countryCode = "+971";
-        break;
+            countryCode = "+971";
+            break;
           case "kuweit":
           case "kuwait":
-        countryCode = "+965";
-        break;
+            countryCode = "+965";
+            break;
           case "usa":
           case "united states":
           case "united states of america":
-        countryCode = "+1";
-        break;
+            countryCode = "+1";
+            break;
           case "south africa":
-        countryCode = "+27";
-        break;
+            countryCode = "+27";
+            break;
           case "sweden":
-        countryCode = "+46";
-        break;
+            countryCode = "+46";
+            break;
           case "qatar":
-        countryCode = "+974";
-        break;
+            countryCode = "+974";
+            break;
           case "djibouti":
-        countryCode = "+253";
-        break;
+            countryCode = "+253";
+            break;
           // Add more countries as needed
           default:
-        countryCode = "+251";
+            countryCode = "+251";
         }
         phoneNo = `${countryCode}${phoneNo}`;
       }
@@ -604,8 +632,13 @@ export async function getStudentAnalyticsperPackage(
     })
   );
 
+  if (progressFilter) {
+    studentsWithProgress = studentsWithProgress.filter(
+      (student) => student.studentProgress === progressFilter
+    );
+  }
   const totalPages = Math.ceil(totalRecords / take);
-  console.log("data",studentsWithProgress)
+// const totalPages = Math.ceil(studentsWithProgress.length / take);
 
   return {
     data: studentsWithProgress,
@@ -620,5 +653,4 @@ export async function getStudentAnalyticsperPackage(
   };
 }
 
-export async function gettheCoutrycode(){}
-
+export async function gettheCoutrycode() {}

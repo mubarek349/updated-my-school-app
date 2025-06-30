@@ -1,20 +1,25 @@
 "use client";
-import React, { useState } from 'react'
-import CustomTable from '@/components/custom/admin/custom-table';
-import { getStudentAnalyticsperPackage } from '@/actions/admin/analysis';
-import useAction from '@/hooks/useAction';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import React, { useState } from "react";
+import CustomTable from "@/components/custom/admin/custom-table";
+import useAction from "@/hooks/useAction";
+import { getStudentAnalyticsperchapter } from "@/actions/admin/analysis";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 function Page() {
+  const { chapterId } = useParams();
+  const { coursesPackageId } = useParams();
+  const { courseId } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [progressFilter, setProgressFilter] = useState<"not-started" | "in-progress" | "completed" | "">("");
 
   const [data, refresh, isLoading] = useAction(
-    getStudentAnalyticsperPackage,
+    getStudentAnalyticsperchapter,
     [true, () => {}],
+    chapterId as string,
     searchTerm,
     currentPage,
     itemsPerPage,
@@ -24,37 +29,33 @@ function Page() {
   const columns = [
     { key: "id", label: "ID" },
     { key: "name", label: "Name" },
-    { key: "isKid", label: "Is Kid" },
     { key: "phoneNo", label: "Phone Number" },
-    { key: "activePackage", label: "activePackage" },
     { key: "studentProgress", label: "Student Progress" },
     { key: "chatid", label: "Telegram Link" },
   ];
 
-  const rows = (data && "data" in data)
-    ? data.data.map((row: any) => ({
-        id: String(row.id ?? ""),
-        name: row.name ?? "",
-        isKid: row.isKid ? "Yes" : "No",
-        phoneNo: row.phoneNo ?? "",
-        activePackage: row.activePackage ?? "",
-        studentProgress: row.studentProgress ?? "",
-        chatid: row.chatid ?? ""
-      }))
-    : [];
+  const rows =
+    data && "data" in data
+      ? data.data.map((row: any) => ({
+          id: String(row.id ?? ""),
+          name: row.name ?? "",
+          phoneNo: row.phoneNo ?? "",
+          studentProgress: row.studentProgress ?? "",
+          chatid: row.chatid ?? "",
+        }))
+      : [];
 
   return (
-    <div className='m-2'>
+    <div className="m-2">
       <Link
-          href="/en/admin/analytics"
-          className="flex items-center text-sm hover:opacity-75 transition mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Analytics
-        </Link>
-      <h1 className="text-xl font-bold mb-1">Student Progress In Package</h1>
-  
-              {/* Progress Filter */}
+        href={`/en/admin/coursesPackages/${coursesPackageId}/${courseId}`}
+        className="flex items-center text-sm hover:opacity-75 transition mb-6"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Chapters setup
+      </Link>
+      <h1 className="text-xl font-bold mb-4">Student Analytics Per Chapter</h1>
+      {/* Progress Filter */}
       <div className="m-1">
         <label className="mr-2 font-medium">Filter by Progress:</label>
         <select
@@ -68,7 +69,7 @@ function Page() {
           <option value="completed">Completed</option>
         </select>
       </div>
-        <CustomTable
+      <CustomTable
         columns={columns}
         rows={rows}
         totalRows={data?.pagination?.totalRecords ?? rows.length}
@@ -80,8 +81,8 @@ function Page() {
         onSearch={setSearchTerm}
         isLoading={isLoading}
       />
-      </div>
-  
+      {isLoading && <div>Loading...</div>}
+    </div>
   );
 }
 

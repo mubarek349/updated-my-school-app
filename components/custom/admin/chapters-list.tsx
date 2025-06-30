@@ -18,11 +18,15 @@ interface ChaptersListProps {
   items: chapter[];
   onReorder: (updateData: { id: string; position: number }[]) => void;
   onEdit: (id: string) => void;
+  coursesPackageId: string;
+  courseId: string;
 }
 export const ChaptersList = ({
   items,
   onReorder,
   onEdit,
+  coursesPackageId,
+  courseId,
 }: ChaptersListProps) => {
   const [isMounted, setIsMounted] = useState(false);
   const [chapters, setChapters] = useState<chapter[]>([]);
@@ -100,7 +104,11 @@ export const ChaptersList = ({
 
                     <div className="ml-auto pr-2 flex items-center gap-x-2">
                       {/* Show order starting from 1 */}
-                      <Button onClick={() => redirect(`/en/admin/studentAnalytics/${chapter.id}`)}>
+                      <Button
+                        onClick={() =>
+                          redirect(`/en/admin/studentAnalytics/${coursesPackageId}/${courseId}/${chapter.id}`)
+                        }
+                      >
                         View Students
                       </Button>
                       {index + 1}

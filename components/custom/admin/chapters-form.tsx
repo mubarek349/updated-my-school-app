@@ -24,13 +24,13 @@ import { ChaptersList } from "./chapters-list";
 interface ChaptersFormProps {
   initialData: course & { chapters: chapter[] };
   courseId: string;
-  coursesPackageId:string;
+  coursesPackageId: string;
 }
 
 const formSchema = z.object({
   title: z.string().min(1),
 });
-const lang="en";
+const lang = "en";
 export const ChaptersForm = ({
   initialData,
   courseId,
@@ -150,6 +150,8 @@ export const ChaptersForm = ({
             onEdit={onEdit}
             onReorder={onReorder}
             items={initialData.chapters || []}
+            coursesPackageId={coursesPackageId}
+            courseId={courseId}
           />
         </div>
       )}
