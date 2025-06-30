@@ -30,16 +30,16 @@ export default function StudentGraph() {
         id: string;
         packageName: string;
         totalStudents: number;
-        inProgressStudents: number;
-        completeStudents: number;
-        notStartedStudents: number;
+        notStartedCount: number;
+        inProgressCount: number;
+        completedCount: number;
       } | undefined>)
         .filter((item): item is NonNullable<typeof item> => !!item)
         .map((item) => ({
           name: item.packageName,
-          notStarted: item.notStartedStudents,
-          inProgress: item.inProgressStudents,
-          completed: item.completeStudents,
+          notStarted: item.notStartedCount,
+          inProgress: item.inProgressCount,
+          completed: item.completedCount,
         }));
       setData(chartData);
     }

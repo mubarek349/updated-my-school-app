@@ -290,16 +290,16 @@ export async function getPackageAnalytics() {
       });
 
       // total Students assigned to this package
-      const assignedTotalStudents = assignedStudents.length
+      const assignedTotalStudents = assignedStudents.length;
 
       // Not started: youtubeSubject is null
       const notStartedStudents = assignedStudents.filter(
         (s) => !s.progress || s.youtubeSubject === null
       );
 
-      // Completed: students who finished all chapters in the package
-      const completedStudents = [];
-      const inProgressStudents = []; 
+      const completedStudents: typeof assignedStudents = [];
+      const inProgressStudents: typeof assignedStudents = [];
+
       for (const student of assignedStudents) {
         // Get all chapters in the package
         const allChapters = await prisma.course.findMany({
@@ -319,20 +319,23 @@ export async function getPackageAnalytics() {
         });
         if (chapterIds.length > 0 && completed.length === chapterIds.length) {
           completedStudents.push(student);
-        }
-       if (chapterIds.length > 0 && completed.length < chapterIds.length) {
+        } else if (completed.length > 0 && completed.length < chapterIds.length) {
           inProgressStudents.push(student);
+        }
       }
+      const notStartedCount = notStartedStudents.length;
+      const inProgressCount = inProgressStudents.length;
+      const completedCount = completedStudents.length;
 
       return {
         id: pkg.id,
         packageName: pkg.name,
         totalStudents: assignedTotalStudents,
-        inProgressStudents: inProgressStudents.length,
-        completeStudents: completedStudents.length,
-        notStartedStudents: notStartedStudents.length,
+        notStartedCount,
+        inProgressCount,
+        completedCount,
       };
-    }})
+    })
   );
 
   return analytics;
@@ -450,8 +453,7 @@ export async function getStudentAnalyticsperchapter(
     );
   }
   const totalPages = Math.ceil(totalRecords / take);
-// const totalPages = Math.ceil(studentsWithProgress.length / take);
-
+  // const totalPages = Math.ceil(studentsWithProgress.length / take);
 
   return {
     data: studentsWithProgress,
@@ -473,7 +475,6 @@ export async function getStudentAnalyticsperPackage(
   currentPage?: number,
   itemsPerPage?: number,
   progressFilter?: "not-started" | "in-progress" | "completed" // <-- Add this
-
 ) {
   const page = currentPage && currentPage > 0 ? currentPage : 1;
   const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
@@ -564,7 +565,6 @@ export async function getStudentAnalyticsperPackage(
         activePackageId
       );
 
-
       const activePackage = await prisma.coursePackage.findUnique({
         where: { id: activePackageId },
         select: { name: true },
@@ -638,7 +638,7 @@ export async function getStudentAnalyticsperPackage(
     );
   }
   const totalPages = Math.ceil(totalRecords / take);
-// const totalPages = Math.ceil(studentsWithProgress.length / take);
+  // const totalPages = Math.ceil(studentsWithProgress.length / take);
 
   return {
     data: studentsWithProgress,
