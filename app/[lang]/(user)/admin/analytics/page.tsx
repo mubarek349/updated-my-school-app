@@ -17,9 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import StudentGraph from "./studetGraph";
+import { getAllAssignedCoursePackages, getThePackagesWhichHasLargestStudent, getTotalStudentsThatHaveacessthePacakges } from "@/actions/admin/analysis";
 
-function Page() {
+async function Page() {
   
+  const largestCoursePackage = await getThePackagesWhichHasLargestStudent();
+  const totalStudents = await getTotalStudentsThatHaveacessthePacakges() ; 
+  const totalPackages=await getAllAssignedCoursePackages();// Example total students
   const takencoursePercent = 80; // Example percentage
   return (
     <>
@@ -33,11 +37,11 @@ function Page() {
             <CardContent className="flex justify-between items-center">
               <div className="flex gap-2">
                 <UserIcon />
-                <div className="text-5xl font-bold">100</div>
+                <div className="text-5xl font-bold">{totalStudents}</div>
               </div>
               <div>
                 <Button size={"sm"} asChild>
-                  <Link href="/dashboard/employees">view all</Link>
+                  <Link href="/en/admin/analytics/viewAll">view all</Link>
                 </Button>
               </div>
             </CardContent>
@@ -46,13 +50,13 @@ function Page() {
           {/* the second card */}
           <Card>
             <CardHeader>
-              <CardTitle>total courses</CardTitle>
+              <CardTitle>total CoursesPackages</CardTitle>
             </CardHeader>
 
             <CardContent className="flex justify-between items-center">
               <div className="flex gap-2">
                 <UserCheckIcon />
-                <div className="text-5xl font-bold">100</div>
+                <div className="text-5xl font-bold">{totalPackages}</div>
               </div>
             </CardContent>
             <CardFooter>
@@ -60,12 +64,12 @@ function Page() {
                 {takencoursePercent > 75 ? (
                   <span>
                     <BadgeCheckIcon />
-                    80% courses are taken
+                    {takencoursePercent}% CoursesPackages are taken
                   </span>
                 ) : (
                   <span className="text-red-500">
                     <User />
-                    {takencoursePercent} % courses are taken
+                    {takencoursePercent}% CoursesPackages are taken
                   </span>
                 )}
               </span>
@@ -74,15 +78,15 @@ function Page() {
           {/* the third card */}
           <Card className="border-pink-500 flex flex-col gap-2">
             <CardHeader>
-              <CardTitle>course of the month</CardTitle>
+              <CardTitle>coursesPackage of the month</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center gap-2">
-              <span className="text-2xl">English</span>
+              <span className="text-2xl">{largestCoursePackage.map((course) => course.packageName)}</span>
             </CardContent>
             <CardFooter className="flex gap-2 item-center text-xs text-muted-foreground mt-auto">
               <PartyPopper className="text-pink-500" />
               <span>
-                Congratulation ,english course is taken by large student!
+                Congratulation {largestCoursePackage.map((course) => course.packageName)} coursesPackage is taken by large student!
               </span>
             </CardFooter>
           </Card>

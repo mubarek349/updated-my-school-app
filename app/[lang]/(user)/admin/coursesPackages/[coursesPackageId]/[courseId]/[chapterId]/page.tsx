@@ -5,10 +5,10 @@ import { ArrowLeft, FileQuestion, LayoutDashboard, Video } from "lucide-react";
 import { IconBadge } from "@/components/icon-badge";
 import { ChapterTitleForm } from "@/components/custom/admin/chapter-title-form";
 import { ChapterVideoForm } from "@/components/custom/admin/chapter-video-form";
-import { ChapterQuestionForm } from "@/components/custom/admin/chapter-question-form";
 
 import { Banner } from "@/components/custom/admin/banner";
 import { ChapterActions } from "@/components/custom/admin/chapter-action";
+import { ChapterQuestionForm } from "@/components/custom/admin/chapter-question-form";
 
 const ChapterIdPage = async ({
   params,

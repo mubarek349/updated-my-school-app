@@ -11,6 +11,8 @@ import {
 import { Grip, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
 
 interface ChaptersListProps {
   items: chapter[];
@@ -98,6 +100,9 @@ export const ChaptersList = ({
 
                     <div className="ml-auto pr-2 flex items-center gap-x-2">
                       {/* Show order starting from 1 */}
+                      <Button onClick={() => redirect(`/en/admin/studentAnalytics/${chapter.id}`)}>
+                        View Students
+                      </Button>
                       {index + 1}
                       <Badge
                         className={cn(

@@ -1,7 +1,12 @@
 "use client";
 import React, { useEffect } from "react";
-import { redirect, useParams, useRouter } from "next/navigation";
-import { updatePathProgressData,  } from "@/actions/student/progress";
+import {
+  redirect,
+  useParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import { updatePathProgressData } from "@/actions/student/progress";
 import useAction from "@/hooks/useAction";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -11,8 +16,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     chapterId: string;
   };
   const wdtIdNum = Number(wdt_ID);
-
-  const [update] = useAction(updatePathProgressData, [true, () => {}], wdtIdNum);
+  const isClicked = useSearchParams().get("isClicked");
+  const [update] = useAction(
+    updatePathProgressData,
+    [true, () => {}],
+    wdtIdNum
+  );
 
   const updatedCourseId = update?.chapter?.course?.id ?? courseId;
   const updatedChapterId = update?.chapter?.id ?? chapterId;
@@ -21,14 +30,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (
-      (updatedCourseId && updatedCourseId !== courseId) ||
-      (updatedChapterId && updatedChapterId !== chapterId)
+      !isClicked &&
+      ((updatedCourseId && updatedCourseId !== courseId) ||
+        (updatedChapterId && updatedChapterId !== chapterId))
     ) {
       redirect(
         `/en/student/${wdtIdNum}/${updatedCourseId}/${updatedChapterId}`
       );
     }
-  }, [updatedCourseId, updatedChapterId, wdtIdNum, courseId, chapterId, router]);
+  }, [
+    updatedCourseId,
+    updatedChapterId,
+    wdtIdNum,
+    courseId,
+    chapterId,
+    router,
+  ]);
 
   return <div className="overflow-hidden grid">{children}</div>;
 }

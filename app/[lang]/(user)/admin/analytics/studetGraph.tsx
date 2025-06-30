@@ -1,5 +1,8 @@
 "use client";
-import React from "react";
+import {
+  getPackageAnalytics,
+} from "@/actions/admin/analysis";
+import React, { useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -10,20 +13,36 @@ import {
   Legend,
 } from "recharts";
 
-const data = [
-  { name: "Math", enrolled: 120, completed: 80 },
-  { name: "Science", enrolled: 150, completed: 100 },
-  { name: "History", enrolled: 90, completed: 70 },
-  { name: "English", enrolled: 110, completed: 85 },
-  { name: "Art", enrolled: 60, completed: 50 },
-  { name: "Music", enrolled: 75, completed: 65 },
-  { name: "Physics", enrolled: 130, completed: 95 },
-  { name: "Chemistry", enrolled: 140, completed: 105 },
-  { name: "Biology", enrolled: 100, completed: 80 },
-  { name: "Economics", enrolled: 85, completed: 60 },
-];
-
 export default function StudentGraph() {
+  const [data, setData] = React.useState([
+    { name: "", notStarted: 0, onprogress: 0, completed: 0 },
+  ]);
+  // This is a mock data set. Replace it with the actual data fetching logic.
+  // You can fetch the data from your API or any other source and set it using setData
+  // For example, you can use the getStudentsData function to fetch the data
+  // and then set it in the state using setData(data) after the data is fetched.
+
+  useEffect(() => {
+    async function fetchData() {
+      const studentsData = await getPackageAnalytics();
+      // Map API data to expected chart data shape
+      const chartData = studentsData.map(
+        (item: {
+          packageName: string;
+          completeStudent: number;
+          enrollStudent: number;
+          notStartStudent: number;
+        }) => ({
+          name: item.packageName,
+          notStarted: item.notStartStudent, // Set to 0 or fetch actual not started count if available
+          onprogress: item.enrollStudent,
+          completed: item.completeStudent, // Set to 0 or fetch actual completed count if available
+        })
+      );
+      setData(chartData);
+    }
+    fetchData();
+  }, []);
   return (
     <ResponsiveContainer height={350} width="100%">
       <BarChart
@@ -34,7 +53,9 @@ export default function StudentGraph() {
         <Legend
           iconType="circle"
           formatter={(value) => {
-            if (value === "enrolled") {
+            if (value === "notStarted") {
+              return <div>Students Not Started</div>;
+            } else if (value === "enrolled") {
               return <div>Students Enrolled</div>;
             } else if (value === "completed") {
               return <div>Students Completed</div>;
@@ -43,6 +64,7 @@ export default function StudentGraph() {
         />
         <XAxis dataKey="name" stroke="#888888" fontSize={12} />
         <YAxis stroke="#888888" fontSize={12} />
+        <Bar dataKey="notStarted" stackId={1} fill="#f87171" />
         <Bar dataKey="enrolled" stackId={1} fill="#34d399" />
         <Bar
           dataKey="completed"

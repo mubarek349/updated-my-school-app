@@ -23,7 +23,7 @@ export async function startBot() {
     let channels = await prisma.wpos_wpdatatable_23.findMany({
       where: {
         chat_id: chatId.toString(),
-        status: { in: ["Active", "Notyet"] },
+        status: { in: ["Active", "Not yet"] },
       },
       select: {
         wdt_ID: true,
@@ -79,7 +79,7 @@ export async function startBot() {
     channels = await prisma.wpos_wpdatatable_23.findMany({
       where: {
         chat_id: chatId.toString(),
-        status: { in: ["Active", "Notyet"] },
+        status: { in: ["Active", "Not yet"] },
       },
       select: {
         wdt_ID: true,

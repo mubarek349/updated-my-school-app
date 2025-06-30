@@ -267,7 +267,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                   )}
                                   onClick={() => {
                                     if (isCompleted) {
-                                      window.location.href = chapterLink;
+                                      window.location.href = `${chapterLink}?isClicked=true`;
                                     }
                                   }}
                                   tabIndex={isCompleted ? 0 : -1}

@@ -177,6 +177,7 @@ model wpos_wpdatatable_23 {
   name           String?
   passcode       String?           @unique
   phoneno        String?           @unique
+  country        String?
   status         String?
   isKid          Boolean?           @default(false)
   // History of all packages (many-to-many)

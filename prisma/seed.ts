@@ -24,6 +24,7 @@ const prisma = new PrismaClient();
         status: "active",
         subject: "hifz",
         chat_id: "973677019",
+        country: "Ethiopia", // added country
       },
       {
         wdt_ID: 1002,
@@ -33,6 +34,7 @@ const prisma = new PrismaClient();
         phoneno: "0910203041",
         status: "active",
         chat_id: "611321369",
+        country: "Saudi Arabia", // added country
       },
       {
         wdt_ID: 1003,
@@ -42,6 +44,7 @@ const prisma = new PrismaClient();
         phoneno: "0910203042",
         status: "active",
         chat_id: "973677021",
+        country: "Dubai", // added country
       },
     ],
   });
