@@ -115,9 +115,17 @@ export async function filterStudentsByPackageandStatus(
       }
     } else if (progress.some((p) => !p.isCompleted)) {
       // In-progress
-      if (status === "inprogress" && student.chat_id) {
-        // inProgressChatIds.push(student.chat_id);
-        filteredChatIds.push(student.chat_id);
+      if (student.chat_id) {
+        const percent = getProgressPercent(progress, chapterIds.length);
+        if (status === "inprogress_10" && percent <= 10) {
+          filteredChatIds.push(student.chat_id);
+        } else if (status === "inprogress_40" && percent > 10 && percent <= 40) {
+          filteredChatIds.push(student.chat_id);
+        } else if (status === "inprogress_70" && percent > 40 && percent <= 70) {
+          filteredChatIds.push(student.chat_id);
+        } else if (status === "inprogress_other" && percent > 70) {
+          filteredChatIds.push(student.chat_id);
+        }
       }
     } else {
       filteredChatIds.push("fuad");
@@ -143,6 +151,119 @@ export async function filterStudentsByPackageandStatus(
   return filteredChatIds;
 }
 
+function getProgressPercent(
+  progress: { isCompleted: boolean }[],
+  total: number
+): number {
+  if (total === 0) return 0;
+  const completed = progress.filter((p) => p.isCompleted).length;
+  return Math.round((completed / total) * 100);
+}
+export async function filterStudentsByPackageList(packageId: string) {
+  console.log("Filtering students for package:", packageId);
+
+  // 1. Get all chapters for the package
+  const chapters = await prisma.chapter.findMany({
+    where: { course: { packageId } },
+    select: { id: true },
+  });
+  const chapterIds = chapters.map((ch) => ch.id);
+
+  // 2. Get all students assigned to this package
+  const subjectPackages = await prisma.subjectPackage.findMany({
+    where: { packageId },
+    select: {
+      subject: true,
+      packageType: true,
+      kidpackage: true,
+    },
+    distinct: ["subject", "kidpackage", "packageType"],
+  });
+
+  const students = await prisma.wpos_wpdatatable_23.findMany({
+    where: {
+      OR: subjectPackages.map((sp) => ({
+        subject: sp.subject,
+        package: sp.packageType,
+        isKid: sp.kidpackage,
+      })),
+    },
+    select: {
+      wdt_ID: true,
+      chat_id: true,
+    },
+  });
+
+  // 3. For each student, check their progress for the chapters in the package
+  let notStartedChatIds: string[] = [];
+  let completedChatIds: string[] = [];
+  let inProgress10ChatIds: string[] = [];
+  let inProgress40ChatIds: string[] = [];
+  let inProgress70ChatIds: string[] = [];
+  let inProgressOtherChatIds: string[] = [];
+  for (const student of students) {
+    // Get all progress records for this student and these chapters
+    const progress = await prisma.studentProgress.findMany({
+      where: {
+        studentId: student.wdt_ID,
+        chapterId: { in: chapterIds },
+      },
+      select: { isCompleted: true, chapterId: true },
+    });
+
+    if (chapterIds.length === 0 || progress.length === 0) {
+      // Not started
+      if (student.chat_id) {
+        notStartedChatIds.push(student.chat_id);
+      }
+    } else if (progress.every((p) => p.isCompleted)) {
+      // Completed
+      if (student.chat_id) {
+        completedChatIds.push(student.chat_id);
+      }
+    } else if (progress.some((p) => !p.isCompleted)) {
+      // In-progress
+      const percent = getProgressPercent(progress, chapterIds.length);
+      if (student.chat_id) {
+        if (percent <= 10) inProgress10ChatIds.push(student.chat_id);
+        else if (percent <= 40) inProgress40ChatIds.push(student.chat_id);
+        else if (percent <= 70) inProgress70ChatIds.push(student.chat_id);
+        else inProgressOtherChatIds.push(student.chat_id);
+      }
+    }
+  }
+
+  // Assign to one object and return
+  const result = [
+    { status: "notstarted", count: notStartedChatIds.length },
+    { status: "inprogress_10", count: inProgress10ChatIds.length },
+    { status: "inprogress_40", count: inProgress40ChatIds.length },
+    { status: "inprogress_70", count: inProgress70ChatIds.length },
+    { status: "inprogress_other", count: inProgressOtherChatIds.length },
+    { status: "completed", count: completedChatIds.length },
+    // { status: "total", count: students.length },
+  ];
+
+  return result;
+
+  //   let studentStatus: "completed" | "not-started" | "in-progress" = "not-started";
+  //   if (chapterIds.length === 0 || progress.length === 0) {
+  //     studentStatus = "not-started";
+  //   } else if (progress.every((p) => p.isCompleted)) {
+  //     studentStatus = "completed";
+  //   } else if (progress.some((p) => !p.isCompleted)) {
+  //     studentStatus = "in-progress";
+  //   }
+
+  //   if (studentStatus === status && student.chat_id) {
+  //     filteredChatIds.push(student.chat_id);
+  //   }
+  // }
+
+  // console.log("Filtered chat IDs:", filteredChatIds);
+
+  // return filteredChatIds;
+}
 export async function getAllStudents() {
   const students = await prisma.wpos_wpdatatable_23.findMany({
     select: {
@@ -579,7 +700,7 @@ export async function getStudentAnalyticsperPackage(
   progressFilter?: "notstarted" | "inprogress" | "completed" // <-- Add this
 ) {
   const page = currentPage && currentPage > 0 ? currentPage : 1;
-  const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
+  const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 2;
   const skip = (page - 1) * take;
 
   // 1. Get the packageId for this chapter
