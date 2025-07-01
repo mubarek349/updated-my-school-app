@@ -168,6 +168,7 @@ model studentProgress {
   id        String   @id @default(cuid())
   name      String
   phoneno   String   @unique
+  chat_id  String    @unique
   passcode  String
   createdAt DateTime @default(now())
 }

@@ -30,7 +30,7 @@ export async function getStudentProgressStatus(
 
   // 3. Logic
   if (chapterIds.length === 0 || progress.length === 0) {
-    return "not-started";
+    return "notstarted";
   }
   if (progress.some((p) => !p.isCompleted)) {
     // Find the first incomplete chapter's id
@@ -44,6 +44,105 @@ export async function getStudentProgressStatus(
   }
   return "completed";
 }
+
+export async function filterStudentsByPackageandStatus(
+  packageId: string,
+  status: string
+) {
+  console.log(
+    "Filtering students for package:",
+    packageId,
+    "with status:",
+    status
+  );
+  // 1. Get all chapters for the package
+  const chapters = await prisma.chapter.findMany({
+    where: { course: { packageId } },
+    select: { id: true },
+  });
+  const chapterIds = chapters.map((ch) => ch.id);
+
+  // 2. Get all students assigned to this package
+  const subjectPackages = await prisma.subjectPackage.findMany({
+    where: { packageId },
+    select: {
+      subject: true,
+      packageType: true,
+      kidpackage: true,
+    },
+    distinct: ["subject", "kidpackage", "packageType"],
+  });
+
+  const students = await prisma.wpos_wpdatatable_23.findMany({
+    where: {
+      OR: subjectPackages.map((sp) => ({
+        subject: sp.subject,
+        package: sp.packageType,
+        isKid: sp.kidpackage,
+      })),
+    },
+    select: {
+      wdt_ID: true,
+      chat_id: true,
+    },
+  });
+
+  // 3. For each student, check their progress for the chapters in the package
+  let filteredChatIds: string[] = [];
+
+  for (const student of students) {
+    // Get all progress records for this student and these chapters
+    const progress = await prisma.studentProgress.findMany({
+      where: {
+        studentId: student.wdt_ID,
+        chapterId: { in: chapterIds },
+      },
+      select: { isCompleted: true, chapterId: true },
+    });
+
+    // if thhe pass data is packageid and not start  then return the chat_id of student not start,if t=pass complete then return the chatid of student completed and if onprogress then return the chatid of student in progress
+    if (chapterIds.length === 0 || progress.length === 0) {
+      // Not started
+      if (status === "notstarted" && student.chat_id) {
+        // notStartedChatIds.push(student.chat_id);
+        filteredChatIds.push(student.chat_id);
+      }
+    } else if (progress.every((p) => p.isCompleted)) {
+      // Completed
+      if (status === "completed" && student.chat_id) {
+        // completedChatIds.push(student.chat_id);
+        filteredChatIds.push(student.chat_id);
+      }
+    } else if (progress.some((p) => !p.isCompleted)) {
+      // In-progress
+      if (status === "inprogress" && student.chat_id) {
+        // inProgressChatIds.push(student.chat_id);
+        filteredChatIds.push(student.chat_id);
+      }
+    } else {
+      filteredChatIds.push("fuad");
+    }
+  }
+
+  //   let studentStatus: "completed" | "not-started" | "in-progress" = "not-started";
+  //   if (chapterIds.length === 0 || progress.length === 0) {
+  //     studentStatus = "not-started";
+  //   } else if (progress.every((p) => p.isCompleted)) {
+  //     studentStatus = "completed";
+  //   } else if (progress.some((p) => !p.isCompleted)) {
+  //     studentStatus = "in-progress";
+  //   }
+
+  //   if (studentStatus === status && student.chat_id) {
+  //     filteredChatIds.push(student.chat_id);
+  //   }
+  // }
+
+  console.log("Filtered chat IDs:", filteredChatIds);
+
+  return filteredChatIds;
+}
+
 export async function getAllStudents() {
   const students = await prisma.wpos_wpdatatable_23.findMany({
     select: {
@@ -319,7 +418,10 @@ export async function getPackageAnalytics() {
         });
         if (chapterIds.length > 0 && completed.length === chapterIds.length) {
           completedStudents.push(student);
-        } else if (completed.length > 0 && completed.length < chapterIds.length) {
+        } else if (
+          completed.length > 0 &&
+          completed.length < chapterIds.length
+        ) {
           inProgressStudents.push(student);
         }
       }
@@ -347,7 +449,7 @@ export async function getStudentAnalyticsperchapter(
   searchTerm?: string,
   currentPage?: number,
   itemsPerPage?: number,
-  progressFilter?: "not-started" | "in-progress" | "completed" // <-- Add this
+  progressFilter?: "notstarted" | "inprogress" | "completed" // <-- Add this
 ) {
   const page = currentPage && currentPage > 0 ? currentPage : 1;
   const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
@@ -430,10 +532,10 @@ export async function getStudentAnalyticsperchapter(
         select: { isCompleted: true },
       });
 
-      let studentProgress: "not-started" | "in-progress" | "completed" =
-        "not-started";
+      let studentProgress: "notstarted" | "inprogress" | "completed" =
+        "notstarted";
       if (progress) {
-        studentProgress = progress.isCompleted ? "completed" : "in-progress";
+        studentProgress = progress.isCompleted ? "completed" : "inprogress";
       }
 
       return {
@@ -474,7 +576,7 @@ export async function getStudentAnalyticsperPackage(
   searchTerm?: string,
   currentPage?: number,
   itemsPerPage?: number,
-  progressFilter?: "not-started" | "in-progress" | "completed" // <-- Add this
+  progressFilter?: "notstarted" | "inprogress" | "completed" // <-- Add this
 ) {
   const page = currentPage && currentPage > 0 ? currentPage : 1;
   const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
@@ -633,9 +735,15 @@ export async function getStudentAnalyticsperPackage(
   );
 
   if (progressFilter) {
-    studentsWithProgress = studentsWithProgress.filter(
-      (student) => student.studentProgress === progressFilter
-    );
+    studentsWithProgress = studentsWithProgress.filter((student) => {
+      if (progressFilter === "inprogress") {
+        return (
+          student.studentProgress !== "completed" &&
+          student.studentProgress !== "notstarted"
+        );
+      }
+      return student.studentProgress === progressFilter;
+    });
   }
   const totalPages = Math.ceil(totalRecords / take);
   // const totalPages = Math.ceil(studentsWithProgress.length / take);

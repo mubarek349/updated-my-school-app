@@ -10,9 +10,9 @@ function Page() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [progressFilter, setProgressFilter] = useState<"not-started" | "in-progress" | "completed" | "">("");
+  const [progressFilter, setProgressFilter] = useState<"notstarted" | "inprogress" | "completed" | "">("");
 
-  const [data, refresh, isLoading] = useAction(
+  const [data,, isLoading] = useAction(
     getStudentAnalyticsperPackage,
     [true, () => {}],
     searchTerm,
@@ -28,7 +28,7 @@ function Page() {
     { key: "phoneNo", label: "Phone Number" },
     { key: "activePackage", label: "activePackage" },
     { key: "studentProgress", label: "Student Progress" },
-    { key: "chatid", label: "Telegram Link" },
+    // { key: "chatid", label: "Telegram Link" },
   ];
 
   const rows = (data && "data" in data)
@@ -39,7 +39,7 @@ function Page() {
         phoneNo: row.phoneNo ?? "",
         activePackage: row.activePackage ?? "",
         studentProgress: row.studentProgress ?? "",
-        chatid: row.chatid ?? ""
+        // chatid: row.chatid ?? ""
       }))
     : [];
 
@@ -63,8 +63,8 @@ function Page() {
           className="border border-gray-300 rounded px-2 py-1"
         >
           <option value="">All</option>
-          <option value="not-started">Not Started</option>
-          <option value="in-progress">In Progress</option>
+          <option value="notstarted">Not Started</option>
+          <option value="inprogress">In Progress</option>
           <option value="completed">Completed</option>
         </select>
       </div>
@@ -81,7 +81,6 @@ function Page() {
         isLoading={isLoading}
       />
       </div>
-  
   );
 }
 

@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
       name: "System Admin",
       phoneno: "0942303571",
       passcode: "admin123",
+      chat_id:"631321369"
     },
   });
 

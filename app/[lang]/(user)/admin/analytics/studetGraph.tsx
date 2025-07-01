@@ -14,13 +14,10 @@ import {
 } from "recharts";
 
 export default function StudentGraph() {
-  const [data, setData] = React.useState([
-    { name: "", notStarted: 0, inProgress: 0, completed: 0 },
-  ]);
-  // This is a mock data set. Replace it with the actual data fetching logic.
-  // You can fetch the data from your API or any other source and set it using setData
-  // For example, you can use the getStudentsData function to fetch the data
-  // and then set it in the state using setData(data) after the data is fetched.
+  const [data, setData] = React.useState<
+    { name: string; notStarted: number; inProgress: number; completed: number; total: number }[]
+  >([]);
+  const [maxTotal, setMaxTotal] = React.useState(0);
 
   useEffect(() => {
     async function fetchData() {
@@ -40,11 +37,14 @@ export default function StudentGraph() {
           notStarted: item.notStartedCount,
           inProgress: item.inProgressCount,
           completed: item.completedCount,
+          total: item.totalStudents,
         }));
       setData(chartData);
+      setMaxTotal(Math.max(...chartData.map((item) => item.total), 0));
     }
     fetchData();
   }, []);
+
   return (
     <ResponsiveContainer height={350} width="100%">
       <BarChart
@@ -65,7 +65,7 @@ export default function StudentGraph() {
           }}
         />
         <XAxis dataKey="name" stroke="#888888" fontSize={12} />
-        <YAxis stroke="#888888" fontSize={12} />
+        <YAxis stroke="#888888" fontSize={12} domain={[0, maxTotal]} />
         <Bar dataKey="notStarted" stackId={1} fill="#f87171" />
         <Bar dataKey="inProgress" stackId={1} fill="#34d399" />
         <Bar
