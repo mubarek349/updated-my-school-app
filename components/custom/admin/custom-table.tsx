@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export interface ColumnDef<T> {
+export interface ColumnDef {
   key: string;
   label: string;
 }
@@ -22,7 +22,7 @@ interface CustomTableProps {
   rows: Array<
     Record<string, string> & { key?: string | number; id?: string | number }
   >;
-  columns: Array<ColumnDef<Record<string, string>>>;
+  columns: Array<ColumnDef>;
   totalRows: number;
   page: number;
   pageSize: number;

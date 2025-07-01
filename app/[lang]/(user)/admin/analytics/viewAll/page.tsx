@@ -32,7 +32,7 @@ function Page() {
   ];
 
   const rows = (data && "data" in data)
-    ? data.data.map((row: any) => ({
+    ? data.data.map((row) => ({
         id: String(row.id ?? ""),
         name: row.name ?? "",
         isKid: row.isKid ? "Yes" : "No",
@@ -59,7 +59,7 @@ function Page() {
         <label className="mr-2 font-medium">Filter by Progress:</label>
         <select
           value={progressFilter}
-          onChange={e => setProgressFilter(e.target.value as any)}
+          onChange={e => setProgressFilter(e.target.value as "notstarted" | "inprogress" | "completed" | "")}
           className="border border-gray-300 rounded px-2 py-1"
         >
           <option value="">All</option>
