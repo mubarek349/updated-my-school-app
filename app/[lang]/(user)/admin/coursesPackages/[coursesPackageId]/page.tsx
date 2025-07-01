@@ -51,7 +51,7 @@ const CoursesPackageIdPage = async ({
 
   const requiredFields = [
     coursesPackage.name,
-    coursesPackage.description,
+    // coursesPackage.description,
     // coursesPackage.userType,
     coursesPackage.courses,
   ];
