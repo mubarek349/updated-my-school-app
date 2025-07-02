@@ -369,7 +369,7 @@ export async function startBot() {
       inprogress_10: 0,
       inprogress_40: 0,
       inprogress_70: 0,
-      inprogress_other: 0,
+      inprogress_o: 0,
     };
     if (Array.isArray(statusCounts)) {
       for (const s of statusCounts) {
@@ -406,15 +406,15 @@ export async function startBot() {
       )
       .row()
       .text(
-        `🟡 ቀሪዎች (${statusMap.inprogress_other})`,
-        `admin_status_${packageId}_inprogress_Other`
+        `🟡 ቀሪዎች (${statusMap.inprogress_o})`,
+        `admin_status_${packageId}_inprogress_o`
       );
     await ctx.reply("የተማሪዎችን ሁኔታ ይምረጡ:", { reply_markup: keyboard });
   });
 
   // Step 3: Prompt for message after status selection and show filtered chat_ids
  bot.callbackQuery(
-  /admin_status_(.+)_(completed|notstarted|inprogress_10|inprogress_40|inprogress_70|inprogress_other)/,
+  /admin_status_(.+)_(completed|notstarted|inprogress_10|inprogress_40|inprogress_70|inprogress_o)/,
   async (ctx) => {
     await ctx.answerCallbackQuery();
     const [, packageId, status] = ctx.match;

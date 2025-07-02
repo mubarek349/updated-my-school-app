@@ -124,7 +124,7 @@ export async function filterStudentsByPackageandStatus(
           filteredChatIds.push(student.chat_id);
         } else if (status === "inprogress_70" && percent > 40 && percent <= 70) {
           filteredChatIds.push(student.chat_id);
-        } else if (status === "inprogress_other" && percent > 70) {
+        } else if (status === "inprogress_o" && percent > 70) {
           filteredChatIds.push(student.chat_id);
         }
       }
@@ -235,7 +235,7 @@ export async function filterStudentsByPackageList(packageId: string) {
     { status: "inprogress_10", count: inProgress10ChatIds.length },
     { status: "inprogress_40", count: inProgress40ChatIds.length },
     { status: "inprogress_70", count: inProgress70ChatIds.length },
-    { status: "inprogress_other", count: inProgressOtherChatIds.length },
+    { status: "inprogress_o", count: inProgressOtherChatIds.length },
     { status: "completed", count: completedChatIds.length },
     // { status: "total", count: students.length },
   ];
