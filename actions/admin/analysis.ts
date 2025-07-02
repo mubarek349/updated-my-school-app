@@ -213,23 +213,17 @@ export async function filterStudentsByPackageList(packageId: string) {
 
     if (chapterIds.length === 0 || progress.length === 0) {
       // Not started
-      if (student.chat_id) {
-        notStartedChatIds.push(student.chat_id);
-      }
+        notStartedChatIds.push(student.wdt_ID.toString());
     } else if (progress.every((p) => p.isCompleted)) {
       // Completed
-      if (student.chat_id) {
-        completedChatIds.push(student.chat_id);
-      }
+      completedChatIds.push(student.wdt_ID+"");
     } else if (progress.some((p) => !p.isCompleted)) {
       // In-progress
       const percent = getProgressPercent(progress, chapterIds.length);
-      if (student.chat_id) {
-        if (percent <= 10) inProgress10ChatIds.push(student.chat_id);
-        else if (percent <= 40) inProgress40ChatIds.push(student.chat_id);
-        else if (percent <= 70) inProgress70ChatIds.push(student.chat_id);
-        else inProgressOtherChatIds.push(student.chat_id);
-      }
+      if (percent <= 10) inProgress10ChatIds.push(student.wdt_ID+'');
+      else if (percent <= 40) inProgress40ChatIds.push(student.wdt_ID+'');
+      else if (percent <= 70) inProgress70ChatIds.push(student.wdt_ID+'');
+      else inProgressOtherChatIds.push(student.wdt_ID+'');
     }
   }
 
@@ -512,13 +506,14 @@ export async function getPackageAnalytics() {
       // total Students assigned to this package
       const assignedTotalStudents = assignedStudents.length;
 
-      // Not started: youtubeSubject is null
-      const notStartedStudents = assignedStudents.filter(
-        (s) => !s.progress || s.youtubeSubject === null
-      );
+      // // Not started: youtubeSubject is null
+      // const notStartedStudents = assignedStudents.filter(
+      //   (s) => !s.progress || s.youtubeSubject === null
+      // );
 
       const completedStudents: typeof assignedStudents = [];
       const inProgressStudents: typeof assignedStudents = [];
+      const notStartedStudents: typeof assignedStudents = [];
 
       for (const student of assignedStudents) {
         // Get all chapters in the package
@@ -545,10 +540,13 @@ export async function getPackageAnalytics() {
         ) {
           inProgressStudents.push(student);
         }
+        else{
+notStartedStudents.push(student);
+        }
       }
-      const notStartedCount = notStartedStudents.length;
       const inProgressCount = inProgressStudents.length;
       const completedCount = completedStudents.length;
+      const notStartedCount = notStartedStudents.length;
 
       return {
         id: pkg.id,
@@ -560,7 +558,7 @@ export async function getPackageAnalytics() {
       };
     })
   );
-
+console.log("analytics",analytics);
   return analytics;
 }
 

@@ -46,7 +46,7 @@ function Page() {
       : [];
 
   return (
-    <div className="m-2">
+    <div className="m-2 overflow-auto">
       <Link
         href={`/en/admin/coursesPackages/${coursesPackageId}/${courseId}`}
         className="flex items-center text-sm hover:opacity-75 transition mb-6"
@@ -69,18 +69,20 @@ function Page() {
           <option value="completed">Completed</option>
         </select>
       </div>
-      <CustomTable
-        columns={columns}
-        rows={rows}
-        totalRows={data?.pagination?.totalRecords ?? rows.length}
-        page={currentPage}
-        pageSize={itemsPerPage}
-        onPageChange={setCurrentPage}
-        onPageSizeChange={setItemsPerPage}
-        searchValue={searchTerm}
-        onSearch={setSearchTerm}
-        isLoading={isLoading}
-      />
+      <div className="w-full max-w-full overflow-x-auto overflow-y-auto" style={{ maxHeight: "70vh" }}>
+              <CustomTable
+                columns={columns}
+                rows={rows}
+                totalRows={data?.pagination?.totalRecords ?? rows.length}
+                page={currentPage}
+                pageSize={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setItemsPerPage}
+                searchValue={searchTerm}
+                onSearch={setSearchTerm}
+                isLoading={isLoading}
+              />
+            </div>
       {isLoading && <div>Loading...</div>}
     </div>
   );

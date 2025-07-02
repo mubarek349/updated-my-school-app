@@ -58,16 +58,16 @@ export default function CustomTable({
   }, [searchValue]);
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-svw space-y-8">
       {/* Search & Page Size */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Input
             placeholder="Search..."
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             disabled={isLoading}
-            className="max-w-sm border border-gray-300 focus:border-blue-400 transition px-4 py-2 rounded"
+            className="max-w-sm border border-gray-300 focus:border-blue-400 transition px-4 py-2 rounded w-full sm:w-auto"
           />
           <Button
             type="button"
@@ -95,15 +95,15 @@ export default function CustomTable({
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-2xl border border-gray-200 overflow-x-auto shadow bg-white p-6 my-4">
-        <Table>
+      {/* Responsive Table */}
+      <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-gray-200 shadow bg-white p-2 sm:p-6 my-4">
+        <Table className="min-w-full">
           <TableHeader>
             <TableRow>
               {columns.map((col) => (
                 <TableHead
                   key={col.key}
-                  className="uppercase text-xs font-semibold text-gray-700 bg-gray-100 px-6 py-4 rounded-t-lg tracking-wider shadow-sm"
+                  className="uppercase text-xs font-semibold text-gray-700 bg-gray-100 sm:px-6 px-2 sm:py-4 py-2 rounded-t-lg tracking-wider shadow-sm"
                   style={{
                     borderBottom: "2px solid #e5e7eb",
                   }}
@@ -132,7 +132,10 @@ export default function CustomTable({
                   )}
                 >
                   {columns.map((col) => (
-                    <TableCell key={col.key} className="font-medium text-gray-700 px-6 py-4">
+                    <TableCell
+                      key={col.key}
+                      className="font-medium text-gray-700 sm:px-6 px-2 sm:py-4 py-2 text-xs sm:text-sm break-words"
+                    >
                       {row[col.key]}
                     </TableCell>
                   ))}
@@ -212,5 +215,5 @@ export default function CustomTable({
         )}
       </div>
     </div>
-    );
+  );
 }

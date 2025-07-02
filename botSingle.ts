@@ -1,7 +1,9 @@
-import { startBot } from "./bot";
+import { startBot, bot } from "./bot";
 
 (async () => {
-  console.log("Starting the bot...");
   await startBot();
+  // await terbiaAdminBot();
+  console.log("Starting the bot...");
+  await bot.start();
   console.log("Bot started.");
 })();

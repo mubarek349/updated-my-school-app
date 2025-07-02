@@ -44,7 +44,7 @@ function Page() {
     : [];
 
   return (
-    <div className='m-2'>
+    <div className='m-2 overflow-auto'>
       <Link
           href="/en/admin/analytics"
           className="flex items-center text-sm hover:opacity-75 transition mb-6"
@@ -55,7 +55,7 @@ function Page() {
       <h1 className="text-xl font-bold mb-1">Student Progress In Package</h1>
   
               {/* Progress Filter */}
-      <div className="m-1">
+      <div className="m-1 overflow-y-auto">
         <label className="mr-2 font-medium">Filter by Progress:</label>
         <select
           value={progressFilter}
@@ -68,18 +68,20 @@ function Page() {
           <option value="completed">Completed</option>
         </select>
       </div>
+        <div className="w-full max-w-svw overflow-auto h-svh" >
         <CustomTable
-        columns={columns}
-        rows={rows}
-        totalRows={data?.pagination?.totalRecords ?? rows.length}
-        page={currentPage}
-        pageSize={itemsPerPage}
-        onPageChange={setCurrentPage}
-        onPageSizeChange={setItemsPerPage}
-        searchValue={searchTerm}
-        onSearch={setSearchTerm}
-        isLoading={isLoading}
-      />
+          columns={columns}
+          rows={rows}
+          totalRows={data?.pagination?.totalRecords ?? rows.length}
+          page={currentPage}
+          pageSize={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setItemsPerPage}
+          searchValue={searchTerm}
+          onSearch={setSearchTerm}
+          isLoading={isLoading}
+        />
+      </div>
       </div>
   );
 }
