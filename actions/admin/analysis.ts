@@ -75,6 +75,7 @@ export async function filterStudentsByPackageandStatus(
 
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
+      status: { in: ["Active", "Not yet"] },
       OR: subjectPackages.map((sp) => ({
         subject: sp.subject,
         package: sp.packageType,
@@ -182,6 +183,7 @@ export async function filterStudentsByPackageList(packageId: string) {
 
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
+      status: { in: ["Active", "Not yet"] },
       OR: subjectPackages.map((sp) => ({
         subject: sp.subject,
         package: sp.packageType,
@@ -260,6 +262,10 @@ export async function filterStudentsByPackageList(packageId: string) {
 }
 export async function getAllStudents() {
   const students = await prisma.wpos_wpdatatable_23.findMany({
+    where:{
+      status: { in: ["Active", "Not yet"] }, 
+    
+    },
     select: {
       wdt_ID: true,
       name: true,
@@ -350,6 +356,7 @@ export async function getTotalStudentsThatHaveacessthePacakges() {
       const packageName = sp.package?.name || "Unknown Package";
       const studentsCount = await prisma.wpos_wpdatatable_23.count({
         where: {
+          status: { in: ["Active", "Not yet"] },
           subject: sp.subject,
           package: sp.packageType,
           isKid: sp.kidpackage ?? undefined,
@@ -390,6 +397,7 @@ export async function getThePackagesWhichHasLargestStudent() {
       const packageName = sp.package?.name || "Unknown Package";
       const studentsCount = await prisma.wpos_wpdatatable_23.count({
         where: {
+          status: { in: ["Active", "Not yet"] },
           subject: sp.subject,
           package: sp.packageType,
           isKid: sp.kidpackage ?? undefined,
@@ -447,6 +455,7 @@ export async function getStudentsGroupedBySubjectKidType() {
       const packageName = sp.package?.name || "Unknown Package";
       const studentsCount = await prisma.wpos_wpdatatable_23.count({
         where: {
+          status: { in: ["Active", "Not yet"] },
           subject: sp.subject,
           package: sp.packageType,
           isKid: sp.kidpackage ?? undefined,
@@ -489,6 +498,7 @@ export async function getPackageAnalytics() {
       // Find all students matching any subjectPackage for this package
       const assignedStudents = await prisma.wpos_wpdatatable_23.findMany({
         where: {
+          status: { in: ["Active", "Not yet"] },
           OR: subjectPackages.map((sp) => ({
             subject: sp.subject ?? undefined,
             package: sp.packageType ?? undefined,
@@ -616,6 +626,7 @@ export async function getStudentAnalyticsperchapter(
   // 5. Count total students matching subjectPackages and search
   const totalRecords = await prisma.wpos_wpdatatable_23.count({
     where: {
+      status: { in: ["Active", "Not yet"] },
       OR: subjectPackageFilters,
       ...searchFilter,
     },
@@ -624,6 +635,7 @@ export async function getStudentAnalyticsperchapter(
   // 6. Get paginated students
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
+      status: { in: ["Active", "Not yet"] },
       OR: subjectPackageFilters,
       ...searchFilter,
     },
@@ -743,6 +755,7 @@ export async function getStudentAnalyticsperPackage(
   // 5. Count total students matching subjectPackages and search
   const totalRecords = await prisma.wpos_wpdatatable_23.count({
     where: {
+      status: { in: ["Active", "Not yet"] },
       OR: subjectPackageFilters,
       ...searchFilter,
     },
@@ -751,6 +764,7 @@ export async function getStudentAnalyticsperPackage(
   // 6. Get paginated students
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
+      status: { in: ["Active", "Not yet"] },
       OR: subjectPackageFilters,
       ...searchFilter,
     },

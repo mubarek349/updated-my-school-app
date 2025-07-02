@@ -354,20 +354,22 @@ export async function startBot() {
   bot.callbackQuery(/admin_package_(.+)/, async (ctx) => {
     await ctx.answerCallbackQuery();
     const packageId = ctx.match[1];
+    console.log("Selected package ID:", packageId);
     if (ctx.chat?.id) {
-      pendingAdminMessages[ctx.chat.id] = { packageId, status: "" };
+      // pendingAdminMessages[ctx.chat.id] = { packageId, status: "" };
     }
 
     // Get status counts for this package
     const statusCounts = await filterStudentsByPackageList(packageId);
+    console.log("Status counts:", statusCounts);
 
     const statusMap: Record<string, number> = {
       completed: 0,
-      notstarted: 0,
+      notstarted: 0, 
       inprogress_10: 0,
       inprogress_40: 0,
       inprogress_70: 0,
-      inprogress_Other: 0,
+      inprogress_other: 0,
     };
     if (Array.isArray(statusCounts)) {
       for (const s of statusCounts) {
@@ -404,7 +406,7 @@ export async function startBot() {
       )
       .row()
       .text(
-        `🟡 ቀሪዎች (${statusMap.inprogress_Other})`,
+        `🟡 ቀሪዎች (${statusMap.inprogress_other})`,
         `admin_status_${packageId}_inprogress_Other`
       );
     await ctx.reply("የተማሪዎችን ሁኔታ ይምረጡ:", { reply_markup: keyboard });
