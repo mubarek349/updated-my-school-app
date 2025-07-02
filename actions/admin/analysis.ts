@@ -221,19 +221,18 @@ export async function filterStudentsByPackageList(packageId: string) {
       select: { isCompleted: true, chapterId: true },
     });
 
-    if ( progress.length === 0) {
-      // Not started
+    if (progress.length > 0) {
+      if (progress.filter(p=>p.isCompleted).length===chapterIds.length) {
+        completedChatIds.push(student.wdt_ID + "");
+      } else {
+        const percent = getProgressPercent(progress, chapterIds.length);
+        if (percent <= 10) inProgress10ChatIds.push(student.wdt_ID + "");
+        else if (percent <= 40) inProgress40ChatIds.push(student.wdt_ID + "");
+        else if (percent <= 70) inProgress70ChatIds.push(student.wdt_ID + "");
+        else inProgressOtherChatIds.push(student.wdt_ID + "");
+      }
+    } else {
       notStartedChatIds.push(student.wdt_ID.toString());
-    } else if (progress.every((p) => p.isCompleted)) {
-      // Completed
-      completedChatIds.push(student.wdt_ID + "");
-    } else  {
-      // In-progress
-      const percent = getProgressPercent(progress, chapterIds.length);
-      if (percent <= 10) inProgress10ChatIds.push(student.wdt_ID + "");
-      else if (percent <= 40) inProgress40ChatIds.push(student.wdt_ID + "");
-      else if (percent <= 70) inProgress70ChatIds.push(student.wdt_ID + "");
-      else inProgressOtherChatIds.push(student.wdt_ID + "");
     }
   }
 
@@ -546,11 +545,12 @@ export async function getPackageAnalytics() {
           where: {
             studentId: student.wdt_ID,
             chapterId: { in: chapterIds },
-            isCompleted: true,
+            // isCompleted: true,
           },
         });
+
         if (completed.length > 0) {
-          if (completed.length === chapterIds.length) {
+          if (completed.filter(p=>p.isCompleted).length === chapterIds.length) {
             completedStudents.push(student);
           } else {
             inProgressStudents.push(student);
