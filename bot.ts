@@ -409,7 +409,7 @@ export async function startBot() {
         `🟡 ቀሪዎች (${statusMap.inprogress_o})`,
         `admin_status_${packageId}_inprogress_o`
       );
-    await ctx.reply("የተማሪዎችን ሁኔታ ይምረጡ:", { reply_markup: keyboard });
+    await ctx.reply("የተማሪዎችን ሁኔታ ይምረጡ:", { reply_markup: keyboard }); 
   });
 
   // Step 3: Prompt for message after status selection and show filtered chat_ids

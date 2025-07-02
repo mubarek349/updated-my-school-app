@@ -120,9 +120,17 @@ export async function filterStudentsByPackageandStatus(
         const percent = getProgressPercent(progress, chapterIds.length);
         if (status === "inprogress_10" && percent <= 10) {
           filteredChatIds.push(student.chat_id);
-        } else if (status === "inprogress_40" && percent > 10 && percent <= 40) {
+        } else if (
+          status === "inprogress_40" &&
+          percent > 10 &&
+          percent <= 40
+        ) {
           filteredChatIds.push(student.chat_id);
-        } else if (status === "inprogress_70" && percent > 40 && percent <= 70) {
+        } else if (
+          status === "inprogress_70" &&
+          percent > 40 &&
+          percent <= 70
+        ) {
           filteredChatIds.push(student.chat_id);
         } else if (status === "inprogress_o" && percent > 70) {
           filteredChatIds.push(student.chat_id);
@@ -213,19 +221,19 @@ export async function filterStudentsByPackageList(packageId: string) {
       select: { isCompleted: true, chapterId: true },
     });
 
-    if (chapterIds.length === 0 || progress.length === 0) {
+    if ( progress.length === 0) {
       // Not started
-        notStartedChatIds.push(student.wdt_ID.toString());
+      notStartedChatIds.push(student.wdt_ID.toString());
     } else if (progress.every((p) => p.isCompleted)) {
       // Completed
-      completedChatIds.push(student.wdt_ID+"");
-    } else if (progress.some((p) => !p.isCompleted)) {
+      completedChatIds.push(student.wdt_ID + "");
+    } else  {
       // In-progress
       const percent = getProgressPercent(progress, chapterIds.length);
-      if (percent <= 10) inProgress10ChatIds.push(student.wdt_ID+'');
-      else if (percent <= 40) inProgress40ChatIds.push(student.wdt_ID+'');
-      else if (percent <= 70) inProgress70ChatIds.push(student.wdt_ID+'');
-      else inProgressOtherChatIds.push(student.wdt_ID+'');
+      if (percent <= 10) inProgress10ChatIds.push(student.wdt_ID + "");
+      else if (percent <= 40) inProgress40ChatIds.push(student.wdt_ID + "");
+      else if (percent <= 70) inProgress70ChatIds.push(student.wdt_ID + "");
+      else inProgressOtherChatIds.push(student.wdt_ID + "");
     }
   }
 
@@ -262,9 +270,8 @@ export async function filterStudentsByPackageList(packageId: string) {
 }
 export async function getAllStudents() {
   const students = await prisma.wpos_wpdatatable_23.findMany({
-    where:{
-      status: { in: ["Active", "Not yet"] }, 
-    
+    where: {
+      status: { in: ["Active", "Not yet"] },
     },
     select: {
       wdt_ID: true,
@@ -542,16 +549,14 @@ export async function getPackageAnalytics() {
             isCompleted: true,
           },
         });
-        if (chapterIds.length > 0 && completed.length === chapterIds.length) {
-          completedStudents.push(student);
-        } else if (
-          completed.length > 0 &&
-          completed.length < chapterIds.length
-        ) {
-          inProgressStudents.push(student);
-        }
-        else{
-notStartedStudents.push(student);
+        if (completed.length > 0) {
+          if (completed.length === chapterIds.length) {
+            completedStudents.push(student);
+          } else {
+            inProgressStudents.push(student);
+          }
+        } else {
+          notStartedStudents.push(student);
         }
       }
       const inProgressCount = inProgressStudents.length;
@@ -568,7 +573,7 @@ notStartedStudents.push(student);
       };
     })
   );
-console.log("analytics",analytics);
+  console.log("analytics", analytics);
   return analytics;
 }
 
