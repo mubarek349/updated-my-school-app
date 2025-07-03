@@ -67,7 +67,7 @@ export default function CustomTable({
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             disabled={isLoading}
-            className="max-w-sm border border-gray-300 focus:border-blue-400 transition px-4 py-2 rounded w-full sm:w-auto"
+            className="max-w-sm border ml-3 border-gray-300 focus:border-blue-400 transition px-4 py-2 rounded w-full sm:w-auto"
           />
           <Button
             type="button"
