@@ -60,7 +60,10 @@ function Page() {
         <label className="mr-2 font-medium">Filter by Progress:</label>
         <select
           value={progressFilter}
-          onChange={e => setProgressFilter(e.target.value as "notstarted" | "inprogress" | "completed" | "")}
+          onChange={e => {
+            setProgressFilter(e.target.value as "notstarted" | "inprogress" | "completed" | "");
+            setCurrentPage(1); // Reset page to 1 when filter changes
+          }}
           className="border border-gray-300 rounded px-2 py-1"
         >
           <option value="">All</option>
@@ -69,21 +72,20 @@ function Page() {
           <option value="completed">Completed</option>
         </select>
       </div>
-      {/* {data?.pagination?.totalRecords} */}
-      <div >
-              <CustomTable
-                columns={columns}
-                rows={rows}
-                totalRows={data?.pagination?.totalRecords ?? rows.length}
-                page={currentPage}
-                pageSize={itemsPerPage}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={setItemsPerPage}
-                searchValue={searchTerm}
-                onSearch={setSearchTerm}
-                isLoading={isLoading}
-              />
-            </div>
+      <div>
+        <CustomTable
+          columns={columns}
+          rows={rows}
+          totalRows={data?.pagination?.totalRecords ?? rows.length}
+          page={currentPage}
+          pageSize={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setItemsPerPage}
+          searchValue={searchTerm}
+          onSearch={setSearchTerm}
+          isLoading={isLoading}
+        />
+      </div>
       {isLoading && <div>Loading...</div>}
     </div>
   );
