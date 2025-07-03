@@ -19,7 +19,6 @@ export async function getStudentProgressStatus(
   });
   const chapterIds = chapters.map((ch) => ch.id);
 
-  // 2. Get all progress records for this student and these chapters
   const progress = await prisma.studentProgress.findMany({
     where: {
       studentId,
@@ -28,23 +27,56 @@ export async function getStudentProgressStatus(
     select: { isCompleted: true, chapterId: true },
   });
 
-  // 3. Logic
-  if (chapterIds.length === 0 || progress.length === 0) {
+  if (progress.length > 0) {
+    if (progress.filter((p) => p.isCompleted).length === chapterIds.length) {
+      return "completed";
+    } else {
+      const firstIncomplete = progress.find((p) => !p.isCompleted);
+      // Find the chapter details for that id
+      const chapter = chapters.find(
+        (ch) => ch.id === firstIncomplete?.chapterId
+      );
+      const chapterTitle = chapter?.title ?? null;
+      const courseTitle = chapter?.course?.title ?? null;
+      const packageName = chapter?.course?.package?.name ?? null;
+
+      const percent = getProgressPercent(progress, chapterIds.length);
+      // if (percent <= 10) return `<=10% ${packageName} > ${courseTitle} > ${chapterTitle}`;
+      // else if (percent <= 40) return `<=40% ${packageName} > ${courseTitle} > ${chapterTitle}`;
+      // else if (percent <= 70) return `<=70% ${packageName} > ${courseTitle} > ${chapterTitle}`;
+      // else return `<100% ${packageName} > ${courseTitle} > ${chapterTitle}`;
+      return `${packageName} > ${courseTitle} > ${chapterTitle} -> ${percent}%`;
+    }
+  } else {
     return "notstarted";
   }
-  if (progress.some((p) => !p.isCompleted)) {
-    // Find the first incomplete chapter's id
-    const firstIncomplete = progress.find((p) => !p.isCompleted);
-    // Find the chapter details for that id
-    const chapter = chapters.find((ch) => ch.id === firstIncomplete?.chapterId);
-    const chapterTitle = chapter?.title ?? null;
-    const courseTitle = chapter?.course?.title ?? null;
-    const packageName = chapter?.course?.package?.name ?? null;
-    return `${packageName} > ${courseTitle} > ${chapterTitle}`;
-  }
-  return "completed";
-}
 
+  // 2. Get all progress records for this student and these chapters
+  // const progress = await prisma.studentProgress.findMany({
+  //   where: {
+  //     studentId,
+  //     chapterId: { in: chapterIds },
+  //   },
+  //   select: { isCompleted: true, chapterId: true },
+  // });
+
+  // 3. Logic
+  //   if (chapterIds.length === 0 || progress.length === 0) {
+  //     return "notstarted";
+  //   }
+  //   if (progress.some((p) => !p.isCompleted)) {
+  //     // Find the first incomplete chapter's id
+  //     const firstIncomplete = progress.find((p) => !p.isCompleted);
+  //     // Find the chapter details for that id
+  //     const chapter = chapters.find((ch) => ch.id === firstIncomplete?.chapterId);
+  //     const chapterTitle = chapter?.title ?? null;
+  //     const courseTitle = chapter?.course?.title ?? null;
+  //     const packageName = chapter?.course?.package?.name ?? null;
+  //     return `${packageName} > ${courseTitle} > ${chapterTitle}`;
+  //   }
+  //   return "completed";
+  // }
+}
 export async function filterStudentsByPackageandStatus(
   packageId: string,
   status: string
@@ -164,7 +196,7 @@ function getProgressPercent(
   progress: { isCompleted: boolean }[],
   total: number
 ): number {
-  if (total === 0) return 0;
+  if (total === 0 || progress.length === 0) return 0;
   const completed = progress.filter((p) => p.isCompleted).length;
   return Math.round((completed / total) * 100);
 }
@@ -222,7 +254,7 @@ export async function filterStudentsByPackageList(packageId: string) {
     });
 
     if (progress.length > 0) {
-      if (progress.filter(p=>p.isCompleted).length===chapterIds.length) {
+      if (progress.filter((p) => p.isCompleted).length === chapterIds.length) {
         completedChatIds.push(student.wdt_ID + "");
       } else {
         const percent = getProgressPercent(progress, chapterIds.length);
@@ -550,7 +582,9 @@ export async function getPackageAnalytics() {
         });
 
         if (completed.length > 0) {
-          if (completed.filter(p=>p.isCompleted).length === chapterIds.length) {
+          if (
+            completed.filter((p) => p.isCompleted).length === chapterIds.length
+          ) {
             completedStudents.push(student);
           } else {
             inProgressStudents.push(student);
@@ -672,6 +706,8 @@ export async function getStudentAnalyticsperchapter(
         "notstarted";
       if (progress) {
         studentProgress = progress.isCompleted ? "completed" : "inprogress";
+      } else {
+        studentProgress = "notstarted";
       }
 
       return {
@@ -690,8 +726,8 @@ export async function getStudentAnalyticsperchapter(
       (student) => student.studentProgress === progressFilter
     );
   }
-  const totalPages = Math.ceil(totalRecords / take);
-  // const totalPages = Math.ceil(studentsWithProgress.length / take);
+  // const totalPages = Math.ceil(totalRecords / take);
+  const totalPages = Math.ceil(studentsWithProgress.length / take);
 
   return {
     data: studentsWithProgress,
@@ -699,8 +735,8 @@ export async function getStudentAnalyticsperchapter(
       currentPage: page,
       totalPages,
       itemsPerPage: take,
-      totalRecords,
-      // totalRecords:studentsWithProgress.length ,
+      // totalRecords,
+      totalRecords:studentsWithProgress.length ,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     },
@@ -811,54 +847,54 @@ export async function getStudentAnalyticsperPackage(
       });
 
       // help me plase  i went to return the phone number by reverse and only the last 9 digits and add a country code based on the country
-      let phoneNo = student.phoneno;
-      if (phoneNo) {
-        // Reverse the phone number and take the last 9 digits
-        phoneNo = phoneNo.split("").reverse().slice(0, 9).reverse().join("");
-        // Add country code based on the country
-        let countryCode = "+251"; // Default Ethiopia
-        switch ((student.country || "").toLowerCase()) {
-          case "ethiopia":
-            countryCode = "+251";
-            break;
-          case "saudiarabia":
-          case "saudi arabia":
-            countryCode = "+966";
-            break;
-          case "canada":
-            countryCode = "+1";
-            break;
-          case "dubai":
-          case "uae":
-            countryCode = "+971";
-            break;
-          case "kuweit":
-          case "kuwait":
-            countryCode = "+965";
-            break;
-          case "usa":
-          case "united states":
-          case "united states of america":
-            countryCode = "+1";
-            break;
-          case "south africa":
-            countryCode = "+27";
-            break;
-          case "sweden":
-            countryCode = "+46";
-            break;
-          case "qatar":
-            countryCode = "+974";
-            break;
-          case "djibouti":
-            countryCode = "+253";
-            break;
-          // Add more countries as needed
-          default:
-            countryCode = "+251";
-        }
-        phoneNo = `${countryCode}${phoneNo}`;
-      }
+      // let phoneNo = student.phoneno;
+      // if (phoneNo) {
+      //   // Reverse the phone number and take the last 9 digits
+      //   phoneNo = phoneNo.split("").reverse().slice(0, 9).reverse().join("");
+      //   // Add country code based on the country
+      //   let countryCode = "+251"; // Default Ethiopia
+      //   switch ((student.country || "").toLowerCase()) {
+      //     case "ethiopia":
+      //       countryCode = "+251";
+      //       break;
+      //     case "saudiarabia":
+      //     case "saudi arabia":
+      //       countryCode = "+966";
+      //       break;
+      //     case "canada":
+      //       countryCode = "+1";
+      //       break;
+      //     case "dubai":
+      //     case "uae":
+      //       countryCode = "+971";
+      //       break;
+      //     case "kuweit":
+      //     case "kuwait":
+      //       countryCode = "+965";
+      //       break;
+      //     case "usa":
+      //     case "united states":
+      //     case "united states of america":
+      //       countryCode = "+1";
+      //       break;
+      //     case "south africa":
+      //       countryCode = "+27";
+      //       break;
+      //     case "sweden":
+      //       countryCode = "+46";
+      //       break;
+      //     case "qatar":
+      //       countryCode = "+974";
+      //       break;
+      //     case "djibouti":
+      //       countryCode = "+253";
+      //       break;
+      //     // Add more countries as needed
+      //     default:
+      //       countryCode = "+251";
+      //   }
+      //   phoneNo = `${countryCode}${phoneNo}`;
+      // }
 
       return {
         id: student.wdt_ID,
@@ -879,12 +915,13 @@ export async function getStudentAnalyticsperPackage(
           student.studentProgress !== "completed" &&
           student.studentProgress !== "notstarted"
         );
+      } else {
+        return student.studentProgress === progressFilter;
       }
-      return student.studentProgress === progressFilter;
     });
   }
-  const totalPages = Math.ceil(totalRecords / take);
-  // const totalPages = Math.ceil(studentsWithProgress.length / take);
+  // const totalPages = Math.ceil(totalRecords / take);
+  const totalPages = Math.ceil(studentsWithProgress.length / take);
 
   return {
     data: studentsWithProgress,
@@ -892,7 +929,7 @@ export async function getStudentAnalyticsperPackage(
       currentPage: page,
       totalPages,
       itemsPerPage: take,
-      totalRecords,
+      totalRecords: studentsWithProgress.length,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     },

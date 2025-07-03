@@ -44,7 +44,7 @@ function Page() {
     : [];
 
   return (
-    <div className='m-2 overflow-auto'>
+    <div className='m-2 overflow-y-auto'>
       <Link
           href="/en/admin/analytics"
           className="flex items-center text-sm hover:opacity-75 transition mb-6"
@@ -55,7 +55,7 @@ function Page() {
       <h1 className="text-xl font-bold mb-1">Student Progress In Package</h1>
   
               {/* Progress Filter */}
-      <div className="m-1 overflow-y-auto">
+      <div className="m-1">
         <label className="mr-2 font-medium">Filter by Progress:</label>
         <select
           value={progressFilter}
@@ -68,7 +68,7 @@ function Page() {
           <option value="completed">Completed</option>
         </select>
       </div>
-        <div className="w-full max-w-svw overflow-auto h-svh" >
+        <div >
         <CustomTable
           columns={columns}
           rows={rows}

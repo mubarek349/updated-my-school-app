@@ -46,7 +46,7 @@ function Page() {
       : [];
 
   return (
-    <div className="m-2 overflow-auto">
+    <div className="m-2 overflow-y-auto">
       <Link
         href={`/en/admin/coursesPackages/${coursesPackageId}/${courseId}`}
         className="flex items-center text-sm hover:opacity-75 transition mb-6"
@@ -69,7 +69,8 @@ function Page() {
           <option value="completed">Completed</option>
         </select>
       </div>
-      <div className="w-full max-w-full overflow-x-auto overflow-y-auto" style={{ maxHeight: "70vh" }}>
+      {/* {data?.pagination?.totalRecords} */}
+      <div >
               <CustomTable
                 columns={columns}
                 rows={rows}

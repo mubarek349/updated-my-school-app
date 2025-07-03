@@ -161,7 +161,7 @@ export async function startBot() {
           const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update?.chapter.course.id}/${update?.chapter.id}`;
 
           const channelName = channel.name || "ዳሩል-ኩብራ";
-          const keyboard = new InlineKeyboard().url(
+          const keyboard = new InlineKeyboard().webApp(
             `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
             url
           );
