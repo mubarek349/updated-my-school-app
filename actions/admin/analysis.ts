@@ -196,9 +196,9 @@ function getProgressPercent(
   progress: { isCompleted: boolean }[],
   total: number
 ): number {
-  if (total === 0 || progress.length === 0) return 0;
+  if ( progress.length === 0) return 0;
   const completed = progress.filter((p) => p.isCompleted).length;
-  return Math.round((completed / total) * 100);
+  return ((completed / total) * 100);
 }
 export async function filterStudentsByPackageList(packageId: string) {
   console.log("Filtering students for package:", packageId);
@@ -239,6 +239,7 @@ export async function filterStudentsByPackageList(packageId: string) {
   // 3. For each student, check their progress for the chapters in the package
   let notStartedChatIds: string[] = [];
   let completedChatIds: string[] = [];
+  let inProgress0ChatIds: string[] = [];
   let inProgress10ChatIds: string[] = [];
   let inProgress40ChatIds: string[] = [];
   let inProgress70ChatIds: string[] = [];
@@ -258,7 +259,8 @@ export async function filterStudentsByPackageList(packageId: string) {
         completedChatIds.push(student.wdt_ID + "");
       } else {
         const percent = getProgressPercent(progress, chapterIds.length);
-        if (percent <= 10) inProgress10ChatIds.push(student.wdt_ID + "");
+        if (percent == 0) inProgress0ChatIds.push(student.wdt_ID + "");
+        else if (percent <= 10) inProgress10ChatIds.push(student.wdt_ID + "");
         else if (percent <= 40) inProgress40ChatIds.push(student.wdt_ID + "");
         else if (percent <= 70) inProgress70ChatIds.push(student.wdt_ID + "");
         else inProgressOtherChatIds.push(student.wdt_ID + "");
@@ -271,6 +273,7 @@ export async function filterStudentsByPackageList(packageId: string) {
   // Assign to one object and return
   const result = [
     { status: "notstarted", count: notStartedChatIds.length },
+    { status: "inprogress_0", count: inProgress0ChatIds.length },
     { status: "inprogress_10", count: inProgress10ChatIds.length },
     { status: "inprogress_40", count: inProgress40ChatIds.length },
     { status: "inprogress_70", count: inProgress70ChatIds.length },

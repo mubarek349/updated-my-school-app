@@ -1,7 +1,7 @@
 import { Bot } from "grammy";
 import prisma from "./lib/db";
 import dotenv from "dotenv";
-import {getStudentById} from "./actions/admin/adminBot";
+import { getStudentById } from "./actions/admin/adminBot";
 import { allPackages } from "./actions/admin/adminBot";
 import { getStudentAnalyticsperPackage } from "./actions/admin/analysis";
 import { filterStudentsByPackageList } from "./actions/admin/analysis";
@@ -22,7 +22,6 @@ export default async function sendMessage(chat_id: number, message: string) {
   }
 }
 export async function startBot() {
-
   bot.command("start", async (ctx) => {
     const chatId = ctx.chat?.id;
 
@@ -193,17 +192,17 @@ export async function startBot() {
   console.log("Telegram bot started successfully.");
   // sendMessagesToAllStudents();
 
-
-
-
-
-
-
-
   // Store admin's pending message context
   const pendingAdminMessages: Record<
     number,
-    { packageId: string; status: string; message?: string; chatIds?: number[]; studentName?: string; studentId?: string }
+    {
+      packageId: string;
+      status: string;
+      message?: string;
+      chatIds?: number[];
+      studentName?: string;
+      studentId?: string;
+    }
   > = {};
 
   // Admin command
@@ -305,7 +304,9 @@ export async function startBot() {
       studentId: (student as any).id ?? "",
     };
 
-    await ctx.reply(`ተማሪ: ${student.name}\n\n✍️ ለመላክ መልእክት ይጻፉ (ጽሑፍ፣ ፎቶ፣ ወይም ድምጽ)፡፡`);
+    await ctx.reply(
+      `ተማሪ: ${student.name}\n\n✍️ ለመላክ መልእክት ይጻፉ (ጽሑፍ፣ ፎቶ፣ ወይም ድምጽ)፡፡`
+    );
   });
 
   // Step 3b: Listen for message to send to individual student or group
@@ -346,7 +347,9 @@ export async function startBot() {
       }
     }
     await ctx.reply(
-      `✅ ለ${sent} ተማሪ${sent > 1 ? "ዎች" : ""} ተልኳል።${failed ? ` ❌ አልተላከላቸውም: ${failed}` : ""}`
+      `✅ ለ${sent} ተማሪ${sent > 1 ? "ዎች" : ""} ተልኳል።${
+        failed ? ` ❌ አልተላከላቸውም: ${failed}` : ""
+      }`
     );
   });
 
@@ -365,7 +368,8 @@ export async function startBot() {
 
     const statusMap: Record<string, number> = {
       completed: 0,
-      notstarted: 0, 
+      notstarted: 0,
+      inprogress_0: 0,
       inprogress_10: 0,
       inprogress_40: 0,
       inprogress_70: 0,
@@ -379,7 +383,7 @@ export async function startBot() {
 
     // 2 in first row, 4 in second row
     const keyboard = new InlineKeyboard()
-    .row()
+      .row()
       .text(
         `✅ ተጠናቀቀ (${statusMap.completed})`,
         `admin_status_${packageId}_completed`
@@ -391,6 +395,11 @@ export async function startBot() {
       )
       .row()
       .text(
+        `0️⃣ 0% (${statusMap.inprogress_0})`,
+        `admin_status_${packageId}_inprogress_0`
+      )
+      .row()
+      .text(
         `🔟 10% (${statusMap.inprogress_10})`,
         `admin_status_${packageId}_inprogress_10`
       )
@@ -399,7 +408,7 @@ export async function startBot() {
         `⏳ 40% (${statusMap.inprogress_40})`,
         `admin_status_${packageId}_inprogress_40`
       )
-    .row()
+      .row()
       .text(
         `🕗 70% (${statusMap.inprogress_70})`,
         `admin_status_${packageId}_inprogress_70`
@@ -409,46 +418,40 @@ export async function startBot() {
         `🟡 ቀሪዎች (${statusMap.inprogress_o})`,
         `admin_status_${packageId}_inprogress_o`
       );
-    await ctx.reply("የተማሪዎችን ሁኔታ ይምረጡ:", { reply_markup: keyboard }); 
+    await ctx.reply("የተማሪዎችን ሁኔታ ይምረጡ:", { reply_markup: keyboard });
   });
 
   // Step 3: Prompt for message after status selection and show filtered chat_ids
- bot.callbackQuery(
-  /admin_status_(.+)_(completed|notstarted|inprogress_10|inprogress_40|inprogress_70|inprogress_o)/,
-  async (ctx) => {
-    await ctx.answerCallbackQuery();
-    const [, packageId, status] = ctx.match;
-    const adminId = ctx.chat?.id;
-    if (!adminId) return;
+  bot.callbackQuery(
+    /admin_status_(.+)_(completed|notstarted|inprogress_0|inprogress_10|inprogress_40|inprogress_70|inprogress_o)/,
+    async (ctx) => {
+      await ctx.answerCallbackQuery();
+      const [, packageId, status] = ctx.match;
+      const adminId = ctx.chat?.id;
+      if (!adminId) return;
 
-    // Pass status directly to your filter function
-    const chatIds = await filterStudentsByPackageandStatus(packageId, status);
+      // Pass status directly to your filter function
+      const chatIds = await filterStudentsByPackageandStatus(packageId, status);
 
-    if (!chatIds.length) {
-      await ctx.reply(
-        "ለተመረጠው ፓኬጅ እና ሁኔታ ምንም ተማሪ አልተገኘም።"
-      );
-      return;
+      if (!chatIds.length) {
+        await ctx.reply("ለተመረጠው ፓኬጅ እና ሁኔታ ምንም ተማሪ አልተገኘም።");
+        return;
+      }
+
+      // Save pending state
+      pendingAdminMessages[adminId] = {
+        packageId,
+        status,
+        chatIds: chatIds.map(Number),
+      };
+
+      // Show prompt and cancel button
+      const keyboard = new InlineKeyboard().text("❌ ሰርዝ", "admin_cancel_send");
+      await ctx.reply("✍️ ለመላክ የሚፈልጉትን መልእክት (ጽሑፍ፣ ፎቶ፣ ወይም ድምጽ) ይጻፉ፡፡", {
+        reply_markup: keyboard,
+      });
     }
-
-    // Save pending state
-    pendingAdminMessages[adminId] = {
-      packageId,
-      status,
-      chatIds: chatIds.map(Number),
-    };
-
-    // Show prompt and cancel button
-    const keyboard =  new InlineKeyboard().text(
-      "❌ ሰርዝ",
-      "admin_cancel_send"
-    );
-    await ctx.reply(
-      "✍️ ለመላክ የሚፈልጉትን መልእክት (ጽሑፍ፣ ፎቶ፣ ወይም ድምጽ) ይጻፉ፡፡",
-      { reply_markup: keyboard }
-    );
-  }
-);
+  );
 
   // Cancel handler
   bot.callbackQuery("admin_cancel_send", async (ctx) => {
@@ -522,7 +525,9 @@ export async function startBot() {
       .text("📊 ዳሽቦርድ", "admin_dashboard_page_1")
       .row()
       .text("✉️ መልእክት ላክ", "admin_send");
-    await ctx.editMessageText("👋 እንኳን ወደ አድሚን ፓነል በደህና መጡ!", { reply_markup: keyboard });
+    await ctx.editMessageText("👋 እንኳን ወደ አድሚን ፓነል በደህና መጡ!", {
+      reply_markup: keyboard,
+    });
   });
 
   // bot.start();
