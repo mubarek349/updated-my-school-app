@@ -18,7 +18,7 @@ function Page() {
     searchTerm,
     currentPage,
     itemsPerPage,
-    progressFilter || undefined // Pass undefined if no filter selected
+    progressFilter || undefined, // Pass undefined if no filter selected
   );
 
   const columns = [

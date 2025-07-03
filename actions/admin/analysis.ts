@@ -744,22 +744,14 @@ export async function getStudentAnalyticsperchapter(
 }
 
 export async function getStudentAnalyticsperPackage(
-  // chapterId: string | number,
   searchTerm?: string,
   currentPage?: number,
   itemsPerPage?: number,
-  progressFilter?: "notstarted" | "inprogress" | "completed" // <-- Add this
+  progressFilter?: "notstarted" | "inprogress" | "completed"
 ) {
   const page = currentPage && currentPage > 0 ? currentPage : 1;
-  const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 2;
+  const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
   const skip = (page - 1) * take;
-
-  // 1. Get the packageId for this chapter
-  // const chapter = await prisma.chapter.findUnique({
-  //   where: { id: String(chapterId) },
-  //   select: { course: { select: { packageId: true } } },
-  // // });
-  // const packageId = chapter?.course?.packageId;
 
   // 2. Get all subjectPackages for this package
   const subjectPackages = await prisma.subjectPackage.findMany({
@@ -785,7 +777,6 @@ export async function getStudentAnalyticsperPackage(
         OR: [
           { name: { contains: searchTerm } },
           { phoneno: { contains: searchTerm } },
-          // Only add wdt_ID filter if searchTerm is a valid number
           ...(Number.isNaN(Number(searchTerm))
             ? []
             : [{ wdt_ID: Number(searchTerm) }]),
@@ -793,16 +784,7 @@ export async function getStudentAnalyticsperPackage(
       }
     : {};
 
-  // 5. Count total students matching subjectPackages and search
-  const totalRecords = await prisma.wpos_wpdatatable_23.count({
-    where: {
-      status: { in: ["Active", "Not yet"] },
-      OR: subjectPackageFilters,
-      ...searchFilter,
-    },
-  });
-
-  // 6. Get paginated students
+  // 5. Get students (paginated)
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
       status: { in: ["Active", "Not yet"] },
@@ -824,7 +806,7 @@ export async function getStudentAnalyticsperPackage(
     },
   });
 
-  // 7. For each student, find their subjectPackage and get progress
+  // 6. For each student, find their subjectPackage and get progress
   let studentsWithProgress = await Promise.all(
     students.map(async (student) => {
       // Find the subjectPackage for this student
@@ -846,60 +828,60 @@ export async function getStudentAnalyticsperPackage(
         select: { name: true },
       });
 
-      // help me plase  i went to return the phone number by reverse and only the last 9 digits and add a country code based on the country
-      // let phoneNo = student.phoneno;
-      // if (phoneNo) {
-      //   // Reverse the phone number and take the last 9 digits
-      //   phoneNo = phoneNo.split("").reverse().slice(0, 9).reverse().join("");
-      //   // Add country code based on the country
-      //   let countryCode = "+251"; // Default Ethiopia
-      //   switch ((student.country || "").toLowerCase()) {
-      //     case "ethiopia":
-      //       countryCode = "+251";
-      //       break;
-      //     case "saudiarabia":
-      //     case "saudi arabia":
-      //       countryCode = "+966";
-      //       break;
-      //     case "canada":
-      //       countryCode = "+1";
-      //       break;
-      //     case "dubai":
-      //     case "uae":
-      //       countryCode = "+971";
-      //       break;
-      //     case "kuweit":
-      //     case "kuwait":
-      //       countryCode = "+965";
-      //       break;
-      //     case "usa":
-      //     case "united states":
-      //     case "united states of america":
-      //       countryCode = "+1";
-      //       break;
-      //     case "south africa":
-      //       countryCode = "+27";
-      //       break;
-      //     case "sweden":
-      //       countryCode = "+46";
-      //       break;
-      //     case "qatar":
-      //       countryCode = "+974";
-      //       break;
-      //     case "djibouti":
-      //       countryCode = "+253";
-      //       break;
-      //     // Add more countries as needed
-      //     default:
-      //       countryCode = "+251";
-      //   }
-      //   phoneNo = `${countryCode}${phoneNo}`;
-      // }
+      // Format phone number: reverse, last 9 digits, add country code
+      let phoneNo = student.phoneno;
+      if (phoneNo) {
+        // Reverse and take last 9 digits
+        phoneNo = phoneNo.split("").reverse().slice(0, 9).reverse().join("");
+        // Add country code based on country
+        let countryCode = "+251"; // Default Ethiopia
+        switch ((student.country || "").toLowerCase()) {
+          case "ethiopia":
+            countryCode = "+251";
+            break;
+          case "saudiarabia":
+          case "saudi arabia":
+            countryCode = "+966";
+            break;
+          case "canada":
+            countryCode = "+1";
+            break;
+          case "dubai":
+          case "uae":
+            countryCode = "+971";
+            break;
+          case "kuweit":
+          case "kuwait":
+            countryCode = "+965";
+            break;
+          case "usa":
+          case "united states":
+          case "united states of america":
+            countryCode = "+1";
+            break;
+          case "south africa":
+            countryCode = "+27";
+            break;
+          case "sweden":
+            countryCode = "+46";
+            break;
+          case "qatar":
+            countryCode = "+974";
+            break;
+          case "djibouti":
+            countryCode = "+253";
+            break;
+          // Add more countries as needed
+          default:
+            countryCode = "+251";
+        }
+        phoneNo = `${countryCode}${phoneNo}`;
+      }
 
       return {
         id: student.wdt_ID,
         name: student.name,
-        phoneNo: student.phoneno,
+        phoneNo,
         isKid: student.isKid,
         chatid: student.chat_id,
         activePackage: activePackage?.name ?? "",
@@ -908,6 +890,7 @@ export async function getStudentAnalyticsperPackage(
     })
   );
 
+  // 7. Filter by progressFilter if provided
   if (progressFilter) {
     studentsWithProgress = studentsWithProgress.filter((student) => {
       if (progressFilter === "inprogress") {
@@ -920,7 +903,7 @@ export async function getStudentAnalyticsperPackage(
       }
     });
   }
-  // const totalPages = Math.ceil(totalRecords / take);
+
   const totalPages = Math.ceil(studentsWithProgress.length / take);
 
   return {

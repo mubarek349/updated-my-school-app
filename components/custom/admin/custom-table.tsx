@@ -33,7 +33,7 @@ interface CustomTableProps {
   isLoading?: boolean;
 }
 
-const PAGE_SIZES = [1, 5, 25, 50];
+const PAGE_SIZES = [10, 25, 100, 250, 500];
 
 export default function CustomTable({
   rows,
