@@ -617,7 +617,7 @@ export async function getStudentAnalyticsperchapter(
   searchTerm?: string,
   currentPage?: number,
   itemsPerPage?: number,
-  progressFilter?: "notstarted" | "inprogress" | "completed" // <-- Add this
+  progressFilter?: "notstarted" | "inprogress" | "completed" | "all"
 ) {
   const page = currentPage && currentPage > 0 ? currentPage : 1;
   const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
@@ -654,7 +654,6 @@ export async function getStudentAnalyticsperchapter(
         OR: [
           { name: { contains: searchTerm } },
           { phoneno: { contains: searchTerm } },
-          // Only add wdt_ID filter if searchTerm is a valid number
           ...(Number.isNaN(Number(searchTerm))
             ? []
             : [{ wdt_ID: Number(searchTerm) }]),
@@ -662,24 +661,13 @@ export async function getStudentAnalyticsperchapter(
       }
     : {};
 
-  // 5. Count total students matching subjectPackages and search
-  const totalRecords = await prisma.wpos_wpdatatable_23.count({
-    where: {
-      status: { in: ["Active", "Not yet"] },
-      OR: subjectPackageFilters,
-      ...searchFilter,
-    },
-  });
-
-  // 6. Get paginated students
+  // 5. Get ALL students (no skip/take here!)
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
       status: { in: ["Active", "Not yet"] },
       OR: subjectPackageFilters,
       ...searchFilter,
     },
-    skip,
-    take,
     orderBy: { wdt_ID: "asc" },
     select: {
       wdt_ID: true,
@@ -691,7 +679,7 @@ export async function getStudentAnalyticsperchapter(
     },
   });
 
-  // 7. For each student, get their progress for this chapter
+  // 6. For each student, get their progress for this chapter
   let studentsWithProgress = await Promise.all(
     students.map(async (student) => {
       const progress = await prisma.studentProgress.findFirst({
@@ -702,18 +690,24 @@ export async function getStudentAnalyticsperchapter(
         select: { isCompleted: true },
       });
 
-      let studentProgress: "notstarted" | "inprogress" | "completed" =
-        "notstarted";
+      let studentProgress: "notstarted" | "inprogress" | "completed" = "notstarted";
       if (progress) {
         studentProgress = progress.isCompleted ? "completed" : "inprogress";
-      } else {
-        studentProgress = "notstarted";
+      }
+
+      // Format phone number: reverse, last 9 digits, add country code (optional, like package)
+      let phoneNo = student.phoneno;
+      if (phoneNo) {
+        phoneNo = phoneNo.split("").reverse().slice(0, 9).reverse().join("");
+        let countryCode = "+251"; // Default Ethiopia
+        // You can add country code logic here if needed
+        phoneNo = `${countryCode}${phoneNo}`;
       }
 
       return {
         id: student.wdt_ID,
         name: student.name,
-        phoneNo: student.phoneno,
+        phoneNo,
         isKid: student.isKid,
         chatid: student.chat_id,
         activePackage: student.activePackage?.name ?? "",
@@ -721,22 +715,32 @@ export async function getStudentAnalyticsperchapter(
       };
     })
   );
-  if (progressFilter) {
-    studentsWithProgress = studentsWithProgress.filter(
-      (student) => student.studentProgress === progressFilter
-    );
+
+  // 7. Filter by progressFilter if provided and not "all"
+  if (progressFilter && progressFilter !== "all") {
+    studentsWithProgress = studentsWithProgress.filter((student) => {
+      if (progressFilter === "inprogress") {
+        return (
+          student.studentProgress === "inprogress"
+        );
+      } else {
+        return student.studentProgress === progressFilter;
+      }
+    });
   }
+
+  // 8. Paginate after filtering
+  const totalRecords = studentsWithProgress.length;
   const totalPages = Math.ceil(totalRecords / take);
-  // const totalPages = Math.ceil(studentsWithProgress.length / take);
+  const paginatedStudents = studentsWithProgress.slice(skip, skip + take);
 
   return {
-    data: studentsWithProgress,
+    data: paginatedStudents,
     pagination: {
       currentPage: page,
       totalPages,
       itemsPerPage: take,
       totalRecords,
-      // totalRecords:studentsWithProgress.length ,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     },

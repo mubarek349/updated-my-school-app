@@ -59,7 +59,10 @@ function Page() {
         <label className="mr-2 font-medium">Filter by Progress:</label>
         <select
           value={progressFilter}
-          onChange={e => setProgressFilter(e.target.value as "notstarted" | "inprogress" | "completed" | "")}
+          onChange={e => {
+            setProgressFilter(e.target.value as "notstarted" | "inprogress" | "completed" | "");
+            setCurrentPage(1); // Reset page to 1 when filter changes
+          }}
           className="border border-gray-300 rounded px-2 py-1"
         >
           <option value="">All</option>
