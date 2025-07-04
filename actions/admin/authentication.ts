@@ -1,4 +1,5 @@
 "use server";
+
 import { auth, CustomError } from "@/lib/auth";
 import { signIn, signOut } from "../../lib/auth";
 import { z } from "zod";
@@ -20,10 +21,10 @@ export async function authenticate(
     console.log("sign in successfully");
     return { message: "Login successful" };
   } catch (error) {
-    console.log("sign in failed", JSON.parse(JSON.stringify(error)));
+    console.log("sign in failed", error);
     if (error instanceof CustomError) {
       return { message: error.message };
-    } else return { message: "Invalid phone number or password" };
+    } else return { message: "Invalid phone number or password2222" };
   }
 }
 
