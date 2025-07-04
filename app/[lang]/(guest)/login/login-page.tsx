@@ -8,9 +8,8 @@ import useAction from "@/hooks/useAction";
 import { authenticate } from "@/actions/admin/authentication";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-// import { useToast } from "@/components/ui/use-toast";
-import Link from "next/link";
 import Loading from "@/components/custom/common/loading"; // Optional: if you're using a custom one
+import Image from "next/image";
 
 function LoginPage() {
   const {
@@ -23,13 +22,18 @@ function LoginPage() {
 
   //   const { toast } = useToast();
 
-  const [, action, loading] = useAction(authenticate, [, (response) => {}]);
+  const [, action, loading] = useAction(authenticate, [
+    ,
+    (response) => {
+      console.log("Response from action:", response);
+    },
+  ]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
         <div className="flex justify-center mb-6">
-          <img
+          <Image
             src="/logo.jpg"
             alt="Logo"
             className="h-16 w-auto object-contain"
