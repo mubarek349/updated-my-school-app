@@ -18,11 +18,11 @@ export async function authenticate(
       return { message: error.message };
     }
     console.log("sign in failed", error);
-    return { message: "Invalid email or password" };
+    return { message: "Invalid phone number or password" };
   }
   if (result && result.error) {
     console.log("sign in failed", result.error);
-    return { message: "Invalid email or password" };
+    return { message: "Invalid phone number or password" };
   }
   console.log("sign in successfully");
   // Fetch user role and isBlocked from DB
