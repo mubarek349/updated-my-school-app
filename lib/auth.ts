@@ -33,7 +33,10 @@ const authConfig = {
     signOut: "/signout",
   },
   callbacks: {
-    authorized: async () => {
+    authorized: async ({ auth, request: { nextUrl } }) => {
+      if (nextUrl.pathname.startsWith("/en/login") && !!auth) {
+        return Response.redirect(new URL("/en/admin/dashboard", nextUrl));
+      }
       return true;
     },
     jwt: async ({ token, user }) => {
