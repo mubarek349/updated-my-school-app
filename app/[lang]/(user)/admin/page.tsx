@@ -1,11 +1,11 @@
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 // import { isTeacher } from "@/lib/teacher";
 import { BookOpen } from "lucide-react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
-export  default async function Home() {
-  console.log('AUTH',auth);
+export default async function Home() {
+  console.log("AUTH", auth);
   redirect("/en/admin/coursesPackages");
   return (
     <div className="min-h-screen bg-gray-50">
