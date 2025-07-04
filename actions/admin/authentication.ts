@@ -26,7 +26,7 @@ export async function authenticate(
   }
   console.log("sign in successfully");
   // Fetch user role and isBlocked from DB
-  const user = await prisma.admin.findUnique({
+  const user = await prisma.admin.findFirst({
     where: { phoneno: data.phoneno },
     select: { id: true, name: true },
   });
