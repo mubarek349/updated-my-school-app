@@ -1,10 +1,11 @@
 "use server";
-import { auth } from "@/lib/auth";
+import { auth, CustomError } from "@/lib/auth";
 import { signIn, signOut } from "../../lib/auth";
 import { z } from "zod";
 import { loginSchema } from "@/lib/zodSchema";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
+
 export async function authenticate(
   data?: z.infer<typeof loginSchema> | undefined
 ): Promise<{ message: string } | undefined> {
@@ -13,6 +14,9 @@ export async function authenticate(
   try {
     result = await signIn("credentials", { ...data, redirect: false });
   } catch (error) {
+    if (error instanceof CustomError) {
+      return { message: error.message };
+    }
     console.log("sign in failed", error);
     return { message: "Invalid email or password" };
   }

@@ -23,7 +23,7 @@ function LoginPage() {
   //   const { toast } = useToast();
 
   const [, action, loading] = useAction(authenticate, [
-    ,
+    undefined,
     (response) => {
       console.log("Response from action:", response);
     },

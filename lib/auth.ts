@@ -20,17 +20,17 @@ declare module "next-auth/jwt" {
 }
 
 export class CustomError extends CredentialsSignin {
-  constructor(code: string) {
+  constructor(message: string) {
     super();
-    this.code = code;
+    this.message = message;
   }
 }
 
 const authConfig = {
   trustHost: true,
   pages: {
-    signIn: "/signin",
-    signOut: "/signout",
+    signIn: "/en/login",
+    // signOut: "/signout",
   },
   callbacks: {
     authorized: async ({ auth, request: { nextUrl } }) => {
