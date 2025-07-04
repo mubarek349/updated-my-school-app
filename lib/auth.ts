@@ -49,15 +49,17 @@ const authConfig = {
   providers: [
     Credentials({
       async authorize(credentials) {
-        const { phoneno, passcode } = await loginSchema.parseAsync(credentials);
+        const { data, success } = await loginSchema.safeParseAsync(credentials);
+        if (!success) throw new CustomError("Invalid credentials");
+
         const user = await prisma.admin.findFirst({
-          where: { phoneno },
+          where: { phoneno: data.phoneno },
           select: { id: true, passcode: true },
         });
         if (!user) throw new CustomError("Invalid Phone Number");
         if (!user.passcode) throw new CustomError("Password Not Set");
         // Plain text password comparison (not secure for production)
-        if (passcode !== user.passcode)
+        if (data.passcode !== user.passcode)
           throw new CustomError("Invalid Password");
         return { id: user.id };
       },

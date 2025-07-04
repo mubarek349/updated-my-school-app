@@ -7,18 +7,20 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
 
 export async function authenticate(
-  data?: z.infer<typeof loginSchema> | undefined
-): Promise<{ message: string } | undefined> {
-  if (!data) return { message: "No data provided" };
-
+  data: z.infer<typeof loginSchema>
+): Promise<{ message: string }> {
   try {
-    await signIn("credentials", { ...data, redirect: false });
+    await signIn("credentials", {
+      phoneno: data.phoneno,
+      passcode: data.passcode,
+      redirect: false,
+    });
     // redirect("/en/admin/coursesPackages");
 
     console.log("sign in successfully");
     return { message: "Login successful" };
   } catch (error) {
-    console.log("sign in failed", error);
+    console.log("sign in failed", JSON.parse(JSON.stringify(error)));
     if (error instanceof CustomError) {
       return { message: error.message };
     } else return { message: "Invalid phone number or password" };
