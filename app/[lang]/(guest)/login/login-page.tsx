@@ -36,6 +36,8 @@ function LoginPage() {
           <Image
             src="/logo.jpg"
             alt="Logo"
+            width={64}
+            height={64}
             className="h-16 w-auto object-contain"
           />
         </div>
