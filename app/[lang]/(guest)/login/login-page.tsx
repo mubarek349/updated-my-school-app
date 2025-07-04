@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/custom/common/loading"; // Optional: if you're using a custom one
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 function LoginPage() {
   const {
@@ -20,12 +21,15 @@ function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  //   const { toast } = useToast();
+  const router = useRouter();
 
   const [, action, loading] = useAction(authenticate, [
     undefined,
     (response) => {
       console.log("Response from action:", response);
+      if (response?.message == "Login successful") {
+        router.push("/en/admin/coursesPackages");
+      }
     },
   ]);
 

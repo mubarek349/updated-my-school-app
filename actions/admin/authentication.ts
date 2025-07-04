@@ -10,36 +10,19 @@ export async function authenticate(
   data?: z.infer<typeof loginSchema> | undefined
 ): Promise<{ message: string } | undefined> {
   if (!data) return { message: "No data provided" };
-  let result;
+
   try {
-    result = await signIn("credentials", { ...data, redirect: false });
+    await signIn("credentials", { ...data, redirect: false });
+    // redirect("/en/admin/coursesPackages");
+
+    console.log("sign in successfully");
+    return { message: "Login successful" };
   } catch (error) {
+    console.log("sign in failed", error);
     if (error instanceof CustomError) {
       return { message: error.message };
-    }
-    console.log("sign in failed", error);
-    return { message: "Invalid phone number or password" };
+    } else return { message: "Invalid phone number or password" };
   }
-  if (result && result.error) {
-    console.log("sign in failed", result.error);
-    return { message: "Invalid phone number or password" };
-  }
-  console.log("sign in successfully");
-  // Fetch user role and isBlocked from DB
-  const user = await prisma.admin.findFirst({
-    where: { phoneno: data.phoneno },
-    select: { id: true, name: true },
-  });
-
-  // Deny login if user is blocked
-  if (user?.name === "BLOCKED") {
-    return { message: "Your account is blocked. Please contact support." };
-  }
-
-  // Redirect to /admin on SSO login
-  redirect("/en/admin/coursesPackages");
-
-  return { message: "Login successful" };
 }
 
 export async function logout() {
