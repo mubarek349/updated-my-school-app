@@ -192,6 +192,41 @@ export async function startBot() {
   console.log("Telegram bot started successfully.");
   // sendMessagesToAllStudents();
 
+  bot.command("login", async (ctx) => {
+    // Show an inline button that triggers a callback query
+    const keyboard = new InlineKeyboard().text("🔑 Login", "admin_login_check");
+    await ctx.reply("Please click the button below to login:", {
+      reply_markup: keyboard,
+    });
+  });
+
+  // Handle the callbackQuery for the login button
+  bot.callbackQuery("admin_login_check", async (ctx) => {
+    const chatId = ctx.chat?.id;
+    // Check if user is admin
+    const admin = await prisma.admin.findFirst({
+      where: { chat_id: chatId?.toString() },
+    });
+
+    if (admin) {
+      // If admin, show web app button
+      const keyboard = new InlineKeyboard().webApp(
+        "🔑 Open Admin WebApp",
+        "https://darelkubra.com:5000/en/login" // Replace with your actual web app URL
+      );
+      await ctx.editMessageText(
+        "Welcome, admin! Click below to open the admin web app:",
+        {
+          reply_markup: keyboard,
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "🚫 You are not authorized to access the admin web app."
+      );
+    }
+  });
+
   // Store admin's pending message context
   const pendingAdminMessages: Record<
     number,
