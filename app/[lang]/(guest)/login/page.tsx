@@ -5,13 +5,14 @@ import { useForm } from "react-hook-form";
 import { loginSchema } from "@/lib/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import useAction from "@/hooks/useAction";
-import { authenticate } from "@/actions/admin/authentication";
+// import useAction from "@/hooks/useAction";
+// import { authenticate } from "@/actions/admin/authentication";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Loading from "@/components/custom/common/loading"; // Optional: if you're using a custom one
+// import Loading from "@/components/custom/common/loading"; // Optional: if you're using a custom one
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 function LoginPage() {
   const {
@@ -24,15 +25,14 @@ function LoginPage() {
 
   const router = useRouter();
 
-  const [, action, loading] = useAction(authenticate, [
-    undefined,
-    (response) => {
-      console.log("Response from action:", response);
-      if (response?.message == "Login successful") {
-        router.push("/en/admin/coursesPackages");
-      }
-    },
-  ]);
+  // const [, , loading] = useAction(authenticate, [
+  //   undefined,
+  //   (response) => {
+  //     console.log("Response from action:", response);
+  //     if (response?.message == "Login successful") {
+  //     }
+  //   },
+  // ]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -49,7 +49,18 @@ function LoginPage() {
         <h1 className="text-2xl font-bold text-center text-green-600 mb-6">
           Welcome to Darelkubra Admin
         </h1>
-        <form onSubmit={handleSubmit(action)} className="space-y-5">
+        <form
+          onSubmit={handleSubmit(async (data) => {
+            try {
+              await signIn("credentials", { ...data, redirect: false });
+              console.log("Sign in successful");
+              router.push("/en/admin/coursesPackages");
+            } catch (error) {
+              console.error("Error during form submission:", error);
+            }
+          })}
+          className="space-y-5"
+        >
           <div>
             <label
               htmlFor="phoneno"
@@ -88,8 +99,10 @@ function LoginPage() {
               </p>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? <Loading /> : "Login"}
+          <Button type="submit" className="w-full">
+            {/* // disabled={loading} >*/}
+            {/* {loading ? <Loading /> : "Login"} */}
+            Login
           </Button>
         </form>
       </div>
