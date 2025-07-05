@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  phoneno: z.string().regex(/^\+?[0-9]{10,15}$/, "Invalid phone number"),
+  phoneno: z.string().regex(/^(09|07)[0-9]{8,13}$/, "Phone number must start with 09 or 07"),
   passcode: z.string().min(8),
 });
 
