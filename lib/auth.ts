@@ -1,10 +1,10 @@
-import NextAuth, { CredentialsSignin, NextAuthConfig } from "next-auth";
+import NextAuth, { NextAuthConfig } from "next-auth";
 import { DefaultJWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import prisma from "./db";
 import { loginSchema } from "./zodSchema";
-// import { Role } from "@prisma/client";
 
+// EXTEND NEXT-AUTH USER
 declare module "next-auth" {
   interface User {
     id?: string;
@@ -19,10 +19,11 @@ declare module "next-auth/jwt" {
   }
 }
 
-export class CustomError extends CredentialsSignin {
+// ✅ FIXED CUSTOM ERROR CLASS
+export class CustomError extends Error {
   constructor(message: string) {
-    super();
-    this.message = message;
+    super(message);
+    this.name = "CustomError";
   }
 }
 
@@ -66,15 +67,17 @@ const authConfig = {
             console.log("Error fetching user:", error);
             return null;
           });
+
         if (!user) throw new CustomError("Invalid Phone Number");
         if (!user.passcode) throw new CustomError("Password Not Set");
-        // Plain text password comparison (not secure for production)
         if (data.passcode !== user.passcode)
           throw new CustomError("Invalid Password");
+
         return { id: user.id };
       },
     }),
   ],
 } satisfies NextAuthConfig;
 
+// EXPORT AUTH UTILS
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
