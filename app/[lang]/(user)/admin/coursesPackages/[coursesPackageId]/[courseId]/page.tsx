@@ -36,7 +36,7 @@ const CourseIdPage = async ({
 
   const requiredFields = [
     course.title,
-    course.description,
+    // course.description,
     // course.imageUrl,
     course.chapters,
   ];
