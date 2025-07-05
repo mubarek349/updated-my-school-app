@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/custom/admin/sidebar";
 import { Navbar } from "@/components/custom/admin/navbar";
 
@@ -8,12 +6,6 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  if (!session || !session.user || !session.user.id) {
-    // If the user is not authenticated, redirect to the login page
-    redirect("/en/login");
-  }
-
   return (
     <div className="h-dvh overflow-hidden grid ">
       <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">

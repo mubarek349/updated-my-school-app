@@ -34,10 +34,15 @@ const authConfig = {
   },
   callbacks: {
     authorized: async ({ auth, request: { nextUrl } }) => {
-      if (nextUrl.pathname.startsWith("/en/login") && !!auth) {
-        return Response.redirect(new URL("/en/admin/coursesPackages", nextUrl));
-      }
-      return true;
+      if (auth) {
+        if (nextUrl.pathname.startsWith("/en/login")) {
+          return Response.redirect(
+            new URL("/en/admin/coursesPackages", nextUrl)
+          );
+        } else return true;
+      } else if (nextUrl.pathname.startsWith("/en/admin")) {
+        return false;
+      } else return true;
     },
     jwt: async ({ token, user }) => {
       return { ...token, ...user };
