@@ -7,10 +7,9 @@ import { loginSchema } from "@/lib/zodSchema";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
 
-export async function authenticate(
-  data: z.infer<typeof loginSchema>
-): Promise<{ message: string }> {
+export async function authenticate(data: z.infer<typeof loginSchema>) {
   try {
+    console.log("credentials >> ", data);
     await signIn("credentials", {
       phoneno: data.phoneno,
       passcode: data.passcode,
@@ -24,7 +23,10 @@ export async function authenticate(
     console.log("sign in failed", error);
     if (error instanceof CustomError) {
       return { message: error.message };
-    } else return { message: "Invalid phone number or password2222" };
+    } else
+      return {
+        message: error,
+      };
   }
 }
 

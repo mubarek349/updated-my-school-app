@@ -55,25 +55,29 @@ const authConfig = {
   providers: [
     Credentials({
       async authorize(credentials) {
-        const { data, success } = await loginSchema.safeParseAsync(credentials);
-        if (!success) throw new CustomError("Invalid credentials");
+        try {
+          console.log("Authorizing user:", credentials);
+          const { data, success } = await loginSchema.safeParseAsync(
+            credentials
+          );
+          if (!success) throw new CustomError("Invalid credentials");
+          console.log("Parsed login data:", data);
 
-        const user = await prisma.admin
-          .findFirst({
+          const user = await prisma.admin.findFirst({
             where: { phoneno: data.phoneno },
             select: { id: true, passcode: true },
-          })
-          .catch((error) => {
-            console.log("Error fetching user:", error);
-            return null;
           });
 
-        if (!user) throw new CustomError("Invalid Phone Number");
-        if (!user.passcode) throw new CustomError("Password Not Set");
-        if (data.passcode !== user.passcode)
-          throw new CustomError("Invalid Password");
+          if (!user) throw new CustomError("Invalid Phone Number");
+          if (!user.passcode) throw new CustomError("Password Not Set");
+          if (data.passcode !== user.passcode)
+            throw new CustomError("Invalid Password");
 
-        return { id: user.id };
+          return { id: user.id };
+        } catch (error) {
+          console.error("Error authorizing user:", error);
+          throw new CustomError("Authorization failed");
+        }
       },
     }),
   ],
