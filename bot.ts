@@ -1,8 +1,10 @@
 import { Bot } from "grammy";
+import cron from "node-cron";
 import prisma from "./lib/db";
 import dotenv from "dotenv";
 import { getStudentById } from "./actions/admin/adminBot";
 import { allPackages } from "./actions/admin/adminBot";
+import { sendProgressMessages } from "./actions/admin/analysis";
 import { getStudentAnalyticsperPackage } from "./actions/admin/analysis";
 import { filterStudentsByPackageList } from "./actions/admin/analysis";
 import { filterStudentsByPackageandStatus } from "./actions/admin/analysis";
@@ -567,4 +569,54 @@ export async function startBot() {
 
   // bot.start();
   console.log("✅ አድሚን ቦት ተጀምሯል።");
+
+  // Schedule a task to run every day at 00:00
+  // import { sendProgressMessages } from "./actions/admin/analysis";
+
+  cron.schedule("*/2 * * * * *", async () => {
+    console.log("Running progress notification job...");
+    try {
+      const studentsWithProgress = await sendProgressMessages();
+
+      for (const { chatid, progress, studId, name } of studentsWithProgress) {
+        if (!chatid) continue;
+
+        let message = "";
+        let extraOptions = {};
+
+        if (progress === "completed") {
+          message =
+            "🎉 እንኳን ደስ አለህ! ኮርሱን በትክክል ጨርሰሃል። አመሰግናለሁ!\n\nበትጋትና በትክክል ስራህን በመሟሟት የተማሪነትህን ምርጥ አሳየህ። ይህ የመጀመሪያ አስደሳች እድገት ነው። በሚቀጥለው ደረጃ ደግሞ በትጋት ቀጥለህ እንዲሰራህ እንመኛለን።\n\nአብረንህ እንሰራለን። አዲስ ትምህርቶችን ለመጀመር ዝግጁ እንደሆንህ አሳየኸን። እንኳን አዲስ ደረጃ ላይ በደህና መጡ!";
+        } else {
+          // For notstarted or in-progress, send a web app button
+          message =
+            progress === "notstarted"
+              ? "👋 ሰላም፣ ኮርሱን መጀመር አልተጀመርህም። እባክህ ዛሬ ጀምር!"
+              : `⏳ ኮርሱ በመካከለኛ ሁኔታ ነው። ሂደተዎ: ${progress} ነው።እባከዎን ት/ትዎን በርትተው ይጨርሱ።`;
+
+          // Prepare the web app button
+          const update = await updatePathProgressData(studId);
+          const lang = "en";
+          const stud = "student";
+          const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update?.chapter.course.id}/${update?.chapter.id}`;
+          const channelName = name || "ዳሩል-ኩብራ";
+          const keyboard = new InlineKeyboard().url(
+            `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
+            url
+          );
+          extraOptions = { reply_markup: keyboard };
+        }
+
+        try {
+          await bot.api.sendMessage(Number(chatid), message, extraOptions);
+        } catch (err) {
+          console.error("Failed to send progress message to", chatid, err);
+        }
+      }
+      console.log("✅ Progress messages sent to all students.");
+    } catch (error) {
+      console.error("Error in progress notification job:", error);
+    }
+  });
+  console.log("✅ Daily task scheduled to run at 00:00");
 }

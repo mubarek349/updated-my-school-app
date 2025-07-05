@@ -196,9 +196,9 @@ function getProgressPercent(
   progress: { isCompleted: boolean }[],
   total: number
 ): number {
-  if ( progress.length === 0) return 0;
+  if (progress.length === 0) return 0;
   const completed = progress.filter((p) => p.isCompleted).length;
-  return ((completed / total) * 100);
+  return +((completed / total) * 100).toFixed(2); // Return as integer percentage
 }
 export async function filterStudentsByPackageList(packageId: string) {
   console.log("Filtering students for package:", packageId);
@@ -693,7 +693,8 @@ export async function getStudentAnalyticsperchapter(
         select: { isCompleted: true },
       });
 
-      let studentProgress: "notstarted" | "inprogress" | "completed" = "notstarted";
+      let studentProgress: "notstarted" | "inprogress" | "completed" =
+        "notstarted";
       if (progress) {
         studentProgress = progress.isCompleted ? "completed" : "inprogress";
       }
@@ -723,9 +724,7 @@ export async function getStudentAnalyticsperchapter(
   if (progressFilter && progressFilter !== "all") {
     studentsWithProgress = studentsWithProgress.filter((student) => {
       if (progressFilter === "inprogress") {
-        return (
-          student.studentProgress === "inprogress"
-        );
+        return student.studentProgress === "inprogress";
       } else {
         return student.studentProgress === progressFilter;
       }
@@ -884,6 +883,8 @@ export async function getStudentAnalyticsperPackage(
         id: student.wdt_ID,
         name: student.name,
         phoneNo,
+        tglink: `https://t.me/${student.chat_id}`,
+        whatsapplink: `https://wa.me/${phoneNo}`,
         isKid: student.isKid,
         chatid: student.chat_id,
         activePackage: activePackage?.name ?? "",
@@ -925,3 +926,72 @@ export async function getStudentAnalyticsperPackage(
 }
 
 export async function gettheCoutrycode() {}
+
+export async function sendProgressMessages() {
+  // 1. Get all subjectPackages for this package
+  const subjectPackages = await prisma.subjectPackage.findMany({
+    select: {
+      subject: true,
+      kidpackage: true,
+      packageType: true,
+      packageId: true,
+    },
+    distinct: ["subject", "kidpackage", "packageType"],
+  });
+
+  // 2. Build OR filter for students matching any subjectPackage
+  const subjectPackageFilters = subjectPackages.map((sp) => ({
+    subject: sp.subject,
+    package: sp.packageType,
+    isKid: sp.kidpackage,
+  }));
+
+  // 3. Get ALL students (no skip/take here!)
+  const students = await prisma.wpos_wpdatatable_23.findMany({
+    where: {
+      status: { in: ["Active", "Not yet"] },
+      OR: subjectPackageFilters,
+    },
+    orderBy: { wdt_ID: "asc" },
+    select: {
+      wdt_ID: true,
+      name: true,
+      phoneno: true,
+      country: true,
+      isKid: true,
+      subject: true,
+      package: true,
+      chat_id: true,
+    },
+  });
+
+  // 4. For each student, find their subjectPackage and get progress
+  const studentsWithProgress = await Promise.all(
+    students.map(async (student) => {
+      // Find the subjectPackage for this student
+      const matchedSubjectPackage = subjectPackages.find(
+        (sp) =>
+          sp.subject === student.subject &&
+          sp.packageType === student.package &&
+          sp.kidpackage === student.isKid
+      );
+      const activePackageId = matchedSubjectPackage?.packageId ?? "";
+
+      const progress = await getStudentProgressStatus(
+        student.wdt_ID,
+        activePackageId
+      );
+
+      return {
+        chatid: student.chat_id,
+        studId: student.wdt_ID,
+        name: student.name,
+        progress,
+      };
+    })
+  );
+
+  // Return array of { chatid, progress }
+  console.log("Students with progress:", studentsWithProgress);
+  return studentsWithProgress;
+}
