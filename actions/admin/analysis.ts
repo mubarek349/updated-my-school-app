@@ -150,7 +150,7 @@ export async function filterStudentsByPackageandStatus(
       // In-progress
       if (student.chat_id) {
         const percent = getProgressPercent(progress, chapterIds.length);
-        if (status === "inprogress_0" && percent == 0) {
+        if (status === "inprogress_0" && progress.length == 1) {
           filteredChatIds.push(student.chat_id);
         } else if (status === "inprogress_10" && percent <= 10) {
           filteredChatIds.push(student.chat_id);
