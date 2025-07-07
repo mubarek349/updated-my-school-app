@@ -827,24 +827,19 @@ export async function getStudentAnalyticsperPackage(
         phoneNo = phoneNo.split("").reverse().slice(0, 9).reverse().join("");
         let countryCode = "+251"; // Default Ethiopia
         switch ((student.country || "").toLowerCase()) {
-          case "ethiopia":
           case "Ethiopia":
             countryCode = "+251";
             break;
           case "Anguilla":
             countryCode = "+1";
             break;
-          case "saudiarabia":
           case "Saudi Arabia":
           case "saudi arabia":
             countryCode = "+966";
             break;
-          case "canada":
           case "Canada":
             countryCode = "+1";
             break;
-          case "dubai":
-          case "uae":
           case "United Arab Emirates":
             countryCode = "+971";
             break;
