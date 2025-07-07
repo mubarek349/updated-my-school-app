@@ -872,7 +872,7 @@ export async function getStudentAnalyticsperPackage(
         id: student.wdt_ID,
         name: student.name,
         phoneNo,
-        tglink: `https://t.me/${student.chat_id}`,
+        tglink: `https://t.me/${phoneNo}`,
         whatsapplink: `https://wa.me/${phoneNo}`,
         isKid: student.isKid,
         chatid: student.chat_id,
