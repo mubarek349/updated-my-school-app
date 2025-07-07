@@ -573,7 +573,7 @@ export async function startBot() {
   // Schedule a task to run every day at 00:00
   // import { sendProgressMessages } from "./actions/admin/analysis";
 
-  cron.schedule("30 7 * * *", async () => {
+  cron.schedule("*/5 * * * *", async () => {
     console.log("Running progress notification job...");
     try {
       const studentsWithProgress = await sendProgressMessages();
