@@ -267,7 +267,6 @@ export async function getActivePackageProgress(wdt_ID: number) {
 
 export async function updatePathProgressData(wdt_ID: number) {
   try {
-    // Fetch the last chapter progress for the student
     const lastChapter = await prisma.studentProgress.findFirst({
       where: {
         student: { wdt_ID: wdt_ID },
@@ -292,46 +291,12 @@ export async function updatePathProgressData(wdt_ID: number) {
       },
     });
 
-    // check nodata is found in studntprogress
     if (!lastChapter) {
-      return null;
-      // const firstCourse = await prisma.course.findFirst({
-      //   where: {
-      //     order: 1,
-      //   },
-      //   select: {
-      //     id: true,
-      //     chapters: {
-      //       where: {
-      //         position: 1,
-      //       },
-      //       select: {
-      //         id: true,
-      //       },
-      //     },
-      //   },
-      // });
-
-      // if (firstCourse && firstCourse.chapters.length > 0) {
-      //   return {
-      //     chapter: {
-      //       id: firstCourse.chapters[0].id,
-      //       course: {
-      //         id: firstCourse.id,
-      //       },
-      //     },
-      //   };
-      // } else {
-      //   return null;
-      // }
-    }
-
-    if (lastChapter && lastChapter.chapter) {
+      console.log("message");
+      return cousefailedsolve(wdt_ID);
+    } else {
       console.log("Last chapter progress:", lastChapter);
       return lastChapter;
-    } else {
-      return null;
-      throw new Error("No last chapter found for the student.");
     }
   } catch (error) {
     console.error("Error fetching last chapter progress:", error);
@@ -568,4 +533,104 @@ export async function packageCompleted(wdt_ID: number) {
 
   console.log("package is finished", response);
   return response;
+}
+
+export async function cousefailedsolve(wdt_ID: number) {
+  const studentwithActivePacage = await prisma.wpos_wpdatatable_23.findFirst({
+    where: {
+      wdt_ID: wdt_ID,
+      status: { in: ["Active", "Not yet"] },
+    },
+    select: {
+      wdt_ID: true,
+      activePackage: {
+        select: {
+          id: true,
+          name: true,
+          courses: {
+            orderBy: { order: "asc" },
+            select: {
+              id: true,
+              chapters: {
+                orderBy: { position: "asc" },
+                select: { id: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  const allChapterIds =
+    studentwithActivePacage?.activePackage?.courses
+      ?.map((c) => c.chapters.map((ch) => ch.id))
+      ?.reduce((acc, cc) => [...acc, ...cc], []) ?? [];
+
+  //Fetch the last chapter progress for the student
+  const progress = await prisma.studentProgress.findMany({
+    where: {
+      studentId: wdt_ID,
+      chapterId: { in: allChapterIds },
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    select: {
+      isCompleted: true,
+      chapter: {
+        select: {
+          id: true,
+          course: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (progress.filter((p) => p.isCompleted).length === allChapterIds.length) {
+    return null;
+  } else {
+    const CompletedlastChapterId = progress.findLast((p) => p.isCompleted)
+      ?.chapter.id;
+
+    let nextChapterId: string | undefined = undefined;
+    if (!CompletedlastChapterId) {
+      nextChapterId = allChapterIds[0];
+    } else {
+      const idx = allChapterIds.findIndex((c) => c === CompletedlastChapterId);
+      nextChapterId = allChapterIds[idx + 1];
+    }
+
+    await prisma.studentProgress.create({
+      data: {
+        studentId: wdt_ID,
+        chapterId: nextChapterId,
+        isCompleted: false,
+      },
+    });
+
+    const lastChapter = await prisma.studentProgress.findFirst({
+      where: {
+        student: { wdt_ID: wdt_ID },
+        chapterId: { in: allChapterIds },
+        isCompleted: false,
+      },
+      select: {
+        chapter: {
+          select: {
+            id: true,
+            course: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return lastChapter;
+  }
 }
