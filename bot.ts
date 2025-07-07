@@ -12,7 +12,7 @@ import { updatePathProgressData } from "./actions/student/progress";
 import { InlineKeyboard } from "grammy";
 dotenv.config();
 const BASE_URL = process.env.FORWARD_URL || process.env.AUTH_URL;
-
+const sentMessageIds: Record<string, number[]> = {};
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN || "");
 export { bot };
 
@@ -573,13 +573,25 @@ export async function startBot() {
   // Schedule a task to run every day at 00:00
   // import { sendProgressMessages } from "./actions/admin/analysis";
 
-  cron.schedule("0 */12 * * *", async () => {
+  cron.schedule("30 13 * * *", async () => {
     console.log("Running progress notification job...");
     try {
       const studentsWithProgress = await sendProgressMessages();
 
       for (const { chatid, progress, studId, name } of studentsWithProgress) {
         if (!chatid) continue;
+
+        // Delete all previous messages for this user
+        if (sentMessageIds[chatid]) {
+          for (const msgId of sentMessageIds[chatid]) {
+            try {
+              // await bot.api.deleteMessage(Number(chatid), msgId);
+            } catch (err) {
+              // Ignore errors (message might already be deleted)
+            }
+          }
+          sentMessageIds[chatid] = [];
+        }
 
         let message = "";
         let extraOptions = {};
@@ -588,13 +600,11 @@ export async function startBot() {
           message =
             "🎉 እንኳን ደስ አለህ! ኮርሱን በትክክል ጨርሰሃል። አመሰግናለሁ!\n\nበትጋትና በትክክል ስራህን በመሟሟት የተማሪነትህን ምርጥ አሳየህ። ይህ የመጀመሪያ አስደሳች እድገት ነው። በሚቀጥለው ደረጃ ደግሞ በትጋት ቀጥለህ እንዲሰራህ እንመኛለን።\n\nአብረንህ እንሰራለን። አዲስ ትምህርቶችን ለመጀመር ዝግጁ እንደሆንህ አሳየኸን። እንኳን አዲስ ደረጃ ላይ በደህና መጡ!";
         } else {
-          // For notstarted or in-progress, send a web app button
           message =
             progress === "notstarted"
               ? "👋 ሰላም፣ ኮርሱን መጀመር አልተጀመርህም። እባክህ ዛሬ ጀምር!"
               : `⏳ ኮርሱ በመካከለኛ ሁኔታ ነው። ሂደተዎ: ${progress} ነው።እባከዎን ት/ትዎን በርትተው ይጨርሱ።`;
 
-          // Prepare the web app button
           const update = await updatePathProgressData(studId);
           const lang = "en";
           const stud = "student";
@@ -608,15 +618,37 @@ export async function startBot() {
         }
 
         try {
-          await bot.api.sendMessage(Number(chatid), message, extraOptions);
+          const sentMsg = await bot.api.sendMessage(
+            Number(chatid),
+            message,
+            extraOptions
+          );
+          // Track the new message ID
+          await Promise.all(
+            Array(sentMsg.message_id)
+              .fill({})
+              .map((v, i) => i)
+              .reverse()
+              .map(async (v) => {
+                try {
+                  const res = await bot.api.deleteMessage(chatid, v);
+                  console.log("Deleted message >> ", res, v, chatid);
+                } catch (error) {
+                  console.log("Failed to delete message >> ", error);
+                }
+                return;
+              })
+          );
+          // if (!sentMessageIds[chatid]) sentMessageIds[chatid] = [];
+          // sentMessageIds[chatid].push(sentMsg.message_id);
         } catch (err) {
-          console.error("Failed to send progress message to", chatid, err);
+          // console.error("Failed to send progress message to", chatid, err);
         }
       }
-      console.log("✅ Progress messages sent to all students.");
+      // console.log("✅ Progress messages sent to all students.");
     } catch (error) {
-      console.error("Error in progress notification job:", error);
+      // console.error("Error in progress notification job:", error);
     }
   });
-  console.log("✅ Daily task scheduled to run at 00:00");
+  // console.log("✅ Daily task scheduled to run at 00:00");
 }
