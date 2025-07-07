@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Table,
   TableHeader,
@@ -145,14 +146,13 @@ export default function CustomTable({
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <Button
-                            size="sm"
-                            className="bg-blue-500 hover:bg-blue-700 text-white"
-                          >
-                            {col.key === "tglink"
-                              ? "Open Telegram"
-                              : "Open WhatsApp"}
-                          </Button>
+                          <Image
+                            src={col.key === "tglink" ? "/tg.png" : "/wa.png"}
+                            alt={col.key === "tglink" ? "Telegram" : "WhatsApp"}
+                            width={32}
+                            height={32}
+                            style={{ objectFit: "contain", borderRadius: 6 }}
+                          />
                         </a>
                       ) : (
                         row[col.key]
