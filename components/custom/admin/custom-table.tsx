@@ -33,7 +33,7 @@ interface CustomTableProps {
   isLoading?: boolean;
 }
 
-const PAGE_SIZES = [1,10, 25, 100, 250, 500];
+const PAGE_SIZES = [1, 10, 25, 100, 250, 500];
 
 export default function CustomTable({
   rows,
@@ -116,7 +116,10 @@ export default function CustomTable({
           <TableBody>
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-6 text-gray-500">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-6 text-gray-500"
+                >
                   No data to display.
                 </TableCell>
               </TableRow>
@@ -125,9 +128,7 @@ export default function CustomTable({
                 <TableRow
                   key={row.id || row.key}
                   className={cn(
-                    idx % 2 === 0
-                      ? "bg-white"
-                      : "bg-gray-50",
+                    idx % 2 === 0 ? "bg-white" : "bg-gray-50",
                     "hover:bg-blue-50 transition"
                   )}
                 >
@@ -136,7 +137,26 @@ export default function CustomTable({
                       key={col.key}
                       className="font-medium text-gray-700 sm:px-6 px-2 sm:py-4 py-2 text-xs sm:text-sm break-words"
                     >
-                      {row[col.key]}
+                      {["tglink", "whatsapplink"].includes(col.key) &&
+                      typeof row[col.key] === "string" &&
+                      row[col.key] ? (
+                        <a
+                          href={row[col.key]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button
+                            size="sm"
+                            className="bg-blue-500 hover:bg-blue-700 text-white"
+                          >
+                            {col.key === "tglink"
+                              ? "Open Telegram"
+                              : "Open WhatsApp"}
+                          </Button>
+                        </a>
+                      ) : (
+                        row[col.key]
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -165,7 +185,8 @@ export default function CustomTable({
           <span className="font-bold text-blue-600">
             {Math.min(page * pageSize, totalRows)}
           </span>{" "}
-          of <span className="font-bold text-gray-700">{totalRows}</span> results
+          of <span className="font-bold text-gray-700">{totalRows}</span>{" "}
+          results
         </div>
 
         {totalPages > 1 && (
