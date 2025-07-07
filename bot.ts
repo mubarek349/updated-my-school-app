@@ -30,6 +30,28 @@ export async function startBot() {
     if (!chatId) {
       return ctx.reply("Unable to retrieve chat ID.");
     }
+    // Check if user is admin
+    const admin = await prisma.admin.findFirst({
+      where: { chat_id: chatId.toString() },
+    });
+
+    if (admin) {
+      // Admin help message (Amharic & English)
+      return ctx.reply(
+      `👋 <b>እንኳን ወደ አድሚን ፓነል በደህና መጡ!</b>\n\n` +
+        `ይህ ቦት የተማሪዎችን ሁኔታ ማየት፣ መልእክት ላክ እና የትምህርት ጥራት ማጣራት ይረዳዎታል።\n\n` +
+        `• <b>/login</b> – ወደ አድሚን ድህረገፅ ይግቡ።\n` +
+        `• <b>/admin</b> – ተማሪዎችን ያስተዳድሩ እና መልእክት ይላኩ።\n` +
+        `• <b>/start</b> – የትምህርት መጀመሪያ ገጽ ይመልከቱ።\n\n` +
+        `Welcome to the Admin Portal!\n\n` +
+        `This bot helps you manage students, send messages, and monitor course quality.\n\n` +
+        `• <b>/login</b> – Access the admin website.\n` +
+        `• <b>/admin</b> – Manage students and send messages in the bot.\n` +
+        `• <b>/start</b> – Start learning the course as a student.\n\n` +
+        `እንኳን ደህና መጡ!`,
+      { parse_mode: "HTML" }
+      );
+    }
 
     // 1. Fetch channels
     let channels = await prisma.wpos_wpdatatable_23.findMany({
