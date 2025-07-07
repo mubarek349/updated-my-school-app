@@ -828,39 +828,85 @@ export async function getStudentAnalyticsperPackage(
         let countryCode = "+251"; // Default Ethiopia
         switch ((student.country || "").toLowerCase()) {
           case "ethiopia":
+          case "Ethiopia":
             countryCode = "+251";
             break;
+          case "Anguilla":
+            countryCode = "+1";
+            break;
           case "saudiarabia":
+          case "Saudi Arabia":
           case "saudi arabia":
             countryCode = "+966";
             break;
           case "canada":
+          case "Canada":
             countryCode = "+1";
             break;
           case "dubai":
           case "uae":
+          case "United Arab Emirates":
             countryCode = "+971";
             break;
-          case "kuweit":
+          case "Kuwait":
           case "kuwait":
             countryCode = "+965";
             break;
           case "usa":
-          case "united states":
+          case "United States":
           case "united states of america":
             countryCode = "+1";
             break;
-          case "south africa":
+          case "China":
+            countryCode = "+86";
+            break;
+          case "South Africa":
             countryCode = "+27";
             break;
-          case "sweden":
+          case "Cuba":
+            countryCode = "+53";
+            break;
+          case "Equatorial Guinea":
+            countryCode = "+240";
+            break;
+          case "Sweden":
             countryCode = "+46";
             break;
-          case "qatar":
+          case "Qatar":
             countryCode = "+974";
             break;
-          case "djibouti":
+          case "Angola":
+            countryCode = "+244";
+            break;
+          case "Pakistan":
+            countryCode = "+92";
+            break;
+          case "Norway":
+            countryCode = "+47";
+            break;
+          case "Netherlands":
+            countryCode = "+31";
+            break;
+          case "Bahrain":
+            countryCode = "+973";
+            break;
+          case "Turkey":
+            countryCode = "+90";
+            break;
+          case "Egypt":
+            countryCode = "+20";
+            break;
+          case "Germany":
+            countryCode = "+49";
+            break;
+          case "Italy":
+            countryCode = "+39";
+            break;
+          case "Djibouti":
             countryCode = "+253";
+            break;
+          case "Mongolia":
+            countryCode = "+976";
             break;
           default:
             countryCode = "+251";
