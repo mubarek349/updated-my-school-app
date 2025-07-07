@@ -38,18 +38,18 @@ export async function startBot() {
     if (admin) {
       // Admin help message (Amharic & English)
       return ctx.reply(
-      `👋 <b>እንኳን ወደ አድሚን ፓነል በደህና መጡ!</b>\n\n` +
-        `ይህ ቦት የተማሪዎችን ሁኔታ ማየት፣ መልእክት ላክ እና የትምህርት ጥራት ማጣራት ይረዳዎታል።\n\n` +
-        `• <b>/login</b> – ወደ አድሚን ድህረገፅ ይግቡ።\n` +
-        `• <b>/admin</b> – ተማሪዎችን ያስተዳድሩ እና መልእክት ይላኩ።\n` +
-        `• <b>/start</b> – የትምህርት መጀመሪያ ገጽ ይመልከቱ።\n\n` +
-        `Welcome to the Admin Portal!\n\n` +
-        `This bot helps you manage students, send messages, and monitor course quality.\n\n` +
-        `• <b>/login</b> – Access the admin website.\n` +
-        `• <b>/admin</b> – Manage students and send messages in the bot.\n` +
-        `• <b>/start</b> – Start learning the course as a student.\n\n` +
-        `እንኳን ደህና መጡ!`,
-      { parse_mode: "HTML" }
+        `👋 <b>እንኳን ወደ አድሚን ፓነል በደህና መጡ!</b>\n\n` +
+          `ይህ ቦት የተማሪዎችን ሁኔታ ማየት፣ መልእክት ላክ እና የትምህርት ጥራት ማጣራት ይረዳዎታል።\n\n` +
+          `• <b>/login</b> – ወደ አድሚን ድህረገፅ ይግቡ።\n` +
+          `• <b>/admin</b> – ተማሪዎችን ያስተዳድሩ እና መልእክት ይላኩ።\n` +
+          `• <b>/start</b> – የትምህርት መጀመሪያ ገጽ ይመልከቱ።\n\n` +
+          `Welcome to the Admin Portal!\n\n` +
+          `This bot helps you manage students, send messages, and monitor course quality.\n\n` +
+          `• <b>/login</b> – Access the admin website.\n` +
+          `• <b>/admin</b> – Manage students and send messages in the bot.\n` +
+          `• <b>/start</b> – Start learning the course as a student.\n\n` +
+          `እንኳን ደህና መጡ!`,
+        { parse_mode: "HTML" }
       );
     }
 
@@ -595,7 +595,7 @@ export async function startBot() {
   // Schedule a task to run every day at 00:00
   // import { sendProgressMessages } from "./actions/admin/analysis";
 
-  cron.schedule("30 13 * * *", async () => {
+  cron.schedule("52 13 * * *", async () => {
     console.log("Running progress notification job...");
     try {
       const studentsWithProgress = await sendProgressMessages();
