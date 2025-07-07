@@ -133,45 +133,32 @@ export async function filterStudentsByPackageandStatus(
       select: { isCompleted: true, chapterId: true },
     });
 
+    if (!student.chat_id) continue;
+
     // if thhe pass data is packageid and not start  then return the chat_id of student not start,if t=pass complete then return the chatid of student completed and if onprogress then return the chatid of student in progress
-    if (chapterIds.length === 0 || progress.length === 0) {
-      // Not started
-      if (status === "notstarted" && student.chat_id) {
-        // notStartedChatIds.push(student.chat_id);
+    if (progress.length === 0) {
+      if (status === "notstarted") {
         filteredChatIds.push(student.chat_id);
       }
-    } else if (progress.every((p) => p.isCompleted)) {
-      // Completed
-      if (status === "completed" && student.chat_id) {
-        // completedChatIds.push(student.chat_id);
+    } else if (
+      progress.filter((p) => p.isCompleted).length === chapterIds.length
+    ) {
+      if (status === "completed") {
         filteredChatIds.push(student.chat_id);
-      }
-    } else if (progress.some((p) => !p.isCompleted)) {
-      // In-progress
-      if (student.chat_id) {
-        const percent = getProgressPercent(progress, chapterIds.length);
-        if (status === "inprogress_0" && percent == 0) {
-          filteredChatIds.push(student.chat_id);
-        } else if (status === "inprogress_10" && percent <= 10) {
-          filteredChatIds.push(student.chat_id);
-        } else if (
-          status === "inprogress_40" &&
-          percent > 10 &&
-          percent <= 40
-        ) {
-          filteredChatIds.push(student.chat_id);
-        } else if (
-          status === "inprogress_70" &&
-          percent > 40 &&
-          percent <= 70
-        ) {
-          filteredChatIds.push(student.chat_id);
-        } else if (status === "inprogress_o" && percent > 70) {
-          filteredChatIds.push(student.chat_id);
-        }
       }
     } else {
-      filteredChatIds.push("fuad");
+      const percent = getProgressPercent(progress, chapterIds.length);
+      if (status === "inprogress_0" && percent == 0) {
+        filteredChatIds.push(student.chat_id);
+      } else if (status === "inprogress_10" && percent <= 10) {
+        filteredChatIds.push(student.chat_id);
+      } else if (status === "inprogress_40" && percent > 10 && percent <= 40) {
+        filteredChatIds.push(student.chat_id);
+      } else if (status === "inprogress_70" && percent > 40 && percent <= 70) {
+        filteredChatIds.push(student.chat_id);
+      } else if (status === "inprogress_o" && percent > 70) {
+        filteredChatIds.push(student.chat_id);
+      }
     }
   }
 
@@ -200,7 +187,7 @@ function getProgressPercent(
 ): number {
   if (progress.length === 0) return 0;
   const completed = progress.filter((p) => p.isCompleted).length;
-  return Number(((completed / total) * 100).toFixed(2));
+  return Number((completed / total) * 100);
 }
 export async function filterStudentsByPackageList(packageId: string) {
   console.log("Filtering students for package:", packageId);
