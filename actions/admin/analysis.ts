@@ -185,7 +185,7 @@ function getProgressPercent(
   progress: { isCompleted: boolean }[],
   total: number
 ): number {
-  if (progress.length === 0) return 0;
+  if (progress.length === 1) return 0;
   const completed = progress.filter((p) => p.isCompleted).length;
   return Number((completed / total) * 100);
 }
