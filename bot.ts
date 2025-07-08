@@ -597,7 +597,7 @@ export async function startBot() {
   // Schedule a task to run every day at 00:00
   // import { sendProgressMessages } from "./actions/admin/analysis";
 
-  cron.schedule("* * * * *", async () => {
+  cron.schedule("38 11 * * *", async () => {
     console.log("Running progress notification job...");
     console.log("Current time:", new Date().toLocaleString());
     console.log("current time zone  >>>", new Date().getTimezoneOffset());
