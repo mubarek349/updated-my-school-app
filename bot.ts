@@ -26,6 +26,8 @@ export default async function sendMessage(chat_id: number, message: string) {
 export async function startBot() {
   bot.command("start", async (ctx) => {
     const chatId = ctx.chat?.id;
+    console.log("Current time:", new Date().toLocaleString());
+    console.log("current time zone  >>>", new Date().getTimezoneOffset());
 
     if (!chatId) {
       return ctx.reply("Unable to retrieve chat ID.");
@@ -595,8 +597,10 @@ export async function startBot() {
   // Schedule a task to run every day at 00:00
   // import { sendProgressMessages } from "./actions/admin/analysis";
 
-  cron.schedule("30 7 * * *", async () => {
+  cron.schedule("* * * * *", async () => {
     console.log("Running progress notification job...");
+    console.log("Current time:", new Date().toLocaleString());
+    console.log("current time zone  >>>", new Date().getTimezoneOffset());
     try {
       const studentsWithProgress = await sendProgressMessages();
 
