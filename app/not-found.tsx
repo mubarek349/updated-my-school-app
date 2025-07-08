@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import React from "react";
 
 function NotFound() {
@@ -17,12 +18,12 @@ function NotFound() {
         <p className="text-gray-500 mb-6 text-center">
           Sorry, the page you are looking for does not exist or has been moved.
         </p>
-        <a
+        <Link
           href="/"
           className="inline-block px-6 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition"
         >
           Go Home
-        </a>
+        </Link>
       </div>
     </div>
   );
