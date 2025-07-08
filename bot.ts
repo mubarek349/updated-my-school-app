@@ -44,6 +44,7 @@ export async function startBot() {
         activePackage: {
           where: { isPublished: true },
           select: {
+            id: true,
             courses: {
               where: { order: 1 },
               select: {
@@ -68,25 +69,19 @@ export async function startBot() {
       const subject = channel.subject;
       const packageType = channel.package;
       const kidPackage = channel.isKid;
-      if (subject) {
-        const subjectPackage = await prisma.subjectPackage.findFirst({
-          where: {
-            subject: subject,
-            packageType: packageType,
-            kidpackage: kidPackage,
-          },
-          select: { packageId: true },
-        });
-        await prisma.wpos_wpdatatable_23.update({
-          where: { wdt_ID: channel.wdt_ID },
-          data: { youtubeSubject: subjectPackage?.packageId || null },
-        });
-      } else {
-        await prisma.wpos_wpdatatable_23.update({
-          where: { wdt_ID: channel.wdt_ID },
-          data: { youtubeSubject: null },
-        });
-      }
+      const subjectPackage = await prisma.subjectPackage.findFirst({
+        where: {
+          subject: subject,
+          packageType: packageType,
+          kidpackage: kidPackage,
+        },
+        select: { packageId: true },
+      });
+
+      await prisma.wpos_wpdatatable_23.update({
+        where: { wdt_ID: channel.wdt_ID },
+        data: { youtubeSubject: subjectPackage?.packageId || null },
+      });
     }
 
     // 3. Fetch channels again to get updated youtubeSubject
@@ -104,6 +99,7 @@ export async function startBot() {
         activePackage: {
           where: { isPublished: true },
           select: {
+            id: true,
             courses: {
               where: { order: 1 },
               select: {
@@ -128,25 +124,22 @@ export async function startBot() {
 
     if (channels && channels.length > 0) {
       let sent;
-
       for (const channel of channels) {
         const studId = channel.wdt_ID;
-        if (
-          channel.activePackage &&
-          channel.activePackage.courses.length > 0 &&
-          channel.activePackage.courses[0].chapters.length > 0
-        ) {
-          const course = channel.activePackage.courses[0];
-          const chapter = course.chapters[0];
-
-          const studentProgress = await prisma.studentProgress.findFirst({
+        if (channel.activePackage) {
+          const studentProgress = await prisma.studentProgress.count({
             where: {
               studentId: channel.wdt_ID,
-              chapterId: chapter.id,
+              chapter: {
+                course: {
+                  packageId: channel.activePackage.id,
+                },
+              },
             },
           });
+          const chapter = channel.activePackage.courses?.[0]?.chapters?.[0];
 
-          if (!studentProgress) {
+          if (studentProgress <= 0 && chapter) {
             await prisma.studentProgress.create({
               data: {
                 studentId: channel.wdt_ID,
@@ -157,10 +150,11 @@ export async function startBot() {
           }
 
           const update = await updatePathProgressData(studId);
+          console.log("currect url", update);
           const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update?.chapter.course.id}/${update?.chapter.id}`;
 
           const channelName = channel.name || "ዳሩል-ኩብራ";
-          const keyboard = new InlineKeyboard().webApp(
+          const keyboard = new InlineKeyboard().url(
             `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
             url
           );
@@ -423,7 +417,7 @@ export async function startBot() {
 
   // Step 3: Prompt for message after status selection and show filtered chat_ids
   bot.callbackQuery(
-    /admin_status_(.+)_(completed|notstarted|inprogress_0|inprogress_10|inprogress_40|inprogress_70|inprogress_o)/,
+    /admin_status_(.+)_(completed|notstarted|inprogress_0 |inprogress_10|inprogress_40|inprogress_70|inprogress_o)/,
     async (ctx) => {
       await ctx.answerCallbackQuery();
       const [, packageId, status] = ctx.match;

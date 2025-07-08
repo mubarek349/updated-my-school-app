@@ -12,7 +12,6 @@ export async function PATCH(
   try {
     const { coursesPackageId } = await params;
     // const userId = "clg1v2j4f0000l5v8xq3z7h4d"; // Replace with actual userId from context
-    
 
     const coursePackageOwner = await prisma.coursePackage.findUnique({
       where: {

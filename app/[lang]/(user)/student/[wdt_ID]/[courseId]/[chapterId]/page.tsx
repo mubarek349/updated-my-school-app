@@ -30,15 +30,12 @@ import { Button } from "@/components/ui/button";
 function Page() {
   const params = useParams();
   const wdt_ID = Number(params.wdt_ID);
-  const chapterId = String(params.chapterId);
   const courseId = String(params.courseId);
 
   const [data, refetch, isLoading] = useAction(
     getQuestionForActivePackageChapterUpdate,
     [true, (response) => console.log(response)],
-    wdt_ID,
-    courseId,
-    chapterId
+    wdt_ID
   );
   const [progressData] = useAction(
     noProgress,
