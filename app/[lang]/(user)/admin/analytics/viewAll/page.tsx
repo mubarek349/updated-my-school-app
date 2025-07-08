@@ -28,6 +28,7 @@ function Page() {
     { key: "name", label: "Name" },
     { key: "isKid", label: "Is Kid" },
     { key: "phoneNo", label: "Phone Number" },
+    { key: "ustazname", label: "Ustaz Name" },
     { key: "tglink", label: "Tg" },
     { key: "whatsapplink", label: "Wa" },
     { key: "activePackage", label: "activePackage" },
@@ -46,6 +47,7 @@ function Page() {
           whatsapplink: row.whatsapplink ?? "",
           activePackage: row.activePackage ?? "",
           studentProgress: row.studentProgress ?? "",
+          ustazname: row.ustazname ?? "",
         }))
       : [];
 

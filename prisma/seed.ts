@@ -8,12 +8,128 @@ const prisma = new PrismaClient();
       name: "System Admin",
       phoneno: "0942303571",
       passcode: "admin123",
-      chat_id:"631321369"
+      chat_id: "631321369",
     },
   });
 
-  
-  
+  // seed the ustaz
+  await prisma.ustaz.createMany({
+    data: [
+      {
+        wdt_ID: 2001,
+        ustazname: "Sheikh Ahmed Ali",
+        subject: "Tajweed",
+        phone: "0911002001",
+        password: "ustaz1",
+        gender: "male",
+        ustazid: "ustaz_001",
+        username: "ahmedali",
+        schedule: "Mon-Wed-Fri",
+        telegramgroup: "@tajweed_group",
+        picture: "",
+        control: "active",
+      },
+      {
+        wdt_ID: 2002,
+        ustazname: "Ustaz Fatima Noor",
+        subject: "Hifz",
+        phone: "0911002002",
+        password: "ustaz2",
+        gender: "female",
+        ustazid: "ustaz_002",
+        username: "fatimanoor",
+        schedule: "Tue-Thu",
+        telegramgroup: "@hifz_group",
+        picture: "",
+        control: "active",
+      },
+      {
+        wdt_ID: 2003,
+        ustazname: "Sheikh Musa Idris",
+        subject: "Fiqh",
+        phone: "0911002003",
+        password: "ustaz3",
+        gender: "male",
+        ustazid: "ustaz_003",
+        username: "musaidris",
+        schedule: "Sat-Sun",
+        telegramgroup: "@fiqh_group",
+        picture: "",
+        control: "active",
+      },
+      {
+        wdt_ID: 2004,
+        ustazname: "Ustazah Amina Yusuf",
+        subject: "Aqeedah",
+        phone: "0911002004",
+        password: "ustaz4",
+        gender: "female",
+        ustazid: "ustaz_004",
+        username: "aminayusuf",
+        schedule: "Mon-Thu",
+        telegramgroup: "@aqeedah_group",
+        picture: "",
+        control: "active",
+      },
+      {
+        wdt_ID: 2005,
+        ustazname: "Sheikh Bilal Osman",
+        subject: "Arabic",
+        phone: "0911002005",
+        password: "ustaz5",
+        gender: "male",
+        ustazid: "ustaz_005",
+        username: "bilalosman",
+        schedule: "Wed-Fri",
+        telegramgroup: "@arabic_group",
+        picture: "",
+        control: "active",
+      },
+    ],
+  });
+
+  // seed controller
+  await prisma.controller.createMany({
+    data: [
+      {
+        bot: "main_bot",
+        chatid: "123456789",
+        name: "Controller One",
+        code: "ctrl_001",
+        topic: "General Management",
+        team_id: 1,
+        Phone: "0911003001",
+        username: "controller1",
+        password: "ctrlpass1",
+        is_leader: true,
+      },
+      {
+        bot: "main_bot",
+        chatid: "987654321",
+        name: "Controller Two",
+        code: "ctrl_002",
+        topic: "Student Affairs",
+        team_id: 2,
+        Phone: "0911003002",
+        username: "controller2",
+        password: "ctrlpass2",
+        is_leader: false,
+      },
+      {
+        bot: "main_bot",
+        chatid: "555666777",
+        name: "Controller Three",
+        code: "ctrl_003",
+        topic: "Academic",
+        team_id: 3,
+        Phone: "0911003003",
+        username: "controller3",
+        password: "ctrlpass3",
+        is_leader: false,
+      },
+    ],
+  });
+
   // Seed Students
   await prisma.wpos_wpdatatable_23.createMany({
     data: [
@@ -25,7 +141,9 @@ const prisma = new PrismaClient();
         status: "active",
         subject: "hifz",
         chat_id: "973677019",
-        country: "Ethiopia", // added country
+        country: "Ethiopia",
+        ustaz: "ustaz_002", // assign ustaz by wdt_ID
+        u_control: "ctrl_001", // relation to controller.code
       },
       {
         wdt_ID: 1002,
@@ -35,7 +153,9 @@ const prisma = new PrismaClient();
         phoneno: "0910203041",
         status: "active",
         chat_id: "611321369",
-        country: "Saudi Arabia", // added country
+        country: "Saudi Arabia",
+        ustaz: "ustaz_002", // assign ustaz by wdt_ID
+        u_control: "ctrl_002", // relation to controller.code
       },
       {
         wdt_ID: 1003,
@@ -45,7 +165,9 @@ const prisma = new PrismaClient();
         phoneno: "0910203042",
         status: "active",
         chat_id: "973677021",
-        country: "Dubai", // added country
+        country: "Dubai",
+        ustaz: "ustaz_004", // assign ustaz by wdt_ID
+        u_control: "ctrl_003", // relation to controller.code
       },
     ],
   });
@@ -92,23 +214,24 @@ const prisma = new PrismaClient();
       },
     },
   });
-await prisma.subjectPackage.createMany({
-    data:[ {
-      packageType: "kids",
-      subject: "nezer",
-      packageId: "pkg_001",
-    },
-    {
-      packageType: "kids",
-      subject: "nezer",
-      packageId: "pkg_001",
-    },
-    {
-      packageType: "kids",
-      subject: "nezer",
-      packageId: "pkg_003",
-    },
-  ]
+  await prisma.subjectPackage.createMany({
+    data: [
+      {
+        packageType: "kids",
+        subject: "nezer",
+        packageId: "pkg_001",
+      },
+      {
+        packageType: "kids",
+        subject: "nezer",
+        packageId: "pkg_001",
+      },
+      {
+        packageType: "kids",
+        subject: "nezer",
+        packageId: "pkg_003",
+      },
+    ],
   });
   // Seed Courses for Programming Package
   await prisma.course.createMany({

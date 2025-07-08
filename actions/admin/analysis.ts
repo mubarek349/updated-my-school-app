@@ -796,6 +796,9 @@ export async function getStudentAnalyticsperPackage(
       subject: true,
       package: true,
       chat_id: true,
+      ustazdata: {
+        select: { ustazname: true },
+      },
     },
   });
 
@@ -913,6 +916,7 @@ export async function getStudentAnalyticsperPackage(
         id: student.wdt_ID,
         name: student.name,
         phoneNo,
+        ustazname: student.ustazdata?.ustazname ?? "",
         tglink: `https://t.me/${phoneNo}`,
         whatsapplink: `https://wa.me/${phoneNo}`,
         isKid: student.isKid,

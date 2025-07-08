@@ -34,12 +34,11 @@ model coursePackage {
 
 model subjectPackage {
   id          String        @id @default(uuid())
-  kidpackage  Boolean?       @default(false)
-  packageType String?        
-  subject     String?        
+  kidpackage  Boolean?      @default(false)
+  packageType String?
+  subject     String?
   package     coursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId   String
-  
 
   // @@unique([subject, packageId])
 }
@@ -164,11 +163,11 @@ model studentProgress {
   @@index([studentId])
 }
 
- model admin {
+model admin {
   id        String   @id @default(cuid())
   name      String
   phoneno   String   @unique
-  chat_id  String    @unique
+  chat_id   String   @unique
   passcode  String
   createdAt DateTime @default(now())
 }
@@ -180,10 +179,12 @@ model wpos_wpdatatable_23 {
   phoneno        String?           @unique
   country        String?
   status         String?
-  isKid          Boolean?           @default(false)
+  isKid          Boolean?          @default(false)
   // History of all packages (many-to-many)
   packages       coursePackage[]   @relation("PackageHistory")
   // Active package (one-to-one or many-to-one)
+  ustaz          String?
+  ustazdata      ustaz?            @relation(fields: [ustaz], references: [ustazid])
   subject        String?
   package        String?
   youtubeSubject String?
@@ -191,4 +192,42 @@ model wpos_wpdatatable_23 {
   progress       studentProgress[]
   studentQuizzes studentQuiz[]
   chat_id        String?           @default("")
+  u_control      String?           @db.VarChar(255)
+  controller     controller?       @relation(fields: [u_control], references: [code])
+}
+
+model ustaz {
+  wdt_ID        Int                   @id @default(autoincrement())
+  picture       String?               @db.VarChar(2000)
+  control       String?               @db.VarChar(255)
+  subject       String?               @db.VarChar(255)
+  phone         String?               @db.VarChar(255)
+  schedule      String?               @db.VarChar(255)
+  password      String?               @db.VarChar(255)
+  telegramgroup String?               @db.VarChar(2000)
+  ustazname     String?               @db.VarChar(255)
+  gender        String?               @db.VarChar(255)
+  ustazid       String?               @unique @db.VarChar(255)
+  userid        Int?
+  username      String?               @db.VarChar(255)
+  stud_ustaz    wpos_wpdatatable_23[]
+
+  @@map("wpos_wpdatatable_24")
+}
+
+model controller {
+  wdt_ID              Int                   @id @default(autoincrement())
+  bot                 String?               @db.VarChar(255)
+  chatid              String?               @db.VarChar(255)
+  name                String?               @db.VarChar(255)
+  code                String?               @unique @db.VarChar(255)
+  topic               String?               @db.VarChar(255)
+  team_id             Int?                  @db.UnsignedInt
+  Phone               String?               @db.VarChar(50)
+  username            String                @db.VarChar(60)
+  password            String                @db.VarChar(255)
+  is_leader           Boolean?              @default(false)
+  wpos_wpdatatable_23 wpos_wpdatatable_23[]
+
+  @@map("wpos_wpdatatable_28")
 }
