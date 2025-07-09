@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       Number(session.user.id) // Ensure ID is a number
     );
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error:  "Failed to fetch analytics" },
       { status: 500 }
