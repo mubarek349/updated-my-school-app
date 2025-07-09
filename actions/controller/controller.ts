@@ -1,25 +1,28 @@
 "use server";
 import prisma from "@/lib/db";
-import { auth } from "@/lib/auth";
 import { getStudentProgressStatus } from "@/actions/admin/analysis";
 
-export async function getStudentAnalyticsperPackageForController(
+export async function getStudentAnalyticsperPackageForEachController(
   searchTerm?: string,
   currentPage?: number,
   itemsPerPage?: number,
-  progressFilter?: "notstarted" | "inprogress" | "completed" | "all"
+  progressFilter?: "notstarted" | "inprogress" | "completed" | "all",
+  controllerId?: string | number
 ) {
   // gate the code from the login user session id thn the login user is a controller
-  const session = await auth();
-  const wdt_ID = Number(session?.user?.id);
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  // const session = await auth();
+  // const wdt_ID = Number(session?.user?.id);
+  // if (!session) {
+  //   throw new Error("Unauthorized");
+  // }
+  // if (!wdt_ID) {
+  //   throw new Error("Invalid user ID");
+  // }
 
   // gate the code of login controller
   const code = await prisma.controller.findFirst({
     where: {
-      wdt_ID,
+      wdt_ID: Number(controllerId),
     },
     select: {
       code: true,

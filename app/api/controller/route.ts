@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStudentAnalyticsperPackageForController } from "@/actions/controller/controller";
+import { auth } from "@/lib/auth"; // NextAuth v5's auth() helper
+import { getStudentAnalyticsperPackageForEachController } from "@/actions/controller/controller";
 
-// GET /api/controller?search=...&page=...&perPage=...&progress=...
 export async function GET(req: NextRequest) {
-  // Get query params
+  // 1. Authenticate the user (NextAuth v5)
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Unauthorized: No session or missing user ID" },
+      { status: 401 }
+    );
+  }
+
+  // 2. Extract query params
   const searchTerm = req.nextUrl.searchParams.get("search") || undefined;
   const currentPage = req.nextUrl.searchParams.get("page")
     ? Number(req.nextUrl.searchParams.get("page"))
@@ -18,18 +28,20 @@ export async function GET(req: NextRequest) {
     | "all"
     | undefined;
 
+  // 3. Fetch data for the authenticated controller
   try {
-    const data = await getStudentAnalyticsperPackageForController(
+    const data = await getStudentAnalyticsperPackageForEachController(
       searchTerm,
       currentPage,
       itemsPerPage,
-      progressFilter
+      progressFilter,
+      Number(session.user.id) // Ensure ID is a number
     );
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || "Unknown error" },
-      { status: 401 }
+      { error: error.message || "Failed to fetch analytics" },
+      { status: 500 }
     );
   }
 }
