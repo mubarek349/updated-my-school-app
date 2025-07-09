@@ -38,10 +38,7 @@ export async function GET(
       controllerId // Pass the controller ID to your function
     );
     return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || "Unknown error" },
-      { status: 401 }
-    );
+  } catch (error) {
+    return NextResponse.json({ error: "Unknown error" }, { status: 401 });
   }
 }
