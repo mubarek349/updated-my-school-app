@@ -775,6 +775,7 @@ export async function getStudentAnalyticsperPackage(
           ...(Number.isNaN(Number(searchTerm))
             ? []
             : [{ wdt_ID: Number(searchTerm) }]),
+          { ustazdata: { ustazname: { contains: searchTerm } } },
         ],
       }
     : {};
