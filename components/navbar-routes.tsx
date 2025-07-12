@@ -22,7 +22,7 @@ export const NavbarRoutes = ({
   const isTeacherPage = pathname?.startsWith("/en/admin");
   const isCoursePage = pathname?.includes(`/${chat_id}`);
 
-const lang="en";
+  const lang = "en";
   const onClick = () => {
     router.push("/");
   };

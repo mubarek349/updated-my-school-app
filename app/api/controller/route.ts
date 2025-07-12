@@ -5,7 +5,7 @@ import { getStudentAnalyticsperPackageForEachController } from "@/actions/contro
 export async function GET(req: NextRequest) {
   // 1. Authenticate the user (NextAuth v5)
   const session = await auth();
-
+  console.log("Session:", session);
   if (!session?.user?.id) {
     return NextResponse.json(
       { error: "Unauthorized: No session or missing user ID" },
@@ -38,9 +38,10 @@ export async function GET(req: NextRequest) {
       Number(session.user.id) // Ensure ID is a number
     );
     return NextResponse.json(data);
-  } catch {
+  } catch (error) {
+    console.error("Error fetching analytics:", error);
     return NextResponse.json(
-      { error:  "Failed to fetch analytics" },
+      { error: "Failed to fetch analytics" },
       { status: 500 }
     );
   }

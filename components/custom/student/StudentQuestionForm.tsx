@@ -93,14 +93,12 @@ const StudentQuestionForm = ({
     [true, (response) => console.log(response)],
 
     wdt_ID
-
   );
   const [progressData, refreshProgress] = useAction(
     updatePathProgressData,
     [true, (response) => console.log(response)],
 
     wdt_ID
-
   );
   const [, refetchSubmit, submitLoading] = useAction(submitAnswers, [
     ,
@@ -163,7 +161,6 @@ const StudentQuestionForm = ({
     );
 
     try {
-
       await refetchSubmit(answers, wdt_ID, courseId, chapterId);
 
       toast.success("Answers submitted!", {
@@ -238,7 +235,7 @@ const StudentQuestionForm = ({
 
       {chapter?.questions.length ? (
         <TooltipProvider>
-          <div className="space-y-4 flex-1 max-md:overflow-y-auto md:max-h-[70vh]">
+          <div className="space-y-4 flex-1 max-md:overflow-y-auto md:max-h-dvh">
             <AnimatePresence>
               {chapter.questions.map((question, index) => (
                 <motion.div
@@ -386,9 +383,7 @@ const StudentQuestionForm = ({
                 {submitLoading ? (
                   <Loader2 className="animate-spin mr-2 w-4 h-4" />
                 ) : null}
-
                 መልሱን ይላኩ
-
               </Button>
               {showCorrect && feedback?.result?.score === 1 ? (
                 <Button
@@ -397,11 +392,9 @@ const StudentQuestionForm = ({
                   aria-label="Go to next chapter"
                 >
                   <Link
-
                     href={`/en/student/${wdt_ID}/${progressData?.chapter?.course?.id}/${progressData?.chapter?.id}`}
                   >
                     ወደ ቀጣይ ክፍል ይሂዱ
-
                   </Link>
                 </Button>
               ) : showCorrect && feedback?.result?.score !== 1 ? (

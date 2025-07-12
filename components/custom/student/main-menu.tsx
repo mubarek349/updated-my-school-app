@@ -1,9 +1,9 @@
-
 //this page is about sidebar menu for student dashboard, it shows the active package and courses with chapters, their progress, and allows navigation to chapters
 
 "use client";
 import React from "react";
 import MenuTitle from "./menu-title";
+import { UserCircle } from "lucide-react";
 import { LightDarkToggle } from "@/components/ui/light-dark-toggle";
 import { cn } from "@/lib/utils";
 import { CheckCircle, PlayCircle, Lock } from "lucide-react";
@@ -29,7 +29,7 @@ interface MainMenuProps {
     | {
         wdt_ID: number;
 
-        name: string| null;
+        name: string | null;
         status: string | null;
         subject: string | null;
 
@@ -81,7 +81,6 @@ export default function MainMenu({ data, className }: MainMenuProps) {
               chapter.id,
 
               wdt_ID
-
             );
             return [chapter.id, result?.isCompleted ?? null] as [
               string,
@@ -97,9 +96,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       }
     }
     fetchAllProgress();
-
   }, [data, wdt_ID]);
-
 
   // Calculate course completion percentage
   const getCourseProgress = (chapters: { id: string }[]) => {
@@ -121,7 +118,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
   return (
     <nav
       className={cn(
-        "h-full w-96 overflow-y-auto py-6 px-4 md:px-8 flex flex-col gap-6",
+        "overflow-y-hidden py-6 px-4 md:px-8 flex flex-col gap-6",
         "bg-gradient-to-b from-sky-50 to-sky-100 dark:from-sky-900 dark:to-sky-950",
         "shadow-xl transition-all duration-300",
         className
@@ -130,18 +127,16 @@ export default function MainMenu({ data, className }: MainMenuProps) {
     >
       <header className="border-b border-sky-200 dark:border-sky-800 pb-4">
         <MenuTitle
-
           title={data?.name || "Student Name"}
           subtitle={data?.subject || "Subject"}
           showBadge={!!data?.activePackage}
           badgeText={data?.status || ""}
-
           badgeVariant="premium"
           className="hover:scale-[1.02] transition-transform duration-200"
         />
       </header>
 
-      <div className="flex-1">
+      <div className="w-60- flex-1 overflow-auto">
         {isLoading ? (
           <motion.div
             className="flex justify-center items-center py-12"
@@ -171,129 +166,132 @@ export default function MainMenu({ data, className }: MainMenuProps) {
               {data.activePackage.name}
             </motion.h3>
             <TooltipProvider>
-              <Accordion type="single" collapsible className="space-y-3">
-                <AnimatePresence>
-                  {data.activePackage.courses.map((course) => (
-                    <motion.div
-                      key={course.id}
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="hidden"
+              <Accordion type="single" collapsible className="w-60  space-y-3">
+                {data.activePackage.courses.map((course) => (
+                  <AccordionItem
+                    key={course.id}
+                    value={`course-${course.id}`}
+                    className={cn(
+                      " border border-sky-200 dark:border-sky-800 rounded-lg",
+                      "bg-white/80 dark:bg-sky-900/80 backdrop-blur-sm",
+                      "shadow-sm hover:shadow-lg transition-all duration-300"
+                    )}
+                  >
+                    <AccordionTrigger
+                      className={cn(
+                        " px-4 py-3 text-base md:text-lg font-semibold ",
+                        "text-sky-800 dark:text-sky-200",
+                        "hover:bg-sky-100/50 dark:hover:bg-sky-800/50",
+                        "rounded-t-lg transition-colors duration-200"
+                      )}
                     >
-                      <AccordionItem
-                        value={`course-${course.id}`}
-                        className={cn(
-                          "border border-sky-200 dark:border-sky-800 rounded-lg",
-                          "bg-white/80 dark:bg-sky-900/80 backdrop-blur-sm",
-                          "shadow-sm hover:shadow-lg transition-all duration-300"
-                        )}
-                      >
-                        <AccordionTrigger
-                          className={cn(
-                            "px-4 py-3 text-base md:text-lg font-semibold",
-                            "text-sky-800 dark:text-sky-200",
-                            "hover:bg-sky-100/50 dark:hover:bg-sky-800/50",
-                            "rounded-t-lg transition-colors duration-200"
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-sky-600 dark:text-sky-400 font-bold">
-                              {course.order}.
-                            </span>
-                            <span className="truncate">{course.title}</span>
-                            <span className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400">
-                              {getCourseProgress(course.chapters)}% Complete
-                            </span>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-4 py-3 space-y-3 rounded-b-lg">
-                          {course.chapters.map((chapter) => {
-                            const isCompleted = chapterProgress?.[chapter.id];
+                      <div className="flex items-center gap-3">
+                        <span className="text-sky-600 dark:text-sky-400 font-bold">
+                          {course.order}.
+                        </span>
+                        <span className="truncate">{course.title}</span>
+                        <span className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400">
+                          {getCourseProgress(course.chapters)}% Complete
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 py-3 space-y-3 rounded-b-lg">
+                      {course.chapters.map((chapter) => {
+                        const isCompleted = chapterProgress?.[chapter.id];
 
-                            const chapterLink = `/en/student/${wdt_ID}/${course.id}/${chapter.id}`;
+                        const chapterLink = `/en/student/${wdt_ID}/${course.id}/${chapter.id}`;
 
-                            return (
-                              <motion.div
-                                key={chapter.id}
-                                className={cn(
-                                  "flex items-center p-3 rounded-md",
-                                  "transition-all duration-200",
-                                  "hover:bg-sky-100/50 dark:hover:bg-sky-800/50",
-                                  "group border border-sky-200 dark:border-sky-700"
-                                )}
-                                variants={itemVariants}
-                              >
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span
-                                      className={cn(
-                                        "flex items-center text-xs font-semibold",
-                                        isCompleted === true
-                                          ? "text-green-500"
-                                          : isCompleted === false
-                                          ? "text-gray-400"
-                                          : "text-yellow-500"
-                                      )}
-                                    >
-                                      {isCompleted === true ? (
-                                        <CheckCircle className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
-                                      ) : isCompleted === false ? (
-                                        <PlayCircle className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
-                                      ) : (
-                                        <Lock className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
-                                      )}
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    {isCompleted === true
-                                      ? "Completed"
-                                      : isCompleted === false
-                                      ? "In Progress"
-                                      : "Locked"}
-                                  </TooltipContent>
-                                </Tooltip>
-                                <span className="text-sm text-sky-600 dark:text-sky-400">
-                                  Lesson {chapter.position}:
-                                </span>
-                                <button
-                                  disabled={!isCompleted}
+                        return (
+                          <Tooltip>
+                            <div
+                              key={chapter.id}
+                              className={cn(
+                                "flex  items-center p-3 rounded-md",
+                                "transition-all duration-200",
+                                "hover:bg-sky-100/50 dark:hover:bg-sky-800/50",
+                                "group border border-sky-200 dark:border-sky-700"
+                              )}
+                            >
+                              <TooltipTrigger asChild>
+                                <span
                                   className={cn(
-                                    "text-left text-sm md:text-base font-medium ml-2",
-                                    "transition-colors duration-200 truncate",
-                                    isCompleted
-                                      ? "text-sky-600 dark:text-sky-400 hover:underline"
-                                      : "text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                    "flex items-center text-xs font-semibold",
+                                    isCompleted === true
+                                      ? "text-green-500"
+                                      : isCompleted === false
+                                      ? "text-gray-400"
+                                      : "text-yellow-500"
                                   )}
-                                  onClick={() => {
-                                    if (isCompleted) {
-                                      window.location.href = `${chapterLink}?isClicked=true`;
-                                    }
-                                  }}
-                                  tabIndex={isCompleted ? 0 : -1}
-                                  aria-disabled={!isCompleted}
-                                  type="button"
-                                  aria-label={`Go to ${chapter.title} ${
-                                    isCompleted ? "" : "(Locked)"
-                                  }`}
                                 >
-                                  {chapter.title}
-                                </button>
-                              </motion.div>
-                            );
-                          })}
-                        </AccordionContent>
-                      </AccordionItem>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                                  {isCompleted === true ? (
+                                    <CheckCircle className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
+                                  ) : isCompleted === false ? (
+                                    <PlayCircle className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
+                                  ) : (
+                                    <Lock className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
+                                  )}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {isCompleted === true
+                                  ? "Completed"
+                                  : isCompleted === false
+                                  ? "In Progress"
+                                  : "Locked"}
+                              </TooltipContent>
+
+                              <span className="text-sm text-sky-600 dark:text-sky-400">
+                                Lesson {chapter.position}:
+                              </span>
+                              <button
+                                disabled={!isCompleted}
+                                className={cn(
+                                  "text-left text-sm md:text-base font-medium ml-2",
+                                  "transition-colors duration-200 truncate",
+                                  isCompleted
+                                    ? "text-sky-600 dark:text-sky-400 hover:underline"
+                                    : "text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                )}
+                                onClick={() => {
+                                  if (isCompleted) {
+                                    window.location.href = `${chapterLink}?isClicked=true`;
+                                  }
+                                }}
+                                tabIndex={isCompleted ? 0 : -1}
+                                aria-disabled={!isCompleted}
+                                type="button"
+                                aria-label={`Go to ${chapter.title} ${
+                                  isCompleted ? "" : "(Locked)"
+                                }`}
+                              >
+                                {chapter.title}
+                              </button>
+                            </div>
+                          </Tooltip>
+                        );
+                      })}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
               </Accordion>
             </TooltipProvider>
           </>
         )}
       </div>
 
-      <footer className="flex items-center gap-3 mt-auto pt-4 border-t border-sky-200 dark:border-sky-800">
+      <footer className="flex items-center justify-between gap-3 pt-2 border-t border-sky-200 dark:border-sky-800">
+        <button
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-lg font-medium"
+          )}
+          onClick={() => {
+            window.location.href = `/en/student/${wdt_ID}/profile`;
+          }}
+          type="button"
+          aria-label="Go to Student Dashboard"
+        >
+          <UserCircle className="w-8 h-8 text-sky-600 dark:text-sky-400" />
+        </button>
         <LightDarkToggle
           className={cn(
             "ml-auto p-2 rounded-full",

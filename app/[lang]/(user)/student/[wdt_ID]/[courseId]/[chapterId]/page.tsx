@@ -148,7 +148,7 @@ function Page() {
 
   return (
     <motion.div
-      className="px-4 md:px-12 md:ml-30 py-6 grid grid-rows-[auto_1fr] min-h-screen"
+      className="px-4 md:px-12  py-6 grid grid-rows-[auto_1fr] min-h-dvh"
       style={{
         background:
           "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%)",
