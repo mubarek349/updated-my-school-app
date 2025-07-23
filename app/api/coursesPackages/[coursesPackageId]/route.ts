@@ -57,10 +57,8 @@ export async function PATCH(
     // ...existing code...
     // const {userId} = auth();
 
-    
     const values = await req.json();
 
-    
     const updatedCoursePackage = await prisma.coursePackage.update({
       where: {
         id: coursesPackageId,
@@ -76,3 +74,4 @@ export async function PATCH(
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+

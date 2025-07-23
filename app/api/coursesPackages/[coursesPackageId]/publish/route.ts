@@ -28,11 +28,7 @@ export async function PATCH(
         id: coursesPackageId,
       },
     });
-    if (
-      !coursesPackage ||
-      !coursesPackage.name ||
-      !coursesPackage.description
-    ) {
+    if (!coursesPackage || !coursesPackage.name) {
       return new NextResponse("Chapter not found or missing title", {
         status: 404,
       });

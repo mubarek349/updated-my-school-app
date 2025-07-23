@@ -20,26 +20,28 @@ datasource db {
 // }
 
 model coursePackage {
-  id              String                @id @default(uuid())
-  name            String                @db.Text
-  description     String?               @db.Text
-  courses         course[]
-  isPublished     Boolean               @default(false)
-  students        wpos_wpdatatable_23[] @relation("PackageHistory")
-  activeStudents  wpos_wpdatatable_23[] @relation("ActivePackage")
-  subjectPackages subjectPackage[] // <-- Add this line for the relation
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id                  String                @id @default(uuid())
+  name                String                @db.Text
+  description         String?               @db.Text
+  courses             course[]
+  questions           question[]
+  finalExamResult     finalExamResult[]
+  examDurationMinutes Int?
+  isPublished         Boolean               @default(false)
+  students            wpos_wpdatatable_23[] @relation("PackageHistory")
+  activeStudents      wpos_wpdatatable_23[] @relation("ActivePackage")
+  subjectPackages     subjectPackage[] // <-- Add this line for the relation
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
 }
 
 model subjectPackage {
   id          String        @id @default(uuid())
-  kidpackage  Boolean?       @default(false)
-  packageType String?        
-  subject     String?        
+  kidpackage  Boolean?      @default(false)
+  packageType String?
+  subject     String?
   package     coursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId   String
-  
 
   // @@unique([subject, packageId])
 }
@@ -88,14 +90,14 @@ model chapter {
 
 model question {
   id              String           @id @default(cuid())
-  chapter         chapter          @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  chapterId       String
+  chapter         chapter?         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId       String?
+  coursePackage   coursePackage?   @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  packageId       String?
   question        String
   questionOptions questionOption[]
   questionAnswer  questionAnswer[]
   studentQuiz     studentQuiz[]
-
-  @@index([chapterId])
 }
 
 model questionOption {
@@ -126,6 +128,7 @@ model studentQuiz {
   studentId          Int
   question           question            @relation(fields: [questionId], references: [id], onDelete: Cascade)
   questionId         String
+  isFinalExam        Boolean             @default(false)
   takenAt            DateTime            @default(now())
   studentQuizAnswers studentQuizAnswer[]
 
@@ -164,31 +167,44 @@ model studentProgress {
   @@index([studentId])
 }
 
- model admin {
+model finalExamResult {
+  id                 String              @id @default(cuid())
+  student            wpos_wpdatatable_23 @relation(fields: [studentId], references: [wdt_ID])
+  studentId          Int
+  coursePackage      coursePackage       @relation(fields: [packageId], references: [id])
+  packageId          String
+  updationProhibited Boolean             @default(false)
+  result             String?
+  startingTime       DateTime            @default(now())
+  endingTime         DateTime?
+}
+
+model admin {
   id        String   @id @default(cuid())
   name      String
   phoneno   String   @unique
-  chat_id  String    @unique
+  chat_id   String   @unique
   passcode  String
   createdAt DateTime @default(now())
 }
 
 model wpos_wpdatatable_23 {
-  wdt_ID         Int               @id @default(autoincrement())
-  name           String?
-  passcode       String?           @unique
-  phoneno        String?           @unique
-  country        String?
-  status         String?
-  isKid          Boolean?           @default(false)
+  wdt_ID          Int               @id @default(autoincrement())
+  name            String?
+  passcode        String?           @unique
+  phoneno         String?           @unique
+  country         String?
+  status          String?
+  isKid           Boolean?          @default(false)
   // History of all packages (many-to-many)
-  packages       coursePackage[]   @relation("PackageHistory")
+  packages        coursePackage[]   @relation("PackageHistory")
   // Active package (one-to-one or many-to-one)
-  subject        String?
-  package        String?
-  youtubeSubject String?
-  activePackage  coursePackage?    @relation("ActivePackage", fields: [youtubeSubject], references: [id])
-  progress       studentProgress[]
-  studentQuizzes studentQuiz[]
-  chat_id        String?           @default("")
+  subject         String?
+  package         String?
+  youtubeSubject  String?
+  activePackage   coursePackage?    @relation("ActivePackage", fields: [youtubeSubject], references: [id])
+  progress        studentProgress[]
+  studentQuizzes  studentQuiz[]
+  finalExamResult finalExamResult[]
+  chat_id         String?           @default("")
 }

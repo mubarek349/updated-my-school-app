@@ -14,7 +14,6 @@ export async function PATCH(
     const { coursesPackageId } = await params;
     const { courseId } = await params;
     // const userId = "clg1v2j4f0000l5v8xq3z7h4d"; // Replace with actual userId from context
-    
 
     const coursePackageOwner = await prisma.coursePackage.findUnique({
       where: {
@@ -33,20 +32,19 @@ export async function PATCH(
       },
     });
 
-    if (!course || !course.title || !course.description) {
+    if (!course || !course.title) {
       return new NextResponse("Chapter not found or missing title", {
         status: 404,
       });
     }
 
-    const isthereanyPublishedChapter=await prisma.chapter.count({
-      where:{
-        courseId:course.id,
-        isPublished:true,
-      }
-
+    const isthereanyPublishedChapter = await prisma.chapter.count({
+      where: {
+        courseId: course.id,
+        isPublished: true,
+      },
     });
-    if(isthereanyPublishedChapter===0){
+    if (isthereanyPublishedChapter === 0) {
       return new NextResponse(null);
     }
     const publishedCourse = await prisma.course.update({
@@ -59,8 +57,6 @@ export async function PATCH(
       },
     });
     console.log("sjk", course?.id);
- 
-      
 
     console.log("publishedCourse: ", publishedCourse);
     return NextResponse.json(publishedCourse);

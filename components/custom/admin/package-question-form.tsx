@@ -11,9 +11,9 @@ import {
 import { Textarea } from "@/components/ui/textarea"; // Add Input for options
 import { Input } from "@/components/ui/input"; // Add Input for options
 // import { zodResolver } from "@hookform/resolvers/zod";
-import { chapter, question } from "@prisma/client";
+import { coursePackage, question } from "@prisma/client";
 import axios from "axios";
-import { PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle, Timer, TimerIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form"; // Add useFieldArray for dynamic fields
@@ -21,12 +21,13 @@ import toast from "react-hot-toast";
 // import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { PackageQuestionsList } from "./package-questions-list";
-import { ChapterQuestionsList } from "./chapter-questions-list";
+interface QuestionWithDetails extends question {
+  questionOptionsJson: { id: string; text: string }[]; // Array of objects with id and text
+  correctAnswerIdsJson: string[]; // Array of selected option IDs
+}
 
-interface ChapterQuestionFormProps {
-  initialData: chapter & { questions: question[] };
-  courseId: string;
-  chapterId: string;
+interface PackageQuestionFormProps {
+  initialData: coursePackage & { questions: question[] };
   coursesPackageId: string;
 }
 
@@ -40,14 +41,11 @@ interface ChapterQuestionFormProps {
 //     .min(1, "At least two options are required"),
 // });
 
-export const ChapterQuestionForm = ({
+export const PackageQuestionForm = ({
   initialData,
-  courseId,
-  chapterId,
   coursesPackageId,
-}: ChapterQuestionFormProps) => {
+}: PackageQuestionFormProps) => {
   const [isCreating, setIsCreating] = useState(false);
-  //   const [isUpdating, setIsUpdating] = useState(false);
 
   const toggleCreating = () => setIsCreating((current) => !current);
 
@@ -68,8 +66,31 @@ export const ChapterQuestionForm = ({
     control: form.control,
     name: "options" as never,
   });
-
   const { isSubmitting, isValid } = form.formState;
+  const [isUpdatingTime, setIsUpdatingTime] = useState(false);
+  // Initialize examTime with data from initialData, or a default
+  const [examDurationMinutes, setExamDurationMinutes] = useState<number | "">(
+    initialData.examDurationMinutes ?? ""
+  );
+
+  // Function to handle saving exam time to the database
+  const handleSaveExamTime = async () => {
+    setIsUpdatingTime(true);
+    try {
+      const timeToSend =
+        typeof examDurationMinutes === "number" ? examDurationMinutes : null;
+      await axios.patch(`/api/coursesPackages/${coursesPackageId}`, {
+        examDurationMinutes: timeToSend,
+      });
+      toast.success("Exam time updated successfully!");
+      router.refresh(); // Refresh data to show updated time
+    } catch (error) {
+      console.error("Failed to update exam time:", error);
+      toast.error("Failed to update exam time.");
+    } finally {
+      setIsUpdatingTime(false);
+    }
+  };
 
   const onSubmit = async (values: {
     title: string;
@@ -78,7 +99,7 @@ export const ChapterQuestionForm = ({
   }) => {
     try {
       await axios.post(
-        `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}/questions`,
+        `/api/coursesPackages/${coursesPackageId}/questions`,
         values
       );
       form.reset();
@@ -94,7 +115,7 @@ export const ChapterQuestionForm = ({
   const onDelete = async (id: string) => {
     try {
       await axios.delete(
-        `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}/questions/${id}`
+        `/api/coursesPackages/${coursesPackageId}/questions/${id}`
       );
       toast.success("Question Deleted");
       router.refresh();
@@ -106,38 +127,73 @@ export const ChapterQuestionForm = ({
   const lang = "en";
   const onEdit = (id: string) => {
     router.push(
-      `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
-    );
-  };
- const onAdding = (id: string) => {
-    router.push(
-      `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
-    );
-  };
-  const onRemoving = (id: string) => {
-    router.push(
-      `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
+      `/${lang}/admin/coursesPackages/${coursesPackageId}/questions/${id}`
     );
   };
 
   return (
     <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
+      {/* Exam Time Setting */}
+      <div className="flex items-start gap-3 mb-4">
+        {" "}
+        {/* Changed to flex-col and items-start */}
+        <label
+          htmlFor="examTime"
+          className="text-gray-700 font-medium whitespace-nowrap"
+        >
+          Exam Duration (minutes):
+        </label>
+        <Input
+          id="examTime"
+          type="number"
+          name="examTime"
+          placeholder="Set Time for Exam"
+          value={examDurationMinutes}
+          onChange={(e) => {
+            const val = e.target.value;
+            setExamDurationMinutes(
+              val === "" ? "" : Math.max(0, parseInt(val, 10))
+            ); // Ensure non-negative number
+          }}
+          className="max-w-[150px] w-full" // w-full ensures it takes full width in the column
+          disabled={isUpdatingTime}
+          min="0"
+        />
+      </div>
+      <div>
+        <Button
+          onClick={handleSaveExamTime}
+          disabled={isUpdatingTime}
+          className="w-full max-w-[150px]"
+        >
+          {" "}
+          {/* Added w-full and max-w to button for consistent width */}
+          {isUpdatingTime ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <TimerIcon className="w-4 h-4 mr-2" />
+          )}
+          {isUpdatingTime ? "Saving..." : "Set Time"}
+        </Button>
+      </div>
       {/* {isUpdating && (
         <div className="absolute w-full h-full bg-slate-500/200 top-0 right-0 rounded-m flex items-center justify-center">
           <Loader2 className="animate-spin h-6 w-6 text-sky-700" />
         </div>
       )} */}
       <div className="font-medium flex items-center justify-between">
-        Chapter Questions
-        <Button onClick={toggleCreating} variant="ghost">
-          {isCreating ? (
-            <>Cancel</>
-          ) : (
-            <>
-              <PlusCircle className="w-4 h-4 mr-2" /> Add Question
-            </>
-          )}
-        </Button>
+        Final Exam Questions for {initialData.name} Pacakge
+        <div>
+          <Button onClick={toggleCreating} variant="ghost">
+            {isCreating ? (
+              <>Cancel</>
+            ) : (
+              <>
+                <PlusCircle className="w-4 h-4 mr-2" /> Add Question
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {isCreating && (
@@ -154,7 +210,7 @@ export const ChapterQuestionForm = ({
                   <FormControl>
                     <Textarea
                       disabled={isSubmitting}
-                      placeholder="e.g. 'What is the main concept of this chapter?'"
+                      placeholder="e.g. 'What is the main concept of this package?'"
                       {...field}
                     />
                   </FormControl>
@@ -241,12 +297,9 @@ export const ChapterQuestionForm = ({
           )}
         >
           {!initialData.questions.length && " NO Questions"}
-          <ChapterQuestionsList
+          <PackageQuestionsList
             onEdit={onEdit}
             onDelete={onDelete}
-            coursesPackageId={coursesPackageId}
-            courseId={courseId}
-            chapterId={chapterId}
             items={initialData.questions || []}
           />
         </div>

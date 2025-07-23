@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash } from "lucide-react";
+import { FileQuestion, Trash } from "lucide-react";
 import { Button } from "../../ui/button";
 import { ConfirmModal } from "../../modals/confirm-modal";
 import { useState } from "react";
@@ -83,8 +83,23 @@ export const CoursesPackageActions = ({
       setIsLoading(false);
     }
   };
+  const routers = useRouter();
   return (
     <div className="flex gap-x-1 flex-wrap items-center justify-end">
+      <div>
+        <Button
+          onClick={() => {
+            routers.push(
+              `/en/admin/coursesPackages/${coursesPackageId}/questions`
+            );
+          }}
+          size="sm"
+          className="bg-blue-600"
+        >
+          <FileQuestion className="w-4 h-4" />
+          Final Exam Questions
+        </Button>
+      </div>
       <Button
         onClick={onClick}
         disabled={disabled || isLoading}

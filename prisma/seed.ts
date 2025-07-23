@@ -8,12 +8,10 @@ const prisma = new PrismaClient();
       name: "System Admin",
       phoneno: "0942303571",
       passcode: "admin123",
-      chat_id:"631321369"
+      chat_id: "631321369",
     },
   });
 
-  
-  
   // Seed Students
   await prisma.wpos_wpdatatable_23.createMany({
     data: [
@@ -24,6 +22,7 @@ const prisma = new PrismaClient();
         phoneno: "0910203040",
         status: "active",
         subject: "hifz",
+        package: "kids",
         chat_id: "973677019",
         country: "Ethiopia", // added country
       },
@@ -31,6 +30,7 @@ const prisma = new PrismaClient();
         wdt_ID: 1002,
         name: "Fuad Abdurahman",
         subject: "hifz",
+        package: "kids",
         passcode: "student2",
         phoneno: "0910203041",
         status: "active",
@@ -40,6 +40,7 @@ const prisma = new PrismaClient();
       {
         wdt_ID: 1003,
         subject: "hifz",
+        package: "kids",
         name: "Abdulkarim ahmed",
         passcode: "student3",
         phoneno: "0910203042",
@@ -92,23 +93,24 @@ const prisma = new PrismaClient();
       },
     },
   });
-await prisma.subjectPackage.createMany({
-    data:[ {
-      packageType: "kids",
-      subject: "nezer",
-      packageId: "pkg_001",
-    },
-    {
-      packageType: "kids",
-      subject: "nezer",
-      packageId: "pkg_001",
-    },
-    {
-      packageType: "kids",
-      subject: "nezer",
-      packageId: "pkg_003",
-    },
-  ]
+  await prisma.subjectPackage.createMany({
+    data: [
+      {
+        packageType: "kids",
+        subject: "nezer",
+        packageId: "pkg_001",
+      },
+      {
+        packageType: "kids",
+        subject: "nezer",
+        packageId: "pkg_001",
+      },
+      {
+        packageType: "kids",
+        subject: "nezer",
+        packageId: "pkg_003",
+      },
+    ],
   });
   // Seed Courses for Programming Package
   await prisma.course.createMany({
@@ -306,6 +308,54 @@ await prisma.subjectPackage.createMany({
         studentId: 1002,
         chapterId: "chapter_002",
         isCompleted: false,
+      },
+    ],
+  });
+  const packages = ["pkg_001", "pkg_002", "pkg_003"];
+
+  for (const packageId of packages) {
+    for (let i = 1; i <= 5; i++) {
+      const question = await prisma.question.create({
+        data: {
+          packageId,
+          question: `Sample Question ${i} for ${packageId}`,
+          questionOptions: {
+            create: [
+              { option: `Option 1 for Q${i}` },
+              { option: `Option 2 for Q${i}` },
+              { option: `Option 3 for Q${i}` },
+              { option: `Option 4 for Q${i}` },
+            ],
+          },
+        },
+        include: { questionOptions: true },
+      });
+
+      // Optionally, set the first option as the correct answer
+      await prisma.questionAnswer.create({
+        data: {
+          questionId: question.id,
+          answerId: question.questionOptions[0].id,
+        },
+      });
+    }
+  }
+  await prisma.finalExamResult.createMany({
+    data: [
+      {
+        studentId: 1001,
+        packageId: "pkg_001",
+        result: "Pass",
+      },
+      {
+        studentId: 1001,
+        packageId: "pkg_002",
+        result: "Pass",
+      },
+      {
+        studentId: 1001,
+        packageId: "pkg_003",
+        result: "Fail",
       },
     ],
   });

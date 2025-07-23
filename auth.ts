@@ -7,7 +7,7 @@ const lang = "en";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      console.log("AUTH >> ", auth, nextUrl.pathname);
+      // console.log("AUTH >> ", auth, nextUrl.pathname);
       if (!auth) {
         if (nextUrl.pathname.includes(`/${lang}/admin`)) return false;
         else return true;

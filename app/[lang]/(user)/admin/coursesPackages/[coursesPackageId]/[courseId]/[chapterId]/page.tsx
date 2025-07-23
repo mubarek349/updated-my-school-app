@@ -23,7 +23,6 @@ const ChapterIdPage = async ({
   const { chapterId } = await params;
   const { coursesPackageId } = await params;
 
-  
   const chapter = await prisma.chapter.findUnique({
     where: {
       id: chapterId,

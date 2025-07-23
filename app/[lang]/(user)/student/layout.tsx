@@ -34,26 +34,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // const [progress, setProgress] = useState(0);
-  // const [completed, setCompleted] = useState(0);
-  // const [total, setTotal] = useState(1); // set to 1 to avoid division by zero
-
-  // // UseAction for progress data
-  // const [progressData, , isLoading] = useAction(
-  //   getActivePackageProgress,
-  //   [true, (response) => console.log(response)],
-  //   String(useParams().wdt_ID)
-  // );
-
-  // useEffect(() => {
-  //   if (progressData && !isLoading) {
-  //     const completedChapters = progressData.completedChapters || 0;
-  //     const totalChapters = progressData.totalChapters || 1;
-  //     // setCompleted(completedChapters);
-  //     // setTotal(totalChapters);
-  //     setProgress((completedChapters / totalChapters) * 100);
-  //   }
-  // }, [progressData, isLoading]);
+  
   const { wdt_ID } = useParams<{ wdt_ID: string }>();
   const [data, refresh] = useAction(
     getPackageData,

@@ -151,7 +151,7 @@ export async function startBot() {
 
           const update = await updatePathProgressData(studId);
           console.log("currect url", update);
-          const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update?.chapter.course.id}/${update?.chapter.id}`;
+          const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
 
           const channelName = channel.name || "ዳሩል-ኩብራ";
           const keyboard = new InlineKeyboard().url(

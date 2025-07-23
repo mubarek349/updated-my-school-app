@@ -23,8 +23,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     wdtIdNum
   );
 
-  const updatedCourseId = update?.chapter?.course?.id ?? courseId;
-  const updatedChapterId = update?.chapter?.id ?? chapterId;
+  const updatedCourseId = update ? update[0] : courseId;
+  const updatedChapterId = update ? update[1] : chapterId;
 
   const router = useRouter();
 

@@ -1,21 +1,30 @@
-
-//this page is about sidebar menu for student dashboard, it shows the active package and courses with chapters, their progress, and allows navigation to chapters
-
 "use client";
+
 import React from "react";
+
 import MenuTitle from "./menu-title";
+
 import { LightDarkToggle } from "@/components/ui/light-dark-toggle";
+import { Button } from "@/components/ui/button"; // Import the Button component
+
 import { cn } from "@/lib/utils";
-import { CheckCircle, PlayCircle, Lock } from "lucide-react";
+
+import { CheckCircle, PlayCircle, Lock, Trophy } from "lucide-react"; // Added Trophy icon
+
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { getStudentProgressPerChapter } from "@/actions/student/progress";
-import { useParams } from "next/navigation";
+import {
+  getStudentProgressPerChapter,
+  isCompletedAllChaptersInthePackage,
+} from "@/actions/student/progress";
+import { useParams, useRouter } from "next/navigation"; // Import useRouter
+
 import { motion, AnimatePresence } from "framer-motion";
+
 import {
   Tooltip,
   TooltipContent,
@@ -29,7 +38,7 @@ interface MainMenuProps {
     | {
         wdt_ID: number;
 
-        name: string| null;
+        name: string | null;
         status: string | null;
         subject: string | null;
 
@@ -56,6 +65,7 @@ interface MainMenuProps {
 
 export default function MainMenu({ data, className }: MainMenuProps) {
   const params = useParams();
+  const router = useRouter(); // Initialize useRouter
 
   const wdt_ID = Number(params.wdt_ID);
 
@@ -63,6 +73,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
     Record<string, boolean | null>
   >({});
   const [isLoading, setIsLoading] = React.useState(true);
+  const [allCoursesCompleted, setAllCoursesCompleted] = React.useState(false); // New state for overall completion
 
   React.useEffect(() => {
     async function fetchAllProgress() {
@@ -79,9 +90,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
           allChapters.map(async (chapter) => {
             const result = await getStudentProgressPerChapter(
               chapter.id,
-
               wdt_ID
-
             );
             return [chapter.id, result?.isCompleted ?? null] as [
               string,
@@ -90,6 +99,16 @@ export default function MainMenu({ data, className }: MainMenuProps) {
           })
         );
         setChapterProgress(Object.fromEntries(progressEntries));
+
+        // --- START MODIFICATION ---
+        // Calculate if ALL chapters in ALL courses are completed
+        const areAllChaptersTrulyCompleted =
+          await isCompletedAllChaptersInthePackage(
+            data.activePackage.id,
+            data.wdt_ID
+          );
+        setAllCoursesCompleted(areAllChaptersTrulyCompleted);
+        // --- END MODIFICATION ---
       } catch (error) {
         console.error("Error fetching progress:", error);
       } finally {
@@ -97,9 +116,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       }
     }
     fetchAllProgress();
-
-  }, [data, wdt_ID]);
-
+  }, [data, wdt_ID]); // Add chapterProgress to dependency array
 
   // Calculate course completion percentage
   const getCourseProgress = (chapters: { id: string }[]) => {
@@ -118,6 +135,17 @@ export default function MainMenu({ data, className }: MainMenuProps) {
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
+  // Handler for the final exam button click
+  const handleFinalExamClick = () => {
+    // Navigate to the final exam page
+    if (allCoursesCompleted) {
+      // Only navigate if truly unlocked
+      router.push(
+        `/en/student/${data?.wdt_ID}/finalexam/${data?.activePackage?.id}`
+      ); // Adjust this path as needed
+    }
+  };
+
   return (
     <nav
       className={cn(
@@ -130,12 +158,10 @@ export default function MainMenu({ data, className }: MainMenuProps) {
     >
       <header className="border-b border-sky-200 dark:border-sky-800 pb-4">
         <MenuTitle
-
           title={data?.name || "Student Name"}
           subtitle={data?.subject || "Subject"}
           showBadge={!!data?.activePackage}
           badgeText={data?.status || ""}
-
           badgeVariant="premium"
           className="hover:scale-[1.02] transition-transform duration-200"
         />
@@ -171,7 +197,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
               {data.activePackage.name}
             </motion.h3>
             <TooltipProvider>
-              <Accordion type="single" collapsible className="space-y-3">
+              <Accordion type="single" collapsible className="space-y-3 w-60">
                 <AnimatePresence>
                   {data.activePackage.courses.map((course) => (
                     <motion.div
@@ -253,9 +279,6 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                       : "Locked"}
                                   </TooltipContent>
                                 </Tooltip>
-                                <span className="text-sm text-sky-600 dark:text-sky-400">
-                                  Lesson {chapter.position}:
-                                </span>
                                 <button
                                   disabled={!isCompleted}
                                   className={cn(
@@ -267,7 +290,9 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                   )}
                                   onClick={() => {
                                     if (isCompleted) {
-                                      window.location.href = `${chapterLink}?isClicked=true`;
+                                      router.push(
+                                        `${chapterLink}?isClicked=true`
+                                      );
                                     }
                                   }}
                                   tabIndex={isCompleted ? 0 : -1}
@@ -277,7 +302,9 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                     isCompleted ? "" : "(Locked)"
                                   }`}
                                 >
-                                  {chapter.title}
+                                  <span className="text-sm text-sky-600 dark:text-sky-400">
+                                    Lesson {chapter.position} : {chapter.title}
+                                  </span>
                                 </button>
                               </motion.div>
                             );
@@ -286,6 +313,51 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                       </AccordionItem>
                     </motion.div>
                   ))}
+
+                  {/* Final Exam Accordion Item */}
+                  <motion.div
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                  >
+                    <AccordionItem
+                      value="final-exam"
+                      className={cn(
+                        "border border-blue-300 dark:border-blue-700 rounded-lg",
+                        "bg-blue-50/80 dark:bg-blue-900/80 backdrop-blur-sm",
+                        "shadow-lg hover:shadow-xl transition-all duration-300"
+                      )}
+                    >
+                      <AccordionTrigger
+                        onClick={handleFinalExamClick} // Trigger navigation directly on click
+                        className={cn(
+                          "px-4 py-3 text-base md:text-lg font-semibold",
+                          "text-blue-800 dark:text-blue-200",
+                          "hover:bg-blue-100/50 dark:hover:bg-blue-800/50",
+                          "rounded-lg transition-colors duration-200", // Rounded all corners
+                          !allCoursesCompleted &&
+                            "cursor-not-allowed opacity-50" // Disable if not all courses completed
+                        )}
+                        disabled={!allCoursesCompleted} // Disable the trigger if not all courses completed
+                      >
+                        <div className="flex items-center gap-3">
+                          <Trophy className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                          <span className="truncate">Final Exam</span>
+                          {!allCoursesCompleted && (
+                            <span className="ml-auto text-xss font-medium text-gray-500 dark:text-gray-400">
+                              (Complete all to unlock)
+                            </span>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      {/* You can optionally add AccordionContent here if there's any info to show before clicking */}
+                      {/* <AccordionContent className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                        Click to begin your final assessment!
+                      </AccordionContent> */}
+                    </AccordionItem>
+                  </motion.div>
+                  {/* End Final Exam Accordion Item */}
                 </AnimatePresence>
               </Accordion>
             </TooltipProvider>
@@ -294,6 +366,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       </div>
 
       <footer className="flex items-center gap-3 mt-auto pt-4 border-t border-sky-200 dark:border-sky-800">
+        {/* The LightDarkToggle remains in the footer */}
         <LightDarkToggle
           className={cn(
             "ml-auto p-2 rounded-full",

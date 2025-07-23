@@ -1,7 +1,11 @@
 "use server";
-import  prisma  from "@/lib/db";
-// import {correctAnswer} from "@/actions/student/question";
+import prisma from "@/lib/db";
 import { unlockTest } from "@/actions/student/unlocktest";
+import {
+  checkingUpdateProhibition,
+  registerFinalExam,
+  updateEndingExamTime,
+} from "./finalExamResult";
 // get a question for the specific chapter by pass the  wdt_ID packageid,courseid and chapterid help me
 export async function getQuestionForActivePackageLastChapter(wdt_ID: number) {
   // get student
@@ -121,7 +125,7 @@ export async function getQuestionForActivePackageLastChapter(wdt_ID: number) {
     courseTitle: currentCourse?.title,
     chapter: chapterData,
   };
-  console.log(data);
+  // console.log(data);
 
   return data;
 }
@@ -288,7 +292,7 @@ export async function getQuestionForActivePackageLastChapter(wdt_ID: number) {
 
 // Get all questions answerfor a specific chapter
 export async function showAnswer(chapterId: string) {
-  console.log("Fetching questions for chapterId:", chapterId);
+  // console.log("Fetching questions for chapterId:", chapterId);
   const questions = await prisma.question.findMany({
     where: { chapterId },
     select: { id: true },
@@ -301,7 +305,7 @@ export async function showAnswer(chapterId: string) {
 
   const questionIds = questions.map((q) => q.id);
 
-  console.log("Fetching correct answers for questions:", questionIds);
+  // console.log("Fetching correct answers for questions:", questionIds);
 
   const questionAnswersRaw = await prisma.questionAnswer.findMany({
     where: { questionId: { in: questionIds } },
@@ -342,7 +346,7 @@ export async function showAnswer(chapterId: string) {
     studentAnswers: studentResponse[id] || [],
   }));
 
-  console.log("Combined answers:", combinedAnswers);
+  // console.log("Combined answers:", combinedAnswers);
 
   return combinedAnswers;
 }
@@ -366,7 +370,7 @@ export async function showAnswer(chapterId: string) {
 // this function is used to check the correct answer for a specific chapter
 export async function correctAnswer(chapterId: string, studentId: number) {
   try {
-    console.log("Fetching questions for chapterId:", chapterId);
+    // console.log("Fetching questions for chapterId:", chapterId);
     const questions = await prisma.question.findMany({
       where: { chapterId },
       select: { id: true },
@@ -379,12 +383,257 @@ export async function correctAnswer(chapterId: string, studentId: number) {
 
     const questionIds = questions.map((q) => q.id);
 
+    // console.log("Fetching student quiz answers for studentId:", studentId);
+    const studentQuizAnswers = await prisma.studentQuizAnswer.findMany({
+      where: {
+        studentQuiz: {
+          studentId: studentId,
+          questionId: { in: questionIds },
+          isFinalExam: false,
+        },
+      },
+      select: {
+        studentQuiz: { select: { questionId: true } },
+        selectedOptionId: true,
+      },
+    });
+
+    const studentResponse: { [questionId: string]: string[] } = {};
+    for (const ans of studentQuizAnswers) {
+      const qid = ans.studentQuiz.questionId;
+      if (!studentResponse[qid]) studentResponse[qid] = [];
+      studentResponse[qid].push(ans.selectedOptionId);
+    }
+
+    // console.log("Fetching correct answers for questions:", questionIds);
+    const questionAnswersRaw = await prisma.questionAnswer.findMany({
+      where: { questionId: { in: questionIds } },
+      select: { questionId: true, answerId: true },
+    });
+
+    const questionAnswers: { [questionId: string]: string[] } = {};
+    for (const qa of questionAnswersRaw) {
+      if (!questionAnswers[qa.questionId]) questionAnswers[qa.questionId] = [];
+      questionAnswers[qa.questionId].push(qa.answerId);
+    }
+
+    const total = questionIds.length;
+    let correct = 0;
+
+    for (const questionId of questionIds) {
+      const correctAnswers = questionAnswers[questionId]?.sort() || [];
+      const userAnswers = studentResponse[questionId]?.sort() || [];
+      const isCorrect =
+        correctAnswers.length === userAnswers.length &&
+        correctAnswers.every((v, i) => v === userAnswers[i]);
+      if (isCorrect) correct++;
+    }
+
+    const result = {
+      total,
+      correct,
+      score: total ? correct / total : 0,
+    };
+
+    console.log("Result calculated:", result);
+    return { studentResponse, questionAnswers, result };
+  } catch (error) {
+    console.error("Error in correctAnswer:", error);
+    throw new Error("Failed to calculate the correct answers.");
+  }
+}
+
+type AnswerPair = { questionId: string; answerId: string[] };
+
+export async function submitAnswers(
+  answers: AnswerPair[],
+  wdt_ID: number,
+  courseId: string,
+  chapterId: string
+) {
+  if (!answers.length) throw new Error("No answers provided.");
+
+  const results = [];
+  const student = await prisma.wpos_wpdatatable_23.findFirst({
+    where: {
+      wdt_ID: wdt_ID,
+      status: { in: ["active", "Not yet"] },
+    },
+    select: {
+      wdt_ID: true,
+      packages: { select: { id: true } },
+    },
+  });
+
+  // const packageId = student?.packages[0]?.id;
+
+  if (!student || !student.wdt_ID) {
+    throw new Error("Student not found or not authorized.");
+  }
+  const studentId = student.wdt_ID;
+  for (const { questionId, answerId } of answers) {
+    // Find or create the studentQuiz record for this student and question
+    let studentQuiz = await prisma.studentQuiz.findFirst({
+      where: { studentId, questionId, isFinalExam: false },
+    });
+
+    if (!studentQuiz) {
+      studentQuiz = await prisma.studentQuiz.create({
+        data: { studentId, questionId },
+      });
+    }
+
+    // Check if an answer already exists for this studentQuiz
+    const existingAnswer = await prisma.studentQuizAnswer.findMany({
+      where: {
+        studentQuizId: studentQuiz.id,
+      },
+    });
+
+    if (!existingAnswer || existingAnswer.length === 0) {
+      // console.log("new answer", existingAnswer);
+      for (const ansId of answerId) {
+        await prisma.studentQuizAnswer.create({
+          data: {
+            studentQuizId: studentQuiz.id,
+            selectedOptionId: ansId,
+          },
+        });
+      }
+    } else {
+      // Remove any previous answers for this question (if single-answer)
+      await prisma.studentQuizAnswer.deleteMany({
+        where: { studentQuizId: studentQuiz.id },
+      });
+      for (const ansId of answerId) {
+        await prisma.studentQuizAnswer.create({
+          data: {
+            studentQuizId: studentQuiz.id,
+            selectedOptionId: ansId,
+          },
+        });
+      }
+    }
+    // Create new answers
+
+    const newAnswer = await prisma.studentQuizAnswer.findMany({
+      where: {
+        studentQuizId: studentQuiz.id,
+        selectedOptionId: { in: answerId },
+      },
+    });
+    results.push(newAnswer);
+  }
+
+  const score = await correctAnswer(chapterId, studentId);
+  // if the the score is above 0.5 then excite the unlock test  else  display message only
+
+  if (score.result.score === 1) {
+    await unlockTest(wdt_ID, courseId, chapterId);
+  } else {
+    console.log("Score below threshold, not unlocking test.");
+  }
+
+  // await unlockingNextChapter(wdt_ID, courseId, chapterId, packageId ?? "");
+  // await unlock(wdt_ID);
+  // await unlock_me(wdt_ID);
+  // await unlockingNextChapterfuad(wdt_ID);
+  console.log("Answers submitted successfully:", results);
+  return { success: true, submitted: results.length };
+}
+// export async function showAnswerForExamPasser(
+//   studentId: number,
+//   coursesPackageId: string
+// ) {
+//   // console.log("Fetching questions for chapterId:", chapterId);
+//   const questions = await prisma.question.findMany({
+//     where: { packageId: coursesPackageId },
+//     select: { id: true },
+//   });
+
+//   if (!questions.length) {
+//     // console.error("No questions found for chapterId:", chapterId);
+//     throw new Error("No questions found for the given chapterId.");
+//   }
+
+//   const questionIds = questions.map((q) => q.id);
+
+//   // console.log("Fetching correct answers for questions:", questionIds);
+
+//   const questionAnswersRaw = await prisma.questionAnswer.findMany({
+//     where: { questionId: { in: questionIds } },
+//     select: { questionId: true, answerId: true },
+//   });
+
+//   const studentAnswersRaw = await prisma.studentQuizAnswer.findMany({
+//     where: {
+//       selectedOption: {
+//         questionId: { in: questionIds },
+//       },
+//     },
+//     select: {
+//       studentQuiz: { select: { questionId: true } },
+//       selectedOptionId: true,
+//     },
+//   });
+
+//   // Group student answers by questionId
+//   const studentResponse: { [questionId: string]: string[] } = {};
+//   for (const ans of studentAnswersRaw) {
+//     const qid = ans.studentQuiz.questionId;
+//     if (!studentResponse[qid]) studentResponse[qid] = [];
+//     studentResponse[qid].push(ans.selectedOptionId);
+//   }
+
+//   // Group correct answers by questionId
+//   const questionAnswers: { [questionId: string]: string[] } = {};
+//   for (const qa of questionAnswersRaw) {
+//     if (!questionAnswers[qa.questionId]) questionAnswers[qa.questionId] = [];
+//     questionAnswers[qa.questionId].push(qa.answerId);
+//   }
+
+//   // Combine questionAnswers and studentResponse per questionId
+//   const combinedAnswers = questionIds.map((id) => ({
+//     questionId: id,
+//     correctAnswers: questionAnswers[id] || [],
+//     studentAnswers: studentResponse[id] || [],
+//   }));
+
+//   // console.log("Combined answers:", combinedAnswers);
+//   if ((await checkingUpdateProhibition(studentId, coursesPackageId)) !== true) {
+//     return {};
+//   } else {
+//     return combinedAnswers;
+//   }
+// }
+export async function correctExamAnswer(
+  coursesPackageId: string,
+  studentId: number
+) {
+  try {
+    console.log("Fetching questions for coursesPackageId:", coursesPackageId);
+    const questions = await prisma.question.findMany({
+      where: { packageId: coursesPackageId },
+      select: { id: true },
+    });
+
+    if (!questions.length) {
+      console.error(
+        "No questions found for coursesPackageId:",
+        coursesPackageId
+      );
+      throw new Error("No questions found for the given coursesPackageId.");
+    }
+
+    const questionIds = questions.map((q) => q.id);
+
     console.log("Fetching student quiz answers for studentId:", studentId);
     const studentQuizAnswers = await prisma.studentQuizAnswer.findMany({
       where: {
         studentQuiz: {
           studentId: studentId,
           questionId: { in: questionIds },
+          isFinalExam: true,
         },
       },
       select: {
@@ -438,13 +687,10 @@ export async function correctAnswer(chapterId: string, studentId: number) {
   }
 }
 
-type AnswerPair = { questionId: string; answerId: string };
-
-export async function submitAnswers(
+export async function examsubmitAnswers(
   answers: AnswerPair[],
   wdt_ID: number,
-  courseId: string,
-  chapterId: string
+  coursesPackageId: string
 ) {
   if (!answers.length) throw new Error("No answers provided.");
 
@@ -453,6 +699,7 @@ export async function submitAnswers(
     where: {
       wdt_ID: wdt_ID,
       status: { in: ["active", "Not yet"] },
+      youtubeSubject: coursesPackageId,
     },
     select: {
       wdt_ID: true,
@@ -466,57 +713,90 @@ export async function submitAnswers(
     throw new Error("Student not found or not authorized.");
   }
   const studentId = student.wdt_ID;
+
+  //registering final Exam Result
+
   for (const { questionId, answerId } of answers) {
     // Find or create the studentQuiz record for this student and question
     let studentQuiz = await prisma.studentQuiz.findFirst({
-      where: { studentId, questionId },
+      where: { studentId, questionId, isFinalExam: true },
     });
 
     if (!studentQuiz) {
       studentQuiz = await prisma.studentQuiz.create({
-        data: { studentId, questionId },
+        data: { studentId, questionId, isFinalExam: true },
       });
+      await registerFinalExam(studentId, coursesPackageId);
     }
 
     // Check if an answer already exists for this studentQuiz
-    const existingAnswer = await prisma.studentQuizAnswer.findFirst({
+    const existingAnswer = await prisma.studentQuizAnswer.findMany({
       where: {
         studentQuizId: studentQuiz.id,
-        selectedOptionId: answerId,
       },
+      select: { selectedOptionId: true },
     });
 
-    if (!existingAnswer) {
-      // Remove any previous answers for this question (if single-answer)
-      await prisma.studentQuizAnswer.deleteMany({
-        where: { studentQuizId: studentQuiz.id },
-      });
- 
-      // Create new answer
-      const newAnswer = await prisma.studentQuizAnswer.create({
-        data: {
-          studentQuizId: studentQuiz.id,
-          selectedOptionId: answerId,
-        },
-      });
-      results.push(newAnswer);
+    if (!existingAnswer || existingAnswer.length === 0) {
+      // console.log("new answer", existingAnswer);
+      if (
+        (await checkingUpdateProhibition(studentId, coursesPackageId)) === false
+      ) {
+        for (const ansId of answerId) {
+          await prisma.studentQuizAnswer.create({
+            data: {
+              studentQuizId: studentQuiz.id,
+              selectedOptionId: ansId,
+            },
+          });
+        }
+        await updateEndingExamTime(studentId, coursesPackageId);
+      }
     } else {
-      results.push(existingAnswer);
+      // Remove any previous answers for this question (if single-answer)
+      if (
+        (await checkingUpdateProhibition(studentId, coursesPackageId)) === false
+      ) {
+        await prisma.studentQuizAnswer.deleteMany({
+          where: { studentQuizId: studentQuiz.id },
+        });
+        for (const ansId of answerId) {
+          await prisma.studentQuizAnswer.create({
+            data: {
+              studentQuizId: studentQuiz.id,
+              selectedOptionId: ansId,
+            },
+          });
+        }
+        await updateEndingExamTime(studentId, coursesPackageId);
+      }
     }
+    // Create new answers
+
+    const newAnswer = await prisma.studentQuizAnswer.findMany({
+      where: {
+        studentQuizId: studentQuiz.id,
+        selectedOptionId: { in: answerId },
+      },
+    });
+    results.push(newAnswer);
   }
 
-  const score = await correctAnswer(chapterId, studentId);
-  // if the the score is above 0.5 then excite the unlock test  else  display message only
-  if (score.result.score === 1) {
-    await unlockTest(wdt_ID, courseId, chapterId);
+  const score = await correctExamAnswer(coursesPackageId, studentId);
+  // // if the the score is above 0.5 then excite the unlock test  else  display message only
+
+  // if (score.result.score === 1) {
+  //   await unlockTest(wdt_ID, courseId, chapterId);
+  // } else {
+  //   console.log("Score below threshold, not unlocking test.");
+  // }
+  if (
+    (await checkingUpdateProhibition(studentId, coursesPackageId)) === false
+  ) {
+    console.log("Answers submitted successfully:", results);
+    return { success: true, submitted: results.length };
   } else {
-    console.log("Score below threshold, not unlocking test.");
+    return;
   }
-
-  // await unlockingNextChapter(wdt_ID, courseId, chapterId, packageId ?? "");
-  // await unlock(wdt_ID);
-  // await unlock_me(wdt_ID);
-  // await unlockingNextChapterfuad(wdt_ID);
-  console.log("Answers submitted successfully:", results);
-  return { success: true, submitted: results.length };
+  // return score;
 }

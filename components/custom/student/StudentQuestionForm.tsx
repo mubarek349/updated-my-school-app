@@ -93,18 +93,29 @@ const StudentQuestionForm = ({
     [true, (response) => console.log(response)],
 
     wdt_ID
-
   );
   const [progressData, refreshProgress] = useAction(
     updatePathProgressData,
     [true, (response) => console.log(response)],
 
     wdt_ID
-
   );
   const [, refetchSubmit, submitLoading] = useAction(submitAnswers, [
     ,
-    (response) => console.log(response),
+    async (response) => {
+      toast.success("Answers submitted!", {
+        style: { background: "#10B981", color: "#fff" },
+      });
+      await fetchCorrectAnswers();
+      setShowCorrect(true);
+      if (feedback?.result?.score === 1) {
+        toast.success("Next chapter unlocked!", {
+          style: { background: "#10B981", color: "#fff" },
+        });
+      }
+      refreshProgress?.();
+      refresh();
+    },
   ]);
   const { refresh } = useMainMenu();
 
@@ -150,6 +161,7 @@ const StudentQuestionForm = ({
       }
       return { ...prev, [questionId]: [...prevSelected, optionId] };
     });
+    console.log("Selected answers in option change", selectedAnswers);
   };
 
   async function handleSubmit() {
@@ -158,26 +170,12 @@ const StudentQuestionForm = ({
       return;
     }
     const answers = Object.entries(selectedAnswers).flatMap(
-      ([questionId, answerIds]) =>
-        answerIds.map((answerId) => ({ questionId, answerId }))
+      ([questionId, answerId]) => ({ questionId, answerId })
     );
+    console.log("Selected answers in handle submit", answers);
 
     try {
-
-      await refetchSubmit(answers, wdt_ID, courseId, chapterId);
-
-      toast.success("Answers submitted!", {
-        style: { background: "#10B981", color: "#fff" },
-      });
-      await fetchCorrectAnswers();
-      setShowCorrect(true);
-      if (feedback?.result?.score === 1) {
-        toast.success("Next chapter unlocked!", {
-          style: { background: "#10B981", color: "#fff" },
-        });
-      }
-      refreshProgress?.();
-      refresh();
+      refetchSubmit(answers, wdt_ID, courseId, chapterId);
     } catch (e) {
       setError("Failed to submit answers.");
       toast.error("Failed to submit answers.", {
@@ -348,11 +346,10 @@ const StudentQuestionForm = ({
                   onClick={() =>
                     refetchSubmit(
                       Object.entries(selectedAnswers).flatMap(
-                        ([questionId, answerIds]) =>
-                          answerIds.map((answerId) => ({
-                            questionId,
-                            answerId,
-                          }))
+                        ([questionId, answerId]) => ({
+                          questionId,
+                          answerId,
+                        })
                       ),
 
                       wdt_ID,
@@ -386,22 +383,18 @@ const StudentQuestionForm = ({
                 {submitLoading ? (
                   <Loader2 className="animate-spin mr-2 w-4 h-4" />
                 ) : null}
-
                 መልሱን ይላኩ
-
               </Button>
-              {showCorrect && feedback?.result?.score === 1 ? (
+              {showCorrect && feedback?.result?.score === 1 && progressData ? (
                 <Button
                   asChild
                   className="bg-green-600 hover:bg-green-700 text-white font-semibold text-base py-2 px-6 rounded-md shadow-md transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                   aria-label="Go to next chapter"
                 >
                   <Link
-
-                    href={`/en/student/${wdt_ID}/${progressData?.chapter?.course?.id}/${progressData?.chapter?.id}`}
+                    href={`/en/student/${wdt_ID}/${progressData[0]}/${progressData[1]}`}
                   >
                     ወደ ቀጣይ ክፍል ይሂዱ
-
                   </Link>
                 </Button>
               ) : showCorrect && feedback?.result?.score !== 1 ? (
@@ -430,7 +423,7 @@ const StudentQuestionForm = ({
           initial="hidden"
           animate="visible"
         >
-          No questions available for this chapter.
+          ለዚህ ክፍል ጥያቄ አልተቀመጥለትም፡፡
         </motion.p>
       )}
     </motion.div>

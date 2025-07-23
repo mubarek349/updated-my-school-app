@@ -12,19 +12,19 @@ import { Grip, Pencil, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmModal } from "../../modals/confirm-modal";
 
-interface QuestionsListProps {
+interface PackageQuestionsListProps {
   items: question[];
   onDelete: (id: string) => void;
   // onReorder: (updateData: { id: string; position: number }[]) => void;
   onEdit: (id: string) => void;
 }
 
-export const QuestionsList = ({
+export const PackageQuestionsList = ({
   items,
   // onReorder,
   onDelete,
   onEdit,
-}: QuestionsListProps) => {
+}: PackageQuestionsListProps) => {
   const [isMounted, setIsMounted] = useState(false);
   const [questions, setQuestions] = useState(items);
 

@@ -32,3 +32,16 @@ export async function getCoursesPackages() {
     return [];
   }
 }
+export async function getCoursesPackageId(wdt_ID: number) {
+  try {
+    const youtubeSubjec = await prisma.wpos_wpdatatable_23.findFirst({
+      where: { wdt_ID },
+      select: { youtubeSubject: true },
+    });
+    console.log("courses package: ", youtubeSubjec?.youtubeSubject);
+    return youtubeSubjec?.youtubeSubject;
+  } catch (error) {
+    console.error("Error fetching courses with progress:", error);
+    return null;
+  }
+}

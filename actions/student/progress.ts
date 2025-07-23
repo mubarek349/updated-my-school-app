@@ -40,6 +40,69 @@ export async function getStudentProgressPerChapter(
   });
   return progress;
 }
+export async function isCompletedAllChaptersInthePackage(
+  packageId: string,
+  wdt_ID: number
+) {
+  const studentwithActivePacage = await prisma.wpos_wpdatatable_23.findFirst({
+    where: {
+      wdt_ID: wdt_ID,
+      status: { in: ["Active", "Not yet"] },
+      youtubeSubject: packageId,
+    },
+    select: {
+      wdt_ID: true,
+      activePackage: {
+        select: {
+          id: true,
+          name: true,
+          courses: {
+            orderBy: { order: "asc" },
+            select: {
+              id: true,
+              chapters: {
+                orderBy: { position: "asc" },
+                select: { id: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  const allChapterIds =
+    studentwithActivePacage?.activePackage?.courses
+      ?.map((c) => c.chapters.map((ch) => ch.id))
+      ?.reduce((acc, cc) => [...acc, ...cc], []) ?? [];
+
+  const progress = await prisma.studentProgress.findMany({
+    where: {
+      studentId: wdt_ID,
+      chapterId: { in: allChapterIds },
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    select: {
+      isCompleted: true,
+      chapter: {
+        select: {
+          id: true,
+          course: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  if (progress.filter((p) => p.isCompleted).length === allChapterIds.length) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 export async function getActivePackageProgress(wdt_ID: number) {
   try {
@@ -161,7 +224,7 @@ export async function updatePathProgressData(wdt_ID: number) {
       return cousefailedsolve(wdt_ID);
     } else {
       console.log("Last chapter progress:", lastChapter);
-      return lastChapter;
+      return [lastChapter.chapter.course.id, lastChapter.chapter.id];
     }
   } catch (error) {
     console.error("Error fetching last chapter progress:", error);
@@ -274,7 +337,7 @@ export async function packageCompleted(wdt_ID: number) {
   });
 
   if (!student?.activePackage?.courses?.length) {
-    return { completed: true, message: "No courses found" };
+    return { completed: true, message: "በፓኬጁ ዉስጥ ምንም ኮርስ አልተገኘም" };
   }
 
   // i went gate all studtentchapter and set in aray
@@ -365,7 +428,7 @@ export async function cousefailedsolve(wdt_ID: number) {
   });
 
   if (progress.filter((p) => p.isCompleted).length === allChapterIds.length) {
-    return null;
+    return ["finalExam", studentwithActivePacage?.activePackage?.id];
   } else {
     const CompletedlastChapterId = progress.findLast((p) => p.isCompleted)
       ?.chapter.id;
@@ -405,6 +468,6 @@ export async function cousefailedsolve(wdt_ID: number) {
         },
       },
     });
-    return lastChapter;
+    return [lastChapter?.chapter.course.id, lastChapter?.chapter.id];
   }
 }
