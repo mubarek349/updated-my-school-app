@@ -10,14 +10,11 @@ import {
   examsubmitAnswers, // This should submit answers to an API
 } from "@/actions/student/question";
 import toast from "react-hot-toast";
-// Removed explicit imports for settingUpdateProhibition and updateEndingExamTime,
-// assuming their logic is handled purely on the backend upon exam submission
-// and no longer directly called from this frontend component.
 import { useMainMenu } from "@/app/[lang]/(user)/student/layout";
 import ExamResultDisplay from "./ExamResultDisplay"; // Component for displaying results
 import { shuffleArray } from "@/lib/utils"; // Utility for shuffling questions
 import {
-  checkingUpdateProhibition,
+  checkFinalExamCreation,
   settingUpdateProhibition,
 } from "@/actions/student/finalExamResult";
 
@@ -37,24 +34,33 @@ interface CoursesPackage {
   questions: Question[];
 }
 
+// Re-import Feedback interface from ExamResultDisplay to ensure consistency
+// import { Feedback } from "./ExamResultDisplay";
+interface Feedback {
+  studentResponse?: Record<string, string[]>;
+  questionAnswers?: Record<string, string[]>;
+  result?: { score: number; correct: number; total: number };
+}
+
 interface FinalExamFormProps {
   coursesPackage: CoursesPackage | null;
   wdt_ID: number;
   coursesPackageId: string;
   examDurationMinutes: number;
+  // The feedback prop from parent is now explicitly for initial student responses,
+  // or it can be removed if FinalExamForm always fetches the full feedback.
+  // For now, let's keep it but rely on internal state for display.
   feedback: { studentResponse: { [questionId: string]: string[] } };
   updateProhibition: boolean;
   refresh: () => void;
 }
-
-// FLAG: Feedback Interface (Moved to top for clarity and consistency)
 
 const FinalExamForm = ({
   coursesPackage,
   wdt_ID,
   coursesPackageId,
   examDurationMinutes,
-  feedback,
+  feedback, // This is the initial feedback from the parent
   updateProhibition,
   refresh,
 }: FinalExamFormProps) => {
@@ -70,17 +76,25 @@ const FinalExamForm = ({
   const [isAnswersLoading, setIsAnswersLoading] = useState(true);
   const [showSubmissionConfirm, setShowSubmissionConfirm] = useState(false);
   const [isExamSubmitted, setIsExamSubmitted] = useState(false);
-  // const [showCorrectAnswers, setShowCorrectAnswers] = useState(false); // Controls display of ExamResultDisplay
-  // const [feedback, setFeedback] = useState<Feedback | null>(null); // Stores full feedback received from submission
-  const [error, setError] = useState<string | null>(null); // For general error handling
-  // FLAG: Data Fetching (Initial Answers)
+
+  // NEW STATE: To hold the complete feedback object for display in ExamResultDisplay
+  const [displayFeedback, setDisplayFeedback] = useState<Feedback | null>(null);
+  const [isFinalExamCreated, setIsFinalExamCreated] = useState(false);
+
+  // FLAG: Data Fetching (Initial Answers and existing feedback)
   useEffect(() => {
     const fetchExistingAnswers = async () => {
       setIsAnswersLoading(true);
+      setIsFinalExamCreated(
+        await checkFinalExamCreation(wdt_ID, coursesPackageId)
+      );
+
       try {
-        const response: {
-          studentResponse: { [questionId: string]: string[] };
-        } = await correctExamAnswer(coursesPackageId, wdt_ID); // Should be an API call
+        // Assume correctExamAnswer returns the full Feedback object as defined in ExamResultDisplay
+        const response: Feedback = await correctExamAnswer(
+          coursesPackageId,
+          wdt_ID
+        );
         if (response?.studentResponse) {
           const cleanedAnswers = Object.fromEntries(
             Object.entries(response.studentResponse).map(([qId, ans]) => [
@@ -89,6 +103,15 @@ const FinalExamForm = ({
             ])
           );
           setInitialAnswers(cleanedAnswers);
+        }
+        // If there's existing result/feedback, set it for display
+        if (response?.result || response?.questionAnswers) {
+          setDisplayFeedback(response);
+          // Also set isExamSubmitted to true if there's an existing result,
+          // as this means the exam was already completed.
+          if (response.result && response.result.score !== undefined) {
+            setIsExamSubmitted(true);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch existing answers:", error);
@@ -99,8 +122,8 @@ const FinalExamForm = ({
     };
 
     fetchExistingAnswers();
-    // This effect should only re-run if coursesPackageId or wdt_ID changes,
-    // which signifies a different exam.
+    // Dependency array: only re-run if exam identifiers change, not on `feedback` prop
+    // as we are managing the display feedback internally now.
   }, [coursesPackageId, wdt_ID]);
 
   // FLAG: Custom Hook Integration
@@ -121,7 +144,6 @@ const FinalExamForm = ({
     toggleFlagged,
     // No need for `totalQuestions` if `getOverallProgress` handles it
   } = useExamState(currentQuestions, initialAnswers);
-  const { refresh: refreshProgress } = useMainMenu(); // Assuming useMainMenu provides a refresh
 
   // FLAG: Action Hook for Submission
   // The success callback now handles post-submission logic (showing results or retake)
@@ -151,8 +173,6 @@ const FinalExamForm = ({
       }
 
       try {
-        // Ensure the payload matches what examsubmitAnswers expects for multiple answers
-        // This will trigger the `useAction` hook's submission process
         refetchSubmit(
           [
             {
@@ -178,7 +198,6 @@ const FinalExamForm = ({
       }
     }, [currentQuestion, answers, refetchSubmit, wdt_ID, coursesPackageId]);
 
-  // FLAG: Utility Function for Array Comparison
   const areArraysEqual = (arr1: string[], arr2: string[]): boolean => {
     if (arr1.length !== arr2.length) return false;
     const sortedArr1 = [...arr1].sort();
@@ -190,12 +209,14 @@ const FinalExamForm = ({
   const handleGoToNextQuestion = async () => {
     if (currentQuestion) {
       const newAnswer = answers[currentQuestion.id] || [];
-      // Fetch the latest existing answer just before moving to ensure accuracy
-      // This `correctExamAnswer` should only fetch, not update, and be an API call
-      const response: { studentResponse: { [questionId: string]: string[] } } =
-        await correctExamAnswer(coursesPackageId, wdt_ID);
+
+      // Fetch the latest existing answer to compare before submitting
+      const response: Feedback = await correctExamAnswer(
+        coursesPackageId,
+        wdt_ID
+      );
       const existingAnswer =
-        response?.studentResponse[currentQuestion.id] || [];
+        response?.studentResponse?.[currentQuestion.id] || [];
 
       // Only submit if the new answer is different from the saved one
       if (!areArraysEqual(newAnswer, existingAnswer)) {
@@ -209,11 +230,12 @@ const FinalExamForm = ({
     if (currentQuestion) {
       const newAnswer = answers[currentQuestion.id] || [];
       // Fetch the latest existing answer just before moving to ensure accuracy
-      // This `correctExamAnswer` should only fetch, not update, and be an API call
-      const response: { studentResponse: { [questionId: string]: string[] } } =
-        await correctExamAnswer(coursesPackageId, wdt_ID);
+      const response: Feedback = await correctExamAnswer(
+        coursesPackageId,
+        wdt_ID
+      );
       const existingAnswer =
-        response?.studentResponse[currentQuestion.id] || [];
+        response?.studentResponse?.[currentQuestion.id] || [];
 
       // Only submit if the new answer is different from the saved one
       if (!areArraysEqual(newAnswer, existingAnswer)) {
@@ -251,12 +273,29 @@ const FinalExamForm = ({
 
       // Trigger the submission via useAction, which handles success/failure based on score
       refetchSubmit(submissionPayload, wdt_ID, coursesPackageId);
-      const result = await correctExamAnswer(coursesPackageId, wdt_ID);
-      if (result.result.score >= 0.5) {
+
+      // Fetch the final result after submission
+      const result: Feedback = await correctExamAnswer(
+        coursesPackageId,
+        wdt_ID
+      );
+      setDisplayFeedback(result); // Set the full feedback for display
+
+      if (
+        result.result &&
+        result.result.score !== undefined &&
+        result.result.score >= 0.5
+      ) {
         await settingUpdateProhibition(wdt_ID, coursesPackageId);
         refresh();
       }
-      setIsExamSubmitted(true);
+
+      // Shuffle the questions after the exam has been fully submitted
+      // Create a shallow copy to ensure a new array reference for state update
+      const shuffledQuestions = shuffleArray([...currentQuestions]);
+      setCurrentQuestions(shuffledQuestions);
+      setIsFinalExamCreated(true);
+      setIsExamSubmitted(true); // Now this correctly triggers the display of ExamResultDisplay with the updated feedback
     } catch (e) {
       toast.error("Failed to submit answers.", {
         style: { background: "#EF4444", color: "#fff" },
@@ -279,141 +318,129 @@ const FinalExamForm = ({
     );
   }
 
-  // Conditional render for submitted state or when feedback is available
+  // Conditional render for submitted state or when displayFeedback is available with a result
   if (
     isExamSubmitted === true ||
-    (updateProhibition === true && feedback && Object.keys(feedback).length > 0)
+    (updateProhibition === true && displayFeedback && displayFeedback.result)
   ) {
-    // if (feedback && Object.keys(feedback).length > 0) {
-    // If exam is submitted and feedback is available, show results
     return (
       <ExamResultDisplay
-        feedback={feedback}
+        feedback={displayFeedback || {}} // Pass the internal displayFeedback state
         questions={coursesPackage?.questions || []}
         wdt_ID={wdt_ID}
         coursesPackageId={coursesPackageId}
         setIsExamSubmitted={setIsExamSubmitted}
+        isFinalExamCreated={isFinalExamCreated}
       />
     );
-    // } else {
-    //   // This block is for when the exam is submitted but no feedback is available yet
-    //
-    // }
-  }
-
-  // FLAG: Submission Confirmation Modal
-  const renderSubmissionConfirmModal = () => {
-    const progress = getOverallProgress();
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-          <h3 className="text-2xl font-bold mb-4">መጨረስዎን ማረጋገጫ</h3>
-          <p className="mb-2">
-            እርስዎ ከዚህ ቡኋላ ምንም ማስተካከል የሚፈልጉት መልስ እንደሌለ እያረጋገጠዎት ነው፡፡ እርግጠኛ ነዎት?
-          </p>
-          <p className="mb-2">
-            የመለሱት: <span className="font-semibold">{progress.answered}</span> /{" "}
-            {progress.total}
-          </p>
-          <p className="mb-2">
-            ያልመለሱት:{" "}
-            <span className="font-semibold text-red-600">
-              {progress.unanswered}
-            </span>
-          </p>
-
-          {progress.unanswered > 0 && (
-            <p className="text-red-500 mb-4 font-medium">
-              ማስጠንቀቂያ!! እርስዎ ያልመለሱት መልስ አለ፡፡እባክዎ መልስዎን ይሙሉ፡፡
+  } else {
+    // FLAG: Submission Confirmation Modal
+    const renderSubmissionConfirmModal = () => {
+      const progress = getOverallProgress();
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-2xl font-bold mb-4">መጨረስዎን ማረጋገጫ</h3>
+            <p className="mb-2">
+              እርስዎ ከዚህ ቡኋላ ምንም ማስተካከል የሚፈልጉት መልስ እንደሌለ እያረጋገጠዎት ነው፡፡ እርግጠኛ ነዎት?
             </p>
-          )}
+            <p className="mb-2">
+              የመለሱት: <span className="font-semibold">{progress.answered}</span>{" "}
+              / {progress.total}
+            </p>
+            <p className="mb-2">
+              ያልመለሱት:{" "}
+              <span className="font-semibold text-red-600">
+                {progress.unanswered}
+              </span>
+            </p>
 
-          <div className="flex justify-end space-x-4">
-            <button
-              onClick={() => setShowSubmissionConfirm(false)}
-              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
-            >
-              አይ
-            </button>
-            <button
-              onClick={handleSubmitExam}
-              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-              disabled={submitLoading} // Disable button while submitting
-            >
-              ኦዎ
-            </button>
+            {progress.unanswered > 0 && (
+              <p className="text-red-500 mb-4 font-medium">
+                ማስጠንቀቂያ!! እርስዎ ያልመለሱት መልስ አለ፡፡እባክዎ መልስዎን ይሙሉ፡፡
+              </p>
+            )}
+
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowSubmissionConfirm(false)}
+                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+              >
+                አይ
+              </button>
+              <button
+                onClick={handleSubmitExam}
+                className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                disabled={submitLoading} // Disable button while submitting
+              >
+                ኦዎ
+              </button>
+            </div>
           </div>
+        </div>
+      );
+    };
+
+    // FLAG: Main Component Render (The exam form itself)
+    return (
+      <div className="min-h-screen bg-gray-100 p-6 font-sans">
+        {showSubmissionConfirm && renderSubmissionConfirmModal()}
+
+        <header className="bg-white p-4 rounded-lg shadow-md flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">
+            የ {coursesPackageId} ማጠቃለያ ፈተና
+          </h1>
+          <div className="flex items-center space-x-4">
+            {!(examDurationMinutes === 0 || examDurationMinutes === null) && (
+              <Timer
+                totalSeconds={examDurationMinutes * 60}
+                onTimeUp={() => {
+                  toast("Time's up!", {
+                    style: { background: "#F59E0B", color: "#fff" },
+                  });
+                  handleTimeUp();
+                }}
+              />
+            )}
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <main className="md:col-span-2">
+            <QuestionDisplay
+              question={currentQuestion}
+              selectedAnswer={
+                currentQuestion ? answers[currentQuestion.id] || [] : []
+              }
+              onAnswerChange={handleAnswerChange}
+              onNext={handleGoToNextQuestion}
+              onPrevious={handleGoToPreviousQuestion}
+              isFirstQuestion={isFirstQuestion}
+              isLastQuestion={isLastQuestion}
+              isSubmitting={submitLoading}
+              studentId={wdt_ID}
+              coursesPackageId={coursesPackageId}
+              isFlagged={
+                currentQuestion ? flaggedQuestions[currentQuestion.id] : false
+              }
+              onToggleFlag={toggleFlagged}
+              onSubmitExam={setShowSubmissionConfirm}
+            />
+          </main>
+
+          <aside className="md:col-span-1">
+            <ExamNavigation
+              questions={currentQuestions} // Pass `currentQuestions` to navigation for correct display after shuffle
+              goToQuestion={goToQuestion}
+              getQuestionStatus={getQuestionStatus}
+              getOverallProgress={getOverallProgress}
+              flaggedQuestions={flaggedQuestions}
+            />
+          </aside>
         </div>
       </div>
     );
-  };
-
-  // FLAG: Main Component Render (The exam form itself)
-  return (
-    <div className="min-h-screen bg-gray-100 p-6 font-sans">
-      {showSubmissionConfirm && renderSubmissionConfirmModal()}
-
-      <header className="bg-white p-4 rounded-lg shadow-md flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">
-          የ {coursesPackageId} ማጠቃለያ ፈተና
-        </h1>
-        <div className="flex items-center space-x-4">
-          {!(examDurationMinutes === 0 || examDurationMinutes === null) && (
-            <Timer
-              totalSeconds={examDurationMinutes * 60}
-              onTimeUp={() => {
-                toast("Time's up!", {
-                  style: { background: "#F59E0B", color: "#fff" },
-                });
-                handleTimeUp();
-              }}
-            />
-          )}
-          {/* <button
-            onClick={() => setShowSubmissionConfirm(true)}
-            className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            disabled={submitLoading} // Disable if already submitting
-          >
-            End Exam
-          </button> */}
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <main className="md:col-span-2">
-          <QuestionDisplay
-            question={currentQuestion}
-            selectedAnswer={
-              currentQuestion ? answers[currentQuestion.id] || [] : []
-            }
-            onAnswerChange={handleAnswerChange}
-            onNext={handleGoToNextQuestion}
-            onPrevious={handleGoToPreviousQuestion}
-            isFirstQuestion={isFirstQuestion}
-            isLastQuestion={isLastQuestion}
-            isSubmitting={submitLoading}
-            studentId={wdt_ID}
-            coursesPackageId={coursesPackageId}
-            isFlagged={
-              currentQuestion ? flaggedQuestions[currentQuestion.id] : false
-            }
-            onToggleFlag={toggleFlagged}
-            onSubmitExam={setShowSubmissionConfirm}
-          />
-        </main>
-
-        <aside className="md:col-span-1">
-          <ExamNavigation
-            questions={currentQuestions} // Pass `currentQuestions` to navigation for correct display after shuffle
-            goToQuestion={goToQuestion}
-            getQuestionStatus={getQuestionStatus}
-            getOverallProgress={getOverallProgress}
-            flaggedQuestions={flaggedQuestions}
-          />
-        </aside>
-      </div>
-    </div>
-  );
+  }
 };
 
 export default FinalExamForm;

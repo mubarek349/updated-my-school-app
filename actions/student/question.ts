@@ -676,7 +676,7 @@ export async function correctExamAnswer(
     const result = {
       total,
       correct,
-      score: total ? correct / total : 0,
+      score: correct / total ? correct / total : 0,
     };
 
     console.log("Result calculated:", result);
@@ -750,6 +750,7 @@ export async function examsubmitAnswers(
             },
           });
         }
+        await registerFinalExam(studentId, coursesPackageId);
         await updateEndingExamTime(studentId, coursesPackageId);
       }
     } else {
@@ -768,6 +769,7 @@ export async function examsubmitAnswers(
             },
           });
         }
+        await registerFinalExam(studentId, coursesPackageId);
         await updateEndingExamTime(studentId, coursesPackageId);
       }
     }

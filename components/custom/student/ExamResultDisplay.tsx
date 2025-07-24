@@ -1,8 +1,9 @@
 // components/custom/student/ExamResultDisplay.tsx
-import { checkingUpdateProhibition } from "@/actions/student/finalExamResult";
-import { useMainMenu } from "@/app/[lang]/(user)/student/layout";
-import { useRouter } from "next/navigation";
-import React, { use, useEffect, useState } from "react";
+import {
+  checkFinalExamCreation,
+  checkingUpdateProhibition,
+} from "@/actions/student/finalExamResult";
+import React, { useEffect, useState } from "react";
 
 interface QuestionOption {
   id: string;
@@ -27,6 +28,7 @@ interface ExamResultDisplayProps {
   wdt_ID: number;
   coursesPackageId: string;
   setIsExamSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
+  isFinalExamCreated: boolean;
 }
 
 const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
@@ -35,20 +37,25 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
   wdt_ID,
   coursesPackageId,
   setIsExamSubmitted,
+  isFinalExamCreated,
 }) => {
   const { studentResponse, questionAnswers, result } = feedback;
   const [isClosedForUpdate, setIsClosedForUpdate] = useState(false);
 
   useEffect(() => {
     (async () => {
-      setIsClosedForUpdate(
-        await checkingUpdateProhibition(wdt_ID, coursesPackageId)
-      );
+      if (isFinalExamCreated === false) {
+        setIsExamSubmitted(false);
+      } else {
+        setIsClosedForUpdate(
+          await checkingUpdateProhibition(wdt_ID, coursesPackageId)
+        );
+      }
       setTimeout(() => {
         if (isClosedForUpdate === false) {
           setIsExamSubmitted(false);
         }
-      }, 10000);
+      }, 20000);
     })();
   }, []);
 
@@ -70,7 +77,7 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
       {/* Content Card: white background, rounded corners, shadow, max-width for readability, auto margins for centering */}
       <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg mb-6 w-full max-w-4xl mx-auto">
         <h2 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-4 text-center">
-          የማጠቃለይ ፈተናዎ ውጤት
+          የማጠቃለያ ፈተናዎ ውጤት
         </h2>
         <div className="text-center mb-6 border-b pb-4 border-gray-200">
           <p className="text-lg sm:text-xl font-semibold text-gray-800">
@@ -90,7 +97,7 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
           >
             {result.score >= 0.5
               ? "እንኩዋን ደስ አለዎት! የማጠቃለያ ፈተናዎኑን አልፈዋል፡፡"
-              : "የማጠቃለያ ፈተናዎኑን ወድቀዋል፡፡"}
+              : "የማጠቃለያ ፈተናውን ወድቀዋል፡፡"}
           </p>
         </div>
 

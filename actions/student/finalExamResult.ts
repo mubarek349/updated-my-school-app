@@ -85,6 +85,33 @@ export async function updateEndingExamTime(
     throw error; // Re-throw the error to be handled by the caller
   }
 }
+
+export async function checkFinalExamCreation(
+  studentId: number,
+  packageId: string
+) {
+  try {
+    // 1. Check if a registration for this student and package already exists
+    const updateProhibibted = await prisma.finalExamResult.findFirst({
+      where: {
+        studentId: studentId,
+        packageId: packageId,
+      },
+      select: {
+        id: true,
+        updationProhibited: true,
+      },
+    });
+    if (!updateProhibibted) {
+      return false;
+    } else {
+      return true;
+    }
+  } catch (error) {
+    console.error("update prohibted errror", error);
+    return false; // Re-throw the error to be handled by the caller
+  }
+}
 export async function checkingUpdateProhibition(
   studentId: number,
   packageId: string
