@@ -44,6 +44,7 @@ interface FinalExamFormProps {
   examDurationMinutes: number;
   feedback: { studentResponse: { [questionId: string]: string[] } };
   updateProhibition: boolean;
+  refresh: () => void;
 }
 
 // FLAG: Feedback Interface (Moved to top for clarity and consistency)
@@ -55,6 +56,7 @@ const FinalExamForm = ({
   examDurationMinutes,
   feedback,
   updateProhibition,
+  refresh,
 }: FinalExamFormProps) => {
   // Use a state for questions to allow re-randomization for retakes
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>(
@@ -236,20 +238,7 @@ const FinalExamForm = ({
       });
       return;
     }
-    if (currentQuestion) {
-      const newAnswer = answers[currentQuestion.id] || [];
-      // Fetch the latest existing answer just before moving to ensure accuracy
-      // This `correctExamAnswer` should only fetch, not update, and be an API call
-      const response: { studentResponse: { [questionId: string]: string[] } } =
-        await correctExamAnswer(coursesPackageId, wdt_ID);
-      const existingAnswer =
-        response?.studentResponse[currentQuestion.id] || [];
 
-      // Only submit if the new answer is different from the saved one
-      if (!areArraysEqual(newAnswer, existingAnswer)) {
-        await submitCurrentQuestionAnswer();
-      }
-    }
     try {
       const submissionPayload = Object.entries(answers).flatMap(
         ([questionId, answerIds]) => {
@@ -265,7 +254,7 @@ const FinalExamForm = ({
       const result = await correctExamAnswer(coursesPackageId, wdt_ID);
       if (result.result.score >= 0.5) {
         await settingUpdateProhibition(wdt_ID, coursesPackageId);
-        refreshProgress?.();
+        refresh();
       }
       setIsExamSubmitted(true);
     } catch (e) {

@@ -37,18 +37,15 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
   setIsExamSubmitted,
 }) => {
   const { studentResponse, questionAnswers, result } = feedback;
-  const router = useRouter();
-  const [isOpenForUpdate, setIsOpenForUpdate] = useState(false);
-  const { refresh: refreshProgress } = useMainMenu(); // Assuming useMainMenu provides a refresh
+  const [isClosedForUpdate, setIsClosedForUpdate] = useState(false);
 
   useEffect(() => {
     (async () => {
-      setIsOpenForUpdate(
+      setIsClosedForUpdate(
         await checkingUpdateProhibition(wdt_ID, coursesPackageId)
       );
-      refreshProgress?.();
       setTimeout(() => {
-        if (isOpenForUpdate === false) {
+        if (isClosedForUpdate === false) {
           setIsExamSubmitted(false);
         }
       }, 10000);
@@ -86,20 +83,24 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
           >
             ያገኙት በፐርሰንት: {scorePercentage}%
           </p>
-          <p className="text-gray-600 mt-2 text-sm sm:text-base">
+          <p
+            className={`mt-2 text-xl sm:text-2xl font-bold ${
+              result.score >= 0.5 ? "text-green-600" : "text-red-600"
+            }`}
+          >
             {result.score >= 0.5
               ? "እንኩዋን ደስ አለዎት! የማጠቃለያ ፈተናዎኑን አልፈዋል፡፡"
               : "የማጠቃለያ ፈተናዎኑን ወድቀዋል፡፡"}
           </p>
         </div>
 
-        {isOpenForUpdate === true ? (
+        {isClosedForUpdate === true ? (
           <div>
             <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 mt-6">
-              Question Breakdown
+              የጥያቄዎቹ ማረሚያ
             </h3>
             {/* Iterate through each question to display its details */}
-            refreshProgress?.() &&
+
             {questions.map((question, index) => {
               const studentAns = studentResponse?.[question.id] || [];
               const correctAns = questionAnswers?.[question.id] || [];
@@ -142,15 +143,15 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
                         }
                       >
                         {option.option}
-                        {correctAns.includes(option.id) && " (Correct Answer)"}
+                        {correctAns.includes(option.id) && " (ትክክለኛው መልስ)"}
                         {studentAns.includes(option.id) &&
                           !correctAns.includes(option.id) &&
-                          " (Your Incorrect Selection)"}
+                          " (እርስዎ የተሳሳቱት)"}
                       </li>
                     ))}
                   </ul>
                   <p className="text-xs sm:text-sm text-gray-800 mt-3">
-                    Your Answer(s):{" "}
+                    እርስዎ የመለሱት:{" "}
                     {studentAns.length > 0
                       ? studentAns
                           .map(
@@ -163,7 +164,7 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
                       : "No Answer Selected"}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-800">
-                    Correct Answer(s):{" "}
+                    ትክክለኛው መልስ:{" "}
                     {correctAns.length > 0
                       ? correctAns
                           .map(
@@ -180,7 +181,7 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
                       isCorrect ? "text-green-700" : "text-red-700"
                     }`}
                   >
-                    Status: {isCorrect ? "Correct" : "Incorrect"}
+                    መልሱን የማግኘትዎ ሁኔታ: {isCorrect ? "አግኝተውታል" : "አላገኙትም"}
                   </p>
                 </div>
               );

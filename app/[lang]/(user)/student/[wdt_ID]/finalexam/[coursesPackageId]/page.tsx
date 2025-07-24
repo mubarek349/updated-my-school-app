@@ -19,7 +19,7 @@ function Page() {
       true,
       (response) => {
         if (response === false) {
-          alert("እባክዎ ማጠቃልያ ፈተናውን ለመውሰድ ቅድሚያ ትምህርቱን ይጨርሱ፡፡");
+          alert("እባክዎ ማጠቃለያ ፈተናውን ለመውሰድ ቅድሚያ ትምህርቱን ይጨርሱ፡፡");
         }
         console.log("API Response:", response);
       },
@@ -83,6 +83,7 @@ function Page() {
       examDurationMinutes={data?.coursesPackage?.examDurationMinutes ?? 0}
       feedback={feedback}
       updateProhibition={updateProhibition}
+      refresh={refetch}
     />
   );
 }
