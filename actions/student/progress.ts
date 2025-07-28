@@ -231,6 +231,104 @@ export async function updatePathProgressData(wdt_ID: number) {
     throw error;
   }
 }
+export async function updateStartingProgress(
+  wdt_ID: number,
+  coursesPackageId: string,
+  chapterId: string
+) {
+  try {
+    const studentPackage = await prisma.coursePackage.findUnique({
+      where: { id: coursesPackageId },
+      select: {
+        courses: {
+          orderBy: { order: "asc" },
+          select: {
+            id: true,
+            chapters: { orderBy: { position: "asc" }, select: { id: true } },
+          },
+        },
+      },
+    });
+    if (!studentPackage) {
+      throw new Error("Student package not found");
+    }
+    const allChapterIdsFromPackage =
+      studentPackage?.courses
+        ?.map((c) => c.chapters.map((ch) => ch.id))
+        ?.reduce((acc, cc) => [...acc, ...cc], []) ?? [];
+    const idx = allChapterIdsFromPackage.findIndex((c) => c === chapterId);
+    if (idx === -1) {
+      throw new Error("Chapter not found in the package");
+    }
+    const existingProgress = await prisma.studentProgress.findMany({
+      where: { studentId: wdt_ID, chapterId: { in: allChapterIdsFromPackage } },
+      select: { id: true },
+    });
+
+    if (existingProgress) {
+      const ids=existingProgress.map((exId)=>exId.id);
+      await prisma.studentProgress.deleteMany({
+        where:{id:{in: ids}}
+      })
+      if (idx === 0) {
+        await prisma.studentProgress.create({
+          data: {
+            studentId: wdt_ID,
+            chapterId: allChapterIdsFromPackage[idx],
+            isCompleted: false,
+          },
+        });
+      } else {
+        for (let id = 0; id < idx; id++) {
+          await prisma.studentProgress.create({
+            data: {
+              studentId: wdt_ID,
+              chapterId: allChapterIdsFromPackage[id],
+              isCompleted: true,
+            },
+          });
+        }
+        await prisma.studentProgress.create({
+          data: {
+            studentId: wdt_ID,
+            chapterId: allChapterIdsFromPackage[idx],
+            isCompleted: false,
+          },
+        });
+      }
+    } else {
+      if (idx === 0) {
+        await prisma.studentProgress.create({
+          data: {
+            studentId: wdt_ID,
+            chapterId: allChapterIdsFromPackage[idx],
+            isCompleted: false,
+          },
+        });
+      } else {
+        for (let id = 0; id < idx; id++) {
+          await prisma.studentProgress.create({
+            data: {
+              studentId: wdt_ID,
+              chapterId: allChapterIdsFromPackage[id],
+              isCompleted: true,
+            },
+          });
+        }
+        await prisma.studentProgress.create({
+          data: {
+            studentId: wdt_ID,
+            chapterId: allChapterIdsFromPackage[idx],
+            isCompleted: false,
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching last chapter progress:", error);
+    throw error;
+  }
+}
 
 // last chapter progress then i wentt o rerutn thr last courseand chapter
 export async function pathProgressData(wdt_ID: number) {

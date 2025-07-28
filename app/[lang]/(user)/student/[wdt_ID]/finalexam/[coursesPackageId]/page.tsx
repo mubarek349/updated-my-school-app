@@ -18,10 +18,14 @@ function Page() {
     [
       true,
       (response) => {
-        if (response === false) {
-          alert("እባክዎ ማጠቃለያ ፈተናውን ለመውሰድ ቅድሚያ ትምህርቱን ይጨርሱ፡፡");
+        try {
+          if (response === false) {
+            alert("እባክዎ ማጠቃለያ ፈተናውን ለመውሰድ ቅድሚያ ትምህርቱን ይጨርሱ፡፡");
+          }
+          console.log("API Response:", response);
+        } catch (error) {
+          console.error("Error in refetch callback:", error);
         }
-        console.log("API Response:", response);
       },
     ], // Log response here
     wdt_ID,

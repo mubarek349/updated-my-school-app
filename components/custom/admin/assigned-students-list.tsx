@@ -1,6 +1,9 @@
 "use client";
 
-import { getAssignedPacakgesWithSubjects } from "@/actions/admin/packageassign";
+import {
+  getAssignedPacakgesWithSubjects,
+  unAssignPackage,
+} from "@/actions/admin/packageassign";
 import { cn } from "@/lib/utils";
 import React from "react";
 
@@ -13,16 +16,17 @@ type AssignedItem = {
 
 type AssignedStudentsListProps = {
   coursesPackageId: string;
-  //   assigned: AssignedItem[];
 };
 
 import { useEffect, useState } from "react";
 import StudentAssignmentForm from "./student-assignment-form";
 import { Baby } from "lucide-react";
+import { UnassigningConfirmModal } from "@/components/modals/confirm-modal";
+import toast from "react-hot-toast";
 
 function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
   const [assigned, setAssigned] = useState<AssignedItem[]>();
-  const [refresh, setRefresh] = useState(Date.now());
+  const [refresh, setRefresh] = useState(new Date().toISOString());
   useEffect(() => {
     async function fetchAssigned() {
       const result = await getAssignedPacakgesWithSubjects(coursesPackageId);
@@ -38,14 +42,6 @@ function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
     fetchAssigned();
   }, [coursesPackageId, refresh]);
 
-//   if (!assigned || assigned.length === 0) {
-//     return (
-//       <div className="text-center text-gray-500 py-8">
-//         No assigned Students found.
-//       </div>
-//     );
-//   }
-
   return (
     <>
       <div className="max-w-2xl mx-auto mt-8 mb-10">
@@ -58,27 +54,42 @@ function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
               key={item.package + item.subject + idx}
               className="bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 rounded-xl shadow-md p-5 flex flex-col items-center hover:shadow-lg transition"
             >
-              <span
-                className={cn(
-                  "flex gap-4 items-center text-lg font-semibold text-blue-700 mb-1",
-                  item.isKid && "text-yellow-700"
-                )}
+              <UnassigningConfirmModal
+                onConfirm={async () => {
+                  try {
+                    await unAssignPackage(
+                      coursesPackageId,
+                      item.isKid ?? false,
+                      item.package,
+                      item.subject
+                    );
+                    toast.success("successfully unAssigned");
+                    setRefresh(new Date().toISOString());
+                  } catch {
+                    toast.error("Failed to unassign package");
+                  }
+                }}
               >
-                {item.package} - {item.subject}
-                {item.isKid && (
-                  <>
-                    <Baby />
-                  </>
-                )}
-              </span>
+                <span
+                  className={cn(
+                    "flex gap-4 items-center text-lg font-semibold text-blue-700 mb-1",
+                    item.isKid && "text-yellow-700"
+                  )}
+                >
+                  {item.package} - {item.subject}
+                  {item.isKid && (
+                    <>
+                      <Baby />
+                    </>
+                  )}
+                </span>
+              </UnassigningConfirmModal>
             </div>
           ))}
         </div>
       </div>
       <StudentAssignmentForm
         setRefresh={setRefresh}
-        // initialData={students}
-        // coursesPackageId={coursesPackage.id}
       />
     </>
   );

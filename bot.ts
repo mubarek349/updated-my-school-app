@@ -1,8 +1,10 @@
 import { Bot } from "grammy";
+import cron from "node-cron";
 import prisma from "./lib/db";
 import dotenv from "dotenv";
 import { getStudentById } from "./actions/admin/adminBot";
 import { allPackages } from "./actions/admin/adminBot";
+import { sendProgressMessages } from "./actions/admin/analysis";
 import { getStudentAnalyticsperPackage } from "./actions/admin/analysis";
 import { filterStudentsByPackageList } from "./actions/admin/analysis";
 import { filterStudentsByPackageandStatus } from "./actions/admin/analysis";
@@ -10,7 +12,7 @@ import { updatePathProgressData } from "./actions/student/progress";
 import { InlineKeyboard } from "grammy";
 dotenv.config();
 const BASE_URL = process.env.FORWARD_URL || process.env.AUTH_URL;
-
+const sentMessageIds: Record<string, number[]> = {};
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN || "");
 export { bot };
 
@@ -24,9 +26,33 @@ export default async function sendMessage(chat_id: number, message: string) {
 export async function startBot() {
   bot.command("start", async (ctx) => {
     const chatId = ctx.chat?.id;
+    console.log("Current time:", new Date().toLocaleString());
+    console.log("current time zone  >>>", new Date().getTimezoneOffset());
 
     if (!chatId) {
       return ctx.reply("Unable to retrieve chat ID.");
+    }
+    // Check if user is admin
+    const admin = await prisma.admin.findFirst({
+      where: { chat_id: chatId.toString() },
+    });
+
+    if (admin) {
+      // Admin help message (Amharic & English)
+      return ctx.reply(
+        `👋 <b>እንኳን ወደ አድሚን ፓነል በደህና መጡ!</b>\n\n` +
+          `ይህ ቦት የተማሪዎችን ሁኔታ ማየት፣ መልእክት ላክ እና የትምህርት ጥራት ማጣራት ይረዳዎታል።\n\n` +
+          `• <b>/login</b> – ወደ አድሚን ድህረገፅ ይግቡ።\n` +
+          `• <b>/admin</b> – ተማሪዎችን ያስተዳድሩ እና መልእክት ይላኩ።\n` +
+          `• <b>/start</b> – የትምህርት መጀመሪያ ገጽ ይመልከቱ።\n\n` +
+          `Welcome to the Admin Portal!\n\n` +
+          `This bot helps you manage students, send messages, and monitor course quality.\n\n` +
+          `• <b>/login</b> – Access the admin website.\n` +
+          `• <b>/admin</b> – Manage students and send messages in the bot.\n` +
+          `• <b>/start</b> – Start learning the course as a student.\n\n` +
+          `እንኳን ደህና መጡ!`,
+        { parse_mode: "HTML" }
+      );
     }
 
     // 1. Fetch channels
@@ -44,7 +70,6 @@ export async function startBot() {
         activePackage: {
           where: { isPublished: true },
           select: {
-            id: true,
             courses: {
               where: { order: 1 },
               select: {
@@ -69,19 +94,25 @@ export async function startBot() {
       const subject = channel.subject;
       const packageType = channel.package;
       const kidPackage = channel.isKid;
-      const subjectPackage = await prisma.subjectPackage.findFirst({
-        where: {
-          subject: subject,
-          packageType: packageType,
-          kidpackage: kidPackage,
-        },
-        select: { packageId: true },
-      });
-
-      await prisma.wpos_wpdatatable_23.update({
-        where: { wdt_ID: channel.wdt_ID },
-        data: { youtubeSubject: subjectPackage?.packageId || null },
-      });
+      if (subject) {
+        const subjectPackage = await prisma.subjectPackage.findFirst({
+          where: {
+            subject: subject,
+            packageType: packageType,
+            kidpackage: kidPackage,
+          },
+          select: { packageId: true },
+        });
+        await prisma.wpos_wpdatatable_23.update({
+          where: { wdt_ID: channel.wdt_ID },
+          data: { youtubeSubject: subjectPackage?.packageId || null },
+        });
+      } else {
+        await prisma.wpos_wpdatatable_23.update({
+          where: { wdt_ID: channel.wdt_ID },
+          data: { youtubeSubject: null },
+        });
+      }
     }
 
     // 3. Fetch channels again to get updated youtubeSubject
@@ -99,7 +130,6 @@ export async function startBot() {
         activePackage: {
           where: { isPublished: true },
           select: {
-            id: true,
             courses: {
               where: { order: 1 },
               select: {
@@ -124,22 +154,25 @@ export async function startBot() {
 
     if (channels && channels.length > 0) {
       let sent;
+
       for (const channel of channels) {
         const studId = channel.wdt_ID;
-        if (channel.activePackage) {
-          const studentProgress = await prisma.studentProgress.count({
+        if (
+          channel.activePackage &&
+          channel.activePackage.courses.length > 0 &&
+          channel.activePackage.courses[0].chapters.length > 0
+        ) {
+          const course = channel.activePackage.courses[0];
+          const chapter = course.chapters[0];
+
+          const studentProgress = await prisma.studentProgress.findFirst({
             where: {
               studentId: channel.wdt_ID,
-              chapter: {
-                course: {
-                  packageId: channel.activePackage.id,
-                },
-              },
+              chapterId: chapter.id,
             },
           });
-          const chapter = channel.activePackage.courses?.[0]?.chapters?.[0];
 
-          if (studentProgress <= 0 && chapter) {
+          if (!studentProgress) {
             await prisma.studentProgress.create({
               data: {
                 studentId: channel.wdt_ID,
@@ -150,7 +183,6 @@ export async function startBot() {
           }
 
           const update = await updatePathProgressData(studId);
-          console.log("currect url", update);
           const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
 
           const channelName = channel.name || "ዳሩል-ኩብራ";
@@ -185,6 +217,41 @@ export async function startBot() {
   // bot.start();
   console.log("Telegram bot started successfully.");
   // sendMessagesToAllStudents();
+
+  bot.command("login", async (ctx) => {
+    // Show an inline button that triggers a callback query
+    const keyboard = new InlineKeyboard().text("🔑 Login", "admin_login_check");
+    await ctx.reply("Please click the button below to login:", {
+      reply_markup: keyboard,
+    });
+  });
+
+  // Handle the callbackQuery for the login button
+  bot.callbackQuery("admin_login_check", async (ctx) => {
+    const chatId = ctx.chat?.id;
+    // Check if user is admin
+    const admin = await prisma.admin.findFirst({
+      where: { chat_id: chatId?.toString() },
+    });
+
+    if (admin) {
+      // If admin, show web app button
+      const keyboard = new InlineKeyboard().webApp(
+        "🔑 Open Admin WebApp",
+        "https://darelkubra.com:5000/en/login" // Replace with your actual web app URL
+      );
+      await ctx.editMessageText(
+        "Welcome, admin! Click below to open the admin web app:",
+        {
+          reply_markup: keyboard,
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "🚫 You are not authorized to access the admin web app."
+      );
+    }
+  });
 
   // Store admin's pending message context
   const pendingAdminMessages: Record<
@@ -417,7 +484,7 @@ export async function startBot() {
 
   // Step 3: Prompt for message after status selection and show filtered chat_ids
   bot.callbackQuery(
-    /admin_status_(.+)_(completed|notstarted|inprogress_0 |inprogress_10|inprogress_40|inprogress_70|inprogress_o)/,
+    /admin_status_(.+)_(completed|notstarted|inprogress_0|inprogress_10|inprogress_40|inprogress_70|inprogress_o)/,
     async (ctx) => {
       await ctx.answerCallbackQuery();
       const [, packageId, status] = ctx.match;
@@ -526,4 +593,90 @@ export async function startBot() {
 
   // bot.start();
   console.log("✅ አድሚን ቦት ተጀምሯል።");
+
+  // Schedule a task to run every day at 00:00
+  // import { sendProgressMessages } from "./actions/admin/analysis";
+
+  cron.schedule("28 12 * * *", async () => {
+    console.log("Running progress notification job...");
+    console.log("Current time:", new Date().toLocaleString());
+    console.log("current time zone  >>>", new Date().getTimezoneOffset());
+    try {
+      const studentsWithProgress = await sendProgressMessages();
+
+      for (const { chatid, progress, studId, name } of studentsWithProgress) {
+        if (!chatid) continue;
+
+        // Delete all previous messages for this user
+        if (sentMessageIds[chatid]) {
+          for (const msgId of sentMessageIds[chatid]) {
+            try {
+              // await bot.api.deleteMessage(Number(chatid), msgId);
+            } catch (err) {
+              // Ignore errors (message might already be deleted)
+            }
+          }
+          sentMessageIds[chatid] = [];
+        }
+
+        let message = "";
+        let extraOptions = {};
+
+        if (progress === "completed") {
+          message =
+            "🎉 እንኳን ደስ አለህ! ኮርሱን በትክክል ጨርሰሃል። አመሰግናለሁ!\n\nበትጋትና በትክክል ስራህን በመሟሟት የተማሪነትህን ምርጥ አሳየህ። ይህ የመጀመሪያ አስደሳች እድገት ነው። በሚቀጥለው ደረጃ ደግሞ በትጋት ቀጥለህ እንዲሰራህ እንመኛለን።\n\nአብረንህ እንሰራለን። አዲስ ትምህርቶችን ለመጀመር ዝግጁ እንደሆንህ አሳየኸን። እንኳን አዲስ ደረጃ ላይ በደህና መጡ!";
+        } else {
+          message =
+            progress === "notstarted"
+              ? "👋 ሰላም፣ ኮርሱን መጀመር አልተጀመርህም። እባክህ ዛሬ ጀምር!"
+              : `⏳ ኮርሱ በመካከለኛ ሁኔታ ነው። ሂደተዎ: ${progress} ነው።እባከዎን ት/ትዎን በርትተው ይጨርሱ።`;
+
+          const update = await updatePathProgressData(studId);
+          const lang = "en";
+          const stud = "student";
+          const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
+          const channelName = name || "ዳሩል-ኩብራ";
+          const keyboard = new InlineKeyboard().url(
+            `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
+            url
+          );
+          extraOptions = { reply_markup: keyboard };
+        }
+
+        try {
+          const sentMsg = await bot.api.sendMessage(
+            Number(chatid),
+            message,
+            extraOptions
+          );
+          // Track the new message ID
+          await Promise.all(
+            Array(sentMsg.message_id)
+              .fill({})
+              .map((v, i) => i)
+              .reverse()
+              .map(async (v) => {
+                try {
+                  const res = await bot.api.deleteMessage(chatid, v);
+                  console.log("Deleted message >> ", res, v, chatid);
+                } catch (error) {
+                  console.log("Failed to delete message >> ", error);
+                }
+                return;
+              })
+          );
+          // if (!sentMessageIds[chatid]) sentMessageIds[chatid] = [];
+          // sentMessageIds[chatid].push(sentMsg.message_id);
+        } catch (err) {
+          // console.error("Failed to send progress message to", chatid, err);
+        }
+      }
+      // console.log("✅ Progress messages sent to all students.");
+    } catch (error) {
+      // console.error("Error in progress notification job:", error);
+    }
+  });
+  // console.log("✅ Daily task scheduled to run at 00:00");
 }
+
+

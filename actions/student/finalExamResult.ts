@@ -128,6 +128,7 @@ export async function checkingUpdateProhibition(
         updationProhibited: true,
       },
     });
+    
     if (updateProhibibted?.updationProhibited === true) {
       return true;
     } else {

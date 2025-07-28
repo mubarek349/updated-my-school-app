@@ -382,12 +382,13 @@ const FinalExamForm = ({
     };
 
     // FLAG: Main Component Render (The exam form itself)
+
     return (
-      <div className="min-h-screen bg-gray-100 p-6 font-sans">
+      <div className="min-h-screen h-auto overflow-y-auto bg-gray-100 p-4 font-sans pb-32">
         {showSubmissionConfirm && renderSubmissionConfirmModal()}
 
-        <header className="bg-white p-4 rounded-lg shadow-md flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
+        <header className="bg-white p-4 rounded-lg shadow-md flex flex-col md:flex-row justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2 md:mb-0">
             የ {coursesPackageId} ማጠቃለያ ፈተና
           </h1>
           <div className="flex items-center space-x-4">
@@ -430,7 +431,7 @@ const FinalExamForm = ({
 
           <aside className="md:col-span-1">
             <ExamNavigation
-              questions={currentQuestions} // Pass `currentQuestions` to navigation for correct display after shuffle
+              questions={currentQuestions}
               goToQuestion={goToQuestion}
               getQuestionStatus={getQuestionStatus}
               getOverallProgress={getOverallProgress}

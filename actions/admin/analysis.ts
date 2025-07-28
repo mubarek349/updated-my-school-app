@@ -3,6 +3,12 @@ import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
 import { getActivePackageProgress } from "@/actions/student/progress";
 import { progress } from "framer-motion";
+import { correctExamAnswer } from "../student/question";
+import {
+  checkFinalExamCreation,
+  checkingUpdateProhibition,
+} from "../student/finalExamResult";
+import { stat } from "fs";
 
 export async function getStudentProgressStatus(
   studentId: number,
@@ -602,6 +608,134 @@ export async function getPackageAnalytics() {
   console.log("analytics", analytics);
   return analytics;
 }
+export async function getFinalExamOfPackageAnalytics() {
+  // 1. Get all course packages
+  const packages = await prisma.coursePackage.findMany({
+    select: {
+      id: true,
+      name: true,
+      subjectPackages: {
+        select: {
+          subject: true,
+          packageType: true,
+          kidpackage: true,
+        },
+      },
+    },
+  });
+
+  // 2. For each package, gather analytics
+  const analytics = await Promise.all(
+    packages.map(async (pkg) => {
+      // Get all students assigned to this package via subjectPackage
+      const subjectPackages = pkg.subjectPackages;
+      // Find all students matching any subjectPackage for this package
+      const assignedStudents = await prisma.wpos_wpdatatable_23.findMany({
+        where: {
+          status: { in: ["Active", "Not yet"] },
+          OR: subjectPackages.map((sp) => ({
+            subject: sp.subject ?? undefined,
+            package: sp.packageType ?? undefined,
+            isKid: sp.kidpackage ?? undefined,
+          })),
+        },
+        select: {
+          wdt_ID: true,
+          name: true,
+          youtubeSubject: true,
+          progress: true,
+        },
+      });
+
+      // total Students assigned to this package
+
+      // // Not started: youtubeSubject is null
+      // const notStartedStudents = assignedStudents.filter(
+      //   (s) => !s.progress || s.youtubeSubject === null
+      // );
+      const completedStudents: typeof assignedStudents = [];
+
+      const passedStudents: typeof assignedStudents = [];
+      const failedStudents: typeof assignedStudents = [];
+
+      const inProgressStudents: typeof assignedStudents = [];
+      const notStartedStudents: typeof assignedStudents = [];
+
+      for (const student of assignedStudents) {
+        // Get
+        const allChapters = await prisma.course.findMany({
+          where: { packageId: pkg.id },
+          select: { chapters: { select: { id: true } } },
+        });
+        const chapterIds = allChapters.flatMap((c) =>
+          c.chapters.map((ch) => ch.id)
+        );
+        // Get completed chapters for this student
+        const completed = await prisma.studentProgress.findMany({
+          where: {
+            studentId: student.wdt_ID,
+            chapterId: { in: chapterIds },
+            // isCompleted: true,
+          },
+        });
+
+        if (completed.length > 0) {
+          if (
+            completed.filter((p) => p.isCompleted).length === chapterIds.length
+          ) {
+            completedStudents.push(student);
+          }
+        }
+      }
+
+      for (const student of completedStudents) {
+        const checkFinalExam = await checkFinalExamCreation(
+          student.wdt_ID,
+          pkg.id
+        );
+        const updateProhibition = await checkingUpdateProhibition(
+          student.wdt_ID,
+          pkg.id
+        );
+        if (checkFinalExam) {
+          if (updateProhibition) {
+            // If the student has passed the final exam
+            const correctAnswers = await correctExamAnswer(
+              pkg.id,
+              student.wdt_ID
+            );
+            if (correctAnswers.result.score >= 0.5) {
+              passedStudents.push(student);
+            } else {
+              failedStudents.push(student);
+            }
+          } else {
+            inProgressStudents.push(student);
+          }
+        } else {
+          notStartedStudents.push(student);
+        }
+      }
+      const assignedTotalCompletedStudents = completedStudents.length;
+      const passedCount = passedStudents.length;
+      const failedCount = failedStudents.length;
+      const inProgressCount = inProgressStudents.length;
+      const notStartedCount = notStartedStudents.length;
+
+      return {
+        id: pkg.id,
+        packageName: pkg.name,
+        totalStudents: assignedTotalCompletedStudents,
+        notStartedCount,
+        inProgressCount,
+        failedCount,
+        passedCount,
+      };
+    })
+  );
+  console.log("analytics", analytics);
+  return analytics;
+}
 
 //  this is new
 export async function getStudentAnalyticsperchapter(
@@ -618,9 +752,10 @@ export async function getStudentAnalyticsperchapter(
   // 1. Get the packageId for this chapter
   const chapter = await prisma.chapter.findUnique({
     where: { id: String(chapterId) },
-    select: { course: { select: { packageId: true } } },
+    select: {title:true, course: { select: { packageId: true } } },
   });
   const packageId = chapter?.course?.packageId;
+  const chapterTitle = chapter?.title;
 
   // 2. Get all subjectPackages for this package
   const subjectPackages = await prisma.subjectPackage.findMany({
@@ -705,6 +840,7 @@ export async function getStudentAnalyticsperchapter(
         chatid: student.chat_id,
         activePackage: student.activePackage?.name ?? "",
         studentProgress,
+        chapterTitle: chapterTitle ?? "",
       };
     })
   );
@@ -742,7 +878,8 @@ export async function getStudentAnalyticsperPackage(
   searchTerm?: string,
   currentPage?: number,
   itemsPerPage?: number,
-  progressFilter?: "notstarted" | "inprogress" | "completed" | "all"
+  progressFilter?: "notstarted" | "inprogress" | "completed" | "all",
+  statusFilter?: "notstarted" | "inprogress" | "failed" | "passed" | "all"
 ) {
   const page = currentPage && currentPage > 0 ? currentPage : 1;
   const take = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
@@ -767,6 +904,7 @@ export async function getStudentAnalyticsperPackage(
   }));
 
   // 3. Build search filter
+
   const searchFilter = searchTerm
     ? {
         OR: [
@@ -868,6 +1006,15 @@ export async function getStudentAnalyticsperPackage(
         phoneNo = `${countryCode}${phoneNo}`;
       }
 
+      const result = await correctExamAnswer(activePackageId, student.wdt_ID);
+      const checkStausOfFinalExam = await checkFinalExamCreation(
+        student.wdt_ID,
+        activePackageId
+      );
+      const checkUpdateProhibition = await checkingUpdateProhibition(
+        student.wdt_ID,
+        activePackageId
+      );
       return {
         id: student.wdt_ID,
         name: student.name,
@@ -878,6 +1025,9 @@ export async function getStudentAnalyticsperPackage(
         chatid: student.chat_id,
         activePackage: activePackage?.name ?? "",
         studentProgress: progress,
+        result: result,
+        checkStausOfFinalExam: checkStausOfFinalExam ? true : false,
+        checkUpdateProhibition: checkUpdateProhibition ? true : false,
       };
     })
   );
@@ -892,6 +1042,30 @@ export async function getStudentAnalyticsperPackage(
         );
       } else {
         return student.studentProgress === progressFilter;
+      }
+    });
+  }
+  if (statusFilter && statusFilter !== "all") {
+    studentsWithProgress = studentsWithProgress.filter((student) => {
+      if (statusFilter === "passed") {
+        return (
+          student.checkStausOfFinalExam === true &&
+          student.checkUpdateProhibition === true &&
+          student.result.result.score >= 0.5
+        );
+      } else if (statusFilter === "failed") {
+        return (
+          student.checkStausOfFinalExam === true &&
+          student.checkUpdateProhibition === true &&
+          student.result.result.score < 0.5
+        );
+      } else if (statusFilter === "inprogress") {
+        return (
+          student.checkStausOfFinalExam === true &&
+          student.checkUpdateProhibition === false
+        );
+      } else if (statusFilter === "notstarted") {
+        return student.checkStausOfFinalExam === false;
       }
     });
   }
@@ -914,4 +1088,71 @@ export async function getStudentAnalyticsperPackage(
   };
 }
 
-export async function gettheCoutrycode() {}
+export async function sendProgressMessages() {
+  // 1. Get all subjectPackages for this package
+  const subjectPackages = await prisma.subjectPackage.findMany({
+    select: {
+      subject: true,
+      kidpackage: true,
+      packageType: true,
+      packageId: true,
+    },
+    distinct: ["subject", "kidpackage", "packageType"],
+  });
+
+  // 2. Build OR filter for students matching any subjectPackage
+  const subjectPackageFilters = subjectPackages.map((sp) => ({
+    subject: sp.subject,
+    package: sp.packageType,
+    isKid: sp.kidpackage,
+  }));
+
+  // 3. Get ALL students (no skip/take here!)
+  const students = await prisma.wpos_wpdatatable_23.findMany({
+    where: {
+      status: { in: ["Active", "Not yet"] },
+      OR: subjectPackageFilters,
+    },
+    orderBy: { wdt_ID: "asc" },
+    select: {
+      wdt_ID: true,
+      name: true,
+      phoneno: true,
+      country: true,
+      isKid: true,
+      subject: true,
+      package: true,
+      chat_id: true,
+    },
+  });
+
+  // 4. For each student, find their subjectPackage and get progress
+  const studentsWithProgress = await Promise.all(
+    students.map(async (student) => {
+      // Find the subjectPackage for this student
+      const matchedSubjectPackage = subjectPackages.find(
+        (sp) =>
+          sp.subject === student.subject &&
+          sp.packageType === student.package &&
+          sp.kidpackage === student.isKid
+      );
+      const activePackageId = matchedSubjectPackage?.packageId ?? "";
+
+      const progress = await getStudentProgressStatus(
+        student.wdt_ID,
+        activePackageId
+      );
+
+      return {
+        chatid: student.chat_id,
+        studId: student.wdt_ID,
+        name: student.name,
+        progress,
+      };
+    })
+  );
+
+  // Return array of { chatid, progress }
+  console.log("Students with progress:", studentsWithProgress);
+  return studentsWithProgress;
+}

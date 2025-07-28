@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import StudentGraph from "./studetGraph";
 import { getAllAssignedCoursePackages, getThePackagesWhichHasLargestStudent, getTotalStudentsThatHaveacessthePacakges } from "@/actions/admin/analysis";
+import FinalExamStudentsGraph from "./finalExamStudentsGraph";
 
 async function Page() {
   
@@ -100,6 +101,17 @@ async function Page() {
           </CardHeader>
           <CardContent className="pl-0">
             <StudentGraph />
+          </CardContent>
+        </Card>
+        <Card className="my-4 overflow-auto">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <LaptopIcon />
+              <span>Completed Students Final Exam Status</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pl-0">
+            <FinalExamStudentsGraph />
           </CardContent>
         </Card>
       </div>

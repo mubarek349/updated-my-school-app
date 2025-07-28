@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export interface ColumnDef {
   key: string;
@@ -31,9 +31,13 @@ interface CustomTableProps {
   searchValue: string;
   onSearch: (value: string) => void;
   isLoading?: boolean;
+  // New props for controlled selection
+  selectedRowIds: Set<string | number>;
+  onSelectAll: (checked: boolean | "indeterminate") => void;
+  onSelectRow: (rowId: string | number, checked: boolean | "indeterminate") => void;
 }
 
-const PAGE_SIZES = [1,10, 25, 100, 250, 500];
+const PAGE_SIZES = [1, 10, 25, 100, 250, 500];
 
 export default function CustomTable({
   rows,
@@ -46,6 +50,9 @@ export default function CustomTable({
   searchValue,
   onSearch,
   isLoading = false,
+  selectedRowIds,
+  onSelectAll,
+  onSelectRow,
 }: CustomTableProps) {
   const totalPages = Math.max(Math.ceil(totalRows / pageSize), 1);
 
@@ -57,9 +64,12 @@ export default function CustomTable({
     setLocalSearch(searchValue);
   }, [searchValue]);
 
+  // Selection logic is now controlled by parent
+ const allSelected = rows.length > 0 && rows.every(row => selectedRowIds.has(String(row.id ?? row.key)));
+const someSelected = rows.some(row => selectedRowIds.has(String(row.id ?? row.key)));
+
   return (
     <div className="w-svw space-y-8">
-      {/* Search & Page Size */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-2 w-full sm:w-auto">
           <Input
@@ -94,12 +104,19 @@ export default function CustomTable({
           <span>entries</span>
         </div>
       </div>
-
       {/* Responsive Table */}
       <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-gray-200 shadow bg-white p-2 sm:p-6 my-4">
         <Table className="min-w-full">
           <TableHeader>
             <TableRow>
+              {/* Selection checkbox header */}
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={onSelectAll}
+                  aria-label="Select all rows"
+                />
+              </TableHead>
               {columns.map((col) => (
                 <TableHead
                   key={col.key}
@@ -116,103 +133,47 @@ export default function CustomTable({
           <TableBody>
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-6 text-gray-500">
+                <TableCell
+                  colSpan={columns.length + 1}
+                  className="text-center py-6 text-gray-500"
+                >
                   No data to display.
                 </TableCell>
               </TableRow>
             ) : (
-              rows.map((row, idx) => (
-                <TableRow
-                  key={row.id || row.key}
-                  className={cn(
-                    idx % 2 === 0
-                      ? "bg-white"
-                      : "bg-gray-50",
-                    "hover:bg-blue-50 transition"
-                  )}
-                >
-                  {columns.map((col) => (
-                    <TableCell
-                      key={col.key}
-                      className="font-medium text-gray-700 sm:px-6 px-2 sm:py-4 py-2 text-xs sm:text-sm break-words"
-                    >
-                      {row[col.key]}
+              rows.map((row, idx) => {
+                // Always use string for rowId
+                const rowId = String(row.id ?? row.key ?? "");
+                return (
+                  <TableRow
+                    key={rowId}
+                    className={cn(
+                      idx % 2 === 0 ? "bg-white" : "bg-gray-50",
+                      "hover:bg-blue-50 transition"
+                    )}
+                  >
+                    {/* Selection checkbox cell */}
+                    <TableCell className="w-8">
+                      <Checkbox
+                        checked={selectedRowIds.has(rowId)}
+                        onCheckedChange={(checked) => onSelectRow(rowId, checked)}
+                        aria-label={`Select row ${rowId}`}
+                      />
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))
+                    {columns.map((col) => (
+                      <TableCell
+                        key={col.key}
+                        className="font-medium text-gray-700 sm:px-6 px-2 sm:py-4 py-2 text-xs sm:text-sm break-words"
+                      >
+                        {row[col.key]}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
-      </div>
-
-      {/* Loading */}
-      {isLoading && rows.length === 0 && (
-        <div className="text-center text-blue-500 py-4 font-semibold">
-          <span className="inline-block w-6 h-6 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mr-2"></span>
-          Loading data...
-        </div>
-      )}
-
-      {/* Pagination */}
-      <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
-        <div>
-          Showing{" "}
-          <span className="font-bold text-blue-600">
-            {rows.length > 0 ? (page - 1) * pageSize + 1 : 0}
-          </span>{" "}
-          to{" "}
-          <span className="font-bold text-blue-600">
-            {Math.min(page * pageSize, totalRows)}
-          </span>{" "}
-          of <span className="font-bold text-gray-700">{totalRows}</span> results
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(Math.max(1, page - 1))}
-              disabled={page === 1 || isLoading}
-              className="border border-gray-300 text-blue-600 px-2 py-1 rounded"
-            >
-              <ChevronLeft size={16} />
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((pg) => {
-                if (totalPages <= 3) return true;
-                if (page <= 2) return pg <= 3;
-                if (page >= totalPages - 1) return pg >= totalPages - 2;
-                return Math.abs(pg - page) <= 1;
-              })
-              .map((pg) => (
-                <Button
-                  key={pg}
-                  variant={pg === page ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onPageChange(pg)}
-                  disabled={pg === page || isLoading}
-                  className={cn(
-                    pg === page
-                      ? "bg-blue-600 text-white font-bold px-3 py-1 rounded"
-                      : "border border-gray-300 text-blue-600 px-3 py-1 rounded"
-                  )}
-                >
-                  {pg}
-                </Button>
-              ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages || isLoading}
-              className="border border-gray-300 text-blue-600 px-2 py-1 rounded"
-            >
-              <ChevronRight size={16} />
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );

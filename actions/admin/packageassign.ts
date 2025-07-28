@@ -11,17 +11,15 @@ export async function getDistinctPackagesWithSubjects() {
       package: true,
       subject: true,
     },
-    distinct: ['package', 'subject'],
+    distinct: ["package", "subject"],
   });
   return result;
 }
 
-
-
 export async function assignPackage(
   coursesPackageId: string,
-  isKid:boolean,
-  selectedStudentPackagewithSubjects: { package: string; subject: string }[],
+  isKid: boolean,
+  selectedStudentPackagewithSubjects: { package: string; subject: string }[]
 ) {
   // Update wpos_wpdatatable_23 for each subject/package pair
   for (const { package: pkg, subject } of selectedStudentPackagewithSubjects) {
@@ -29,7 +27,8 @@ export async function assignPackage(
       where: {
         package: pkg,
         subject: subject,
-        isKid:isKid,
+        isKid: isKid,
+        youtubeSubject: null, // Ensure we only update those without a package assigned
       },
       data: {
         youtubeSubject: coursesPackageId,
@@ -40,15 +39,16 @@ export async function assignPackage(
     const existingPackage = await prisma.subjectPackage.findFirst({
       where: {
         subject: subject,
-        packageType:pkg,
-        kidpackage:isKid,
+        packageType: pkg,
+        kidpackage: isKid,
+        packageId: coursesPackageId,
       },
       select: {
         id: true,
         packageId: true,
         subject: true,
-        packageType:true,
-        kidpackage:true
+        packageType: true,
+        kidpackage: true,
       },
     });
 
@@ -57,9 +57,9 @@ export async function assignPackage(
       await prisma.subjectPackage.update({
         where: {
           id: existingPackage.id,
-          packageType:existingPackage.packageType,
-          subject:existingPackage.subject,
-          kidpackage:existingPackage.kidpackage,
+          packageType: existingPackage.packageType,
+          subject: existingPackage.subject,
+          kidpackage: existingPackage.kidpackage,
         },
         data: {
           packageId: coursesPackageId,
@@ -69,10 +69,10 @@ export async function assignPackage(
       // Create a new subjectPackage entry
       await prisma.subjectPackage.create({
         data: {
-          subject:subject,
-          packageType:pkg,
-          kidpackage:isKid,
-          packageId:coursesPackageId,
+          subject: subject,
+          packageType: pkg,
+          kidpackage: isKid,
+          packageId: coursesPackageId,
         },
       });
     }
@@ -81,7 +81,9 @@ export async function assignPackage(
   return { response: "successfully assigned" };
 }
 
-export async function getAssignedPacakgesWithSubjects(coursesPackageId: string) {
+export async function getAssignedPacakgesWithSubjects(
+  coursesPackageId: string
+) {
   const assignedSubjects = await prisma.subjectPackage.findMany({
     where: {
       packageId: coursesPackageId,
@@ -94,23 +96,188 @@ export async function getAssignedPacakgesWithSubjects(coursesPackageId: string) 
   });
 
   // Return the unique pairs as objects
-  return assignedSubjects.map(item => ({
+  return assignedSubjects.map((item) => ({
     package: item.packageType,
     subject: item.subject,
     isKid: item.kidpackage,
   }));
 }
-
-export async function unasignPackage(studentId: number[]) {
-  await prisma.wpos_wpdatatable_23.updateMany({
+export async function getAvailablePacakges(
+  packageType: string,
+  subject: string,
+  kidpackage: boolean
+) {
+  const assignedPackages = await prisma.subjectPackage.findMany({
     where: {
-      wdt_ID: { in: studentId },
+      packageType: packageType,
+      subject: subject,
+      kidpackage: kidpackage,
     },
-    data: {
-      youtubeSubject: "",
+    select: {
+      packageId: true,
     },
   });
-  return { response: "update successfully" };
+
+  // Return the unique pairs as objects
+  return assignedPackages;
+}
+export async function unAssignMultiplePackage(
+  coursesPackageId: string,
+  isKid: boolean,
+  selectedStudentPackagewithSubjects: { package: string; subject: string }[]
+) {
+  // Update wpos_wpdatatable_23 for each subject/package pair
+  for (const { package: pkg, subject } of selectedStudentPackagewithSubjects) {
+    // Check if the subject is already assigned to a package
+    const existingPackage = await prisma.subjectPackage.findFirst({
+      where: {
+        subject: subject,
+        packageType: pkg,
+        kidpackage: isKid,
+        packageId: coursesPackageId,
+      },
+      select: {
+        id: true,
+        packageId: true,
+        subject: true,
+        packageType: true,
+        kidpackage: true,
+      },
+    });
+
+    if (existingPackage) {
+      // Update the packageId if needed
+      await prisma.subjectPackage.delete({
+        where: {
+          id: existingPackage.id,
+          packageType: existingPackage.packageType,
+          subject: existingPackage.subject,
+          kidpackage: existingPackage.kidpackage,
+        },
+      });
+    }
+    // Check if the subject is still assigned to another package
+    const AssignedExistingPackage = await prisma.subjectPackage.findFirst({
+      where: {
+        subject: subject,
+        packageType: pkg,
+        kidpackage: isKid,
+      },
+      select: {
+        id: true,
+        packageId: true,
+        subject: true,
+        packageType: true,
+        kidpackage: true,
+      },
+    });
+
+    if (!AssignedExistingPackage) {
+      // Update wpos_wpdatatable_23 to remove the package assignment
+      await prisma.wpos_wpdatatable_23.updateMany({
+        where: {
+          package: pkg,
+          subject: subject,
+          isKid: isKid,
+        },
+        data: {
+          youtubeSubject: null, // Remove the package assignment
+        },
+      });
+    } else {
+      // If the subject is still assigned to another package, do not remove it
+      await prisma.wpos_wpdatatable_23.updateMany({
+        where: {
+          package: pkg,
+          subject: subject,
+          isKid: isKid,
+        },
+        data: {
+          youtubeSubject: AssignedExistingPackage.packageId, // Keep the current package assignment
+        },
+      });
+    }
+  }
+
+  return { response: "successfully unAssigned" };
+}
+export async function unAssignPackage(
+  coursesPackageId: string,
+  isKid: boolean,
+  packageType: string,
+  subject: string
+) {
+  // Check if the subject is already assigned to a package
+  const existingPackage = await prisma.subjectPackage.findFirst({
+    where: {
+      subject: subject,
+      packageType: packageType,
+      kidpackage: isKid,
+      packageId: coursesPackageId,
+    },
+    select: {
+      id: true,
+      packageId: true,
+      subject: true,
+      packageType: true,
+      kidpackage: true,
+    },
+  });
+
+  if (existingPackage) {
+    // Update the packageId if needed
+    await prisma.subjectPackage.delete({
+      where: {
+        id: existingPackage.id,
+        packageType: existingPackage.packageType,
+        subject: existingPackage.subject,
+        kidpackage: existingPackage.kidpackage,
+      },
+    });
+  }
+  // Check if the subject is still assigned to another package
+  const AssignedExistingPackage = await prisma.subjectPackage.findFirst({
+    where: {
+      subject: subject,
+      packageType: packageType,
+      kidpackage: isKid,
+    },
+    select: {
+      id: true,
+      packageId: true,
+      subject: true,
+      packageType: true,
+      kidpackage: true,
+    },
+  });
+
+  if (!AssignedExistingPackage) {
+    // Update wpos_wpdatatable_23 to remove the package assignment
+    await prisma.wpos_wpdatatable_23.updateMany({
+      where: {
+        package: packageType,
+        subject: subject,
+        isKid: isKid,
+      },
+      data: {
+        youtubeSubject: null, // Remove the package assignment
+      },
+    });
+  } else {
+    // If the subject is still assigned to another package, do not remove it
+    await prisma.wpos_wpdatatable_23.updateMany({
+      where: {
+        package: packageType,
+        subject: subject,
+        isKid: isKid,
+      },
+      data: {
+        youtubeSubject: AssignedExistingPackage.packageId, // Keep the current package assignment
+      },
+    });
+  }
+
+  return { response: "successfully unAssigned" };
 }
 
 export async function displayPachageStudent(packageId: string) {
