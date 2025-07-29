@@ -281,7 +281,7 @@ const FinalExamForm = ({
       if (
         result.result &&
         result.result.score !== undefined &&
-        result.result.score >= 0.5
+        result.result.score >= 0.75
       ) {
         await settingUpdateProhibition(wdt_ID, coursesPackageId);
         refresh();

@@ -76,7 +76,7 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
       {/* Content Card: white background, rounded corners, shadow, max-width for readability, auto margins for centering */}
       <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg mb-6 w-full max-w-4xl mx-auto">
         <h2 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-4 text-center">
-          የማጠቃለያ ፈተናዎ ውጤት
+          የማጠቃለያ ፈተና ውጤትዎ
         </h2>
         <div className="text-center mb-6 border-b pb-4 border-gray-200">
           <p className="text-lg sm:text-xl font-semibold text-gray-800">
@@ -84,18 +84,18 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
           </p>
           <p
             className={`text-xl sm:text-2xl font-bold ${
-              result.score >= 0.5 ? "text-green-600" : "text-red-600"
+              result.score >= 0.75 ? "text-green-600" : "text-red-600"
             } mt-1`}
           >
             ያገኙት በፐርሰንት: {scorePercentage}%
           </p>
           <p
             className={`mt-2 text-xl sm:text-2xl font-bold ${
-              result.score >= 0.5 ? "text-green-600" : "text-red-600"
+              result.score >= 0.75 ? "text-green-600" : "text-red-600"
             }`}
           >
-            {result.score >= 0.5
-              ? "እንኩዋን ደስ አለዎት! የማጠቃለያ ፈተናዎኑን አልፈዋል፡፡"
+            {result.score >= 0.75
+              ? "እንኩዋን ደስ አለዎት! የማጠቃለያ ፈተናውን አልፈዋል፡፡"
               : "የማጠቃለያ ፈተናውን ወድቀዋል፡፡"}
           </p>
         </div>

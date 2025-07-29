@@ -526,7 +526,7 @@ export async function submitAnswers(
   }
 
   const score = await correctAnswer(chapterId, studentId);
-  // if the the score is above 0.5 then excite the unlock test  else  display message only
+  // if the the score is above 0.75 then excite the unlock test  else  display message only
 
   if (score.result.score === 1) {
     await unlockTest(wdt_ID, courseId, chapterId);
@@ -785,7 +785,7 @@ export async function examsubmitAnswers(
   }
 
   const score = await correctExamAnswer(coursesPackageId, studentId);
-  // // if the the score is above 0.5 then excite the unlock test  else  display message only
+  // // if the the score is above 0.75 then excite the unlock test  else  display message only
 
   // if (score.result.score === 1) {
   //   await unlockTest(wdt_ID, courseId, chapterId);

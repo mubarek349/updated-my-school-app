@@ -704,7 +704,7 @@ export async function getFinalExamOfPackageAnalytics() {
               pkg.id,
               student.wdt_ID
             );
-            if (correctAnswers.result.score >= 0.5) {
+            if (correctAnswers.result.score >= 0.75) {
               passedStudents.push(student);
             } else {
               failedStudents.push(student);
@@ -1051,13 +1051,13 @@ export async function getStudentAnalyticsperPackage(
         return (
           student.checkStausOfFinalExam === true &&
           student.checkUpdateProhibition === true &&
-          student.result.result.score >= 0.5
+          student.result.result.score >= 0.75
         );
       } else if (statusFilter === "failed") {
         return (
           student.checkStausOfFinalExam === true &&
           student.checkUpdateProhibition === true &&
-          student.result.result.score < 0.5
+          student.result.result.score < 0.75
         );
       } else if (statusFilter === "inprogress") {
         return (

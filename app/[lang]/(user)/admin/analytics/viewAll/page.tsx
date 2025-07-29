@@ -48,7 +48,7 @@ function Page() {
           studentProgress: row.studentProgress ?? "",
           finalExamStatus: row.checkStausOfFinalExam
             ? row.checkUpdateProhibition
-              ? row.result?.result.score >= 0.5
+              ? row.result?.result.score >= 0.75
                 ? "Passed"
                 : "Failed"
               : "In Progress"
