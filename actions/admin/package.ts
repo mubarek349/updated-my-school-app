@@ -16,6 +16,7 @@ export async function getCoursesPackages() {
           isPublished: true,
           createdAt: true,
           updatedAt: true,
+          examDurationMinutes: true,
         },
         orderBy: {
           createdAt: "desc",

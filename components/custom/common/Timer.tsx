@@ -1,5 +1,5 @@
 // components/custom/common/Timer.tsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 
 // Define the interface for the Timer component's props
 interface TimerProps {

@@ -49,9 +49,9 @@ export const CreatedCoursePackageList = ({
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between mt-4">
-                {/* <span className="text-xs text-muted-foreground">
-                  <GetSubscject id={coursesPackage.id} />
-                </span> */}
+                <span className="text-xs text-muted-foreground">
+                  {coursesPackage.examDurationMinutes??null}
+                </span>
                 <span className="text-xs text-blue-600 font-semibold ml-auto">
                   View Details &rarr;
                 </span>

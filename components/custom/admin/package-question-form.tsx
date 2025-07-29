@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"; // Add Input for options
 // import { zodResolver } from "@hookform/resolvers/zod";
 import { coursePackage, question } from "@prisma/client";
 import axios from "axios";
-import { Loader2, PlusCircle, Timer, TimerIcon } from "lucide-react";
+import { Loader2, PlusCircle, TimerIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form"; // Add useFieldArray for dynamic fields
@@ -21,10 +21,10 @@ import toast from "react-hot-toast";
 // import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { PackageQuestionsList } from "./package-questions-list";
-interface QuestionWithDetails extends question {
-  questionOptionsJson: { id: string; text: string }[]; // Array of objects with id and text
-  correctAnswerIdsJson: string[]; // Array of selected option IDs
-}
+// interface QuestionWithDetails extends question {
+//   questionOptionsJson: { id: string; text: string }[]; // Array of objects with id and text
+//   correctAnswerIdsJson: string[]; // Array of selected option IDs
+// }
 
 interface PackageQuestionFormProps {
   initialData: coursePackage & { questions: question[] };

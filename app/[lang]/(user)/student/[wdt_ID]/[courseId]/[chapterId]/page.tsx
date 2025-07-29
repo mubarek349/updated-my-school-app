@@ -306,7 +306,7 @@ function Message({ message, wdt_ID }: { message: string; wdt_ID: number }) {
         }, 5000);
       }
     })();
-  }, []);
+  }, [router, wdt_ID]);
 
   return (
     <AnimatePresence>

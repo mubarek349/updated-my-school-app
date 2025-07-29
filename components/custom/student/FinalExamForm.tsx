@@ -10,7 +10,6 @@ import {
   examsubmitAnswers, // This should submit answers to an API
 } from "@/actions/student/question";
 import toast from "react-hot-toast";
-import { useMainMenu } from "@/app/[lang]/(user)/student/layout";
 import ExamResultDisplay from "./ExamResultDisplay"; // Component for displaying results
 import { shuffleArray } from "@/lib/utils"; // Utility for shuffling questions
 import {
@@ -60,7 +59,6 @@ const FinalExamForm = ({
   wdt_ID,
   coursesPackageId,
   examDurationMinutes,
-  feedback, // This is the initial feedback from the parent
   updateProhibition,
   refresh,
 }: FinalExamFormProps) => {
@@ -129,7 +127,6 @@ const FinalExamForm = ({
   // FLAG: Custom Hook Integration
   // Now passes `currentQuestions` (which can be randomized)
   const {
-    currentQuestionIndex,
     currentQuestion,
     answers,
     handleAnswerChange: originalHandleAnswerChange,
@@ -150,7 +147,7 @@ const FinalExamForm = ({
 
   const [, refetchSubmit, submitLoading] = useAction(examsubmitAnswers, [
     ,
-    async (res) => {
+    async () => {
       setShowSubmissionConfirm(false);
     },
   ]);

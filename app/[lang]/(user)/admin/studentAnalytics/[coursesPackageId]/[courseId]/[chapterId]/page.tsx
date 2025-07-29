@@ -22,7 +22,7 @@ function Page() {
     "notstarted" | "inprogress" | "completed" | ""
   >("");
 
-  const [data, , isLoading] = useAction(
+  const [data,refresh , isLoading] = useAction(
     getStudentAnalyticsperchapter,
     [true, () => {}],
     chapterId as string,
@@ -39,7 +39,6 @@ function Page() {
     { key: "studentProgress", label: "Student Progress" },
     // { key: "chatid", label: "Telegram Link" },
   ];
-
   const rows =
     data && "data" in data
       ? data.data.map((row) => ({
@@ -57,9 +56,9 @@ function Page() {
   );
 
   // Handle select all
-  const allSelected =
-    rows.length > 0 && rows.every((row) => selectedRowIds.has(row.id));
-  const someSelected = rows.some((row) => selectedRowIds.has(row.id));
+  // const allSelected =
+  //   rows.length > 0 && rows.every((row) => selectedRowIds.has(row.id));
+  // const someSelected = rows.some((row) => selectedRowIds.has(row.id));
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
@@ -100,7 +99,6 @@ function Page() {
       <h1 className="text-xl font-bold mb-4">Student Analytics Per Chapter</h1>
       {/* Progress Filter */}
       <div className="m-1">
-        
         <label className="mr-2 font-medium">
           Assign Selected Students To start their progress from this Chapter:
         </label>
@@ -115,6 +113,7 @@ function Page() {
                     chapterId as string
                   );
                 }
+                refresh();// Trigger a refresh
                 toast.success("Progress updated successfully");
               }
             } catch {

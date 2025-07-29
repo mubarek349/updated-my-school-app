@@ -5,7 +5,6 @@ import React from "react";
 import MenuTitle from "./menu-title";
 
 import { LightDarkToggle } from "@/components/ui/light-dark-toggle";
-import { Button } from "@/components/ui/button"; // Import the Button component
 
 import { cn } from "@/lib/utils";
 

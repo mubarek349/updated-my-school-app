@@ -45,6 +45,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     courseId,
     chapterId,
     router,
+    isClicked,
   ]);
 
   return <div className="overflow-hidden grid">{children}</div>;

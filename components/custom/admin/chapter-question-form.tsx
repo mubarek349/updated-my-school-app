@@ -20,7 +20,6 @@ import { useForm, useFieldArray } from "react-hook-form"; // Add useFieldArray f
 import toast from "react-hot-toast";
 // import { z } from "zod";
 import { cn } from "@/lib/utils";
-import { PackageQuestionsList } from "./package-questions-list";
 import { ChapterQuestionsList } from "./chapter-questions-list";
 
 interface ChapterQuestionFormProps {
@@ -109,16 +108,16 @@ export const ChapterQuestionForm = ({
       `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
     );
   };
- const onAdding = (id: string) => {
-    router.push(
-      `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
-    );
-  };
-  const onRemoving = (id: string) => {
-    router.push(
-      `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
-    );
-  };
+//  const onAdding = (id: string) => {
+//     router.push(
+//       `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
+//     );
+//   };
+//   const onRemoving = (id: string) => {
+//     router.push(
+//       `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
+//     );
+//   };
 
   return (
     <div className="relative mt-6 border bg-slate-100 rounded-md p-4">

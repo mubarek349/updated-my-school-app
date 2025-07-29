@@ -102,7 +102,7 @@ const StudentQuestionForm = ({
   );
   const [, refetchSubmit, submitLoading] = useAction(submitAnswers, [
     ,
-    async (response) => {
+    async () => {
       toast.success("Answers submitted!", {
         style: { background: "#10B981", color: "#fff" },
       });

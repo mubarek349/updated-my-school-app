@@ -42,10 +42,7 @@ const PAGE_SIZES = [1, 10, 25, 100, 250, 500];
 export default function CustomTable({
   rows,
   columns,
-  totalRows,
-  page,
   pageSize,
-  onPageChange,
   onPageSizeChange,
   searchValue,
   onSearch,
@@ -54,7 +51,6 @@ export default function CustomTable({
   onSelectAll,
   onSelectRow,
 }: CustomTableProps) {
-  const totalPages = Math.max(Math.ceil(totalRows / pageSize), 1);
 
   // Local state for search input
   const [localSearch, setLocalSearch] = useState(searchValue);
@@ -66,7 +62,6 @@ export default function CustomTable({
 
   // Selection logic is now controlled by parent
  const allSelected = rows.length > 0 && rows.every(row => selectedRowIds.has(String(row.id ?? row.key)));
-const someSelected = rows.some(row => selectedRowIds.has(String(row.id ?? row.key)));
 
   return (
     <div className="w-svw space-y-8">

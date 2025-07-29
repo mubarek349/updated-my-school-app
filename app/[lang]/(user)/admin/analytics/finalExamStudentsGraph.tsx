@@ -1,5 +1,5 @@
 "use client";
-import { getFinalExamOfPackageAnalytics, getPackageAnalytics } from "@/actions/admin/analysis";
+import { getFinalExamOfPackageAnalytics } from "@/actions/admin/analysis";
 import React, { useEffect } from "react";
 import {
   BarChart,

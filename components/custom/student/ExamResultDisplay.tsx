@@ -1,6 +1,5 @@
 // components/custom/student/ExamResultDisplay.tsx
 import {
-  checkFinalExamCreation,
   checkingUpdateProhibition,
 } from "@/actions/student/finalExamResult";
 import React, { useEffect, useState } from "react";
@@ -57,7 +56,7 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
         }
       }, 20000);
     })();
-  }, []);
+  }, [coursesPackageId, wdt_ID, isFinalExamCreated, setIsExamSubmitted, isClosedForUpdate]);
 
   if (!result) {
     return (

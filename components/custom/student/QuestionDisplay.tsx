@@ -1,8 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Flag, FlagOff } from "lucide-react"; // Assuming you have lucide-react or similar icon library
 import { cn } from "@/lib/utils";
-import { checkingUpdateProhibition } from "@/actions/student/finalExamResult";
+// import { checkingUpdateProhibition } from "@/actions/student/finalExamResult";
 // import { Button } from "@/components/ui/button"; // This import was not used, so it's commented out.
 
 // Interface Definitions
@@ -46,8 +46,8 @@ const QuestionDisplay = ({
   isFlagged,
   onToggleFlag,
   onSubmitExam, // Destructure the new prop
-  studentId,
-  coursesPackageId,
+  // studentId,
+  // coursesPackageId,
 }: QuestionDisplayProps) => {
   // No Question State
   if (!question) {
@@ -71,23 +71,26 @@ const QuestionDisplay = ({
     onAnswerChange(question.id, updatedSelection);
   };
 
-  const [update, setUpdate] = useState(false);
+  // const [update, setUpdate] = useState(false);
 
-  useEffect(() => {
-    const updating = async () => {
-      try {
-        const value = await checkingUpdateProhibition(
-          studentId,
-          coursesPackageId
-        );
-
-        setUpdate(value);
-      } catch {
-        alert("there is problem");
-      }
-    };
-    updating();
-  }, []);
+  // useEffect(() => {
+  //   const updating = async () => {
+  //     try {
+  //       const value = await checkingUpdateProhibition(
+  //         studentId,
+  //         coursesPackageId
+  //       );
+  //       if (value === false) {
+  //         setUpdate(false);
+  //       } else {
+  //         setUpdate(true);
+  //       }
+  //     } catch {
+  //       alert("there is problem");
+  //     }
+  //   };
+  //   updating();
+  // }, [coursesPackageId, studentId]);
 
   // Main Render Section
   return (
@@ -182,9 +185,9 @@ const QuestionDisplay = ({
         {isLastQuestion ? (
           <button
             onClick={() => {
-              
-              onSubmitExam(true);}} // Call the new onSubmitExam prop
-            disabled={isSubmitting || update}
+              onSubmitExam(true);
+            }} // Call the new onSubmitExam prop
+            disabled={isSubmitting}
             className={cn(
               "flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-lg transition-all duration-300 ease-in-out hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/40 hover:shadow-xl"
             )}
