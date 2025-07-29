@@ -57,12 +57,7 @@ function Page() {
           <p className="text-gray-700">
             ለዚህ ፈተና ምንም አይነት ጥያቄ ማግኘት አልተቻለም። እባክዎ ቆይተው እንደገና ይሞክሩ።
           </p>
-          <button
-            onClick={refetch}
-            className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          >
-            እንደ አዲስ ለመሞከር
-          </button>
+          
         </div>
       </div>
     );

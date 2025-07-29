@@ -102,25 +102,7 @@ export async function getAssignedPacakgesWithSubjects(
     isKid: item.kidpackage,
   }));
 }
-export async function getAvailablePacakges(
-  packageType: string,
-  subject: string,
-  kidpackage: boolean
-) {
-  const assignedPackages = await prisma.subjectPackage.findMany({
-    where: {
-      packageType: packageType,
-      subject: subject,
-      kidpackage: kidpackage,
-    },
-    select: {
-      packageId: true,
-    },
-  });
 
-  // Return the unique pairs as objects
-  return assignedPackages;
-}
 export async function unAssignMultiplePackage(
   coursesPackageId: string,
   isKid: boolean,

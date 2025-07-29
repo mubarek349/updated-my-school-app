@@ -10,6 +10,7 @@ import { filterStudentsByPackageList } from "./actions/admin/analysis";
 import { filterStudentsByPackageandStatus } from "./actions/admin/analysis";
 import { updatePathProgressData } from "./actions/student/progress";
 import { InlineKeyboard } from "grammy";
+import { getAvailablePacakges } from "./actions/student/package";
 dotenv.config();
 const BASE_URL = process.env.FORWARD_URL || process.env.AUTH_URL;
 const sentMessageIds: Record<string, number[]> = {};
@@ -23,16 +24,14 @@ export default async function sendMessage(chat_id: number, message: string) {
     console.error("Failed to send initial message:", err);
   }
 }
+
 export async function startBot() {
   bot.command("start", async (ctx) => {
     const chatId = ctx.chat?.id;
-    console.log("Current time:", new Date().toLocaleString());
-    console.log("current time zone  >>>", new Date().getTimezoneOffset());
-
     if (!chatId) {
       return ctx.reply("Unable to retrieve chat ID.");
     }
-    // Check if user is admin
+
     const admin = await prisma.admin.findFirst({
       where: { chat_id: chatId.toString() },
     });
@@ -55,8 +54,8 @@ export async function startBot() {
       );
     }
 
-    // 1. Fetch channels
-    let channels = await prisma.wpos_wpdatatable_23.findMany({
+    // 1. Fetch student record
+    const student = await prisma.wpos_wpdatatable_23.findFirst({
       where: {
         chat_id: chatId.toString(),
         status: { in: ["Active", "Notyet"] },
@@ -67,81 +66,88 @@ export async function startBot() {
         subject: true,
         package: true,
         isKid: true,
-        activePackage: {
-          where: { isPublished: true },
-          select: {
-            courses: {
-              where: { order: 1 },
-              select: {
-                id: true,
-                title: true,
-                chapters: {
-                  where: { position: 1 },
-                  select: {
-                    id: true,
-                    title: true,
-                  },
-                },
-              },
-            },
-          },
-        },
       },
     });
 
-    // 2. Update youtubeSubject for all channels
-    for (const channel of channels) {
-      const subject = channel.subject;
-      const packageType = channel.package;
-      const kidPackage = channel.isKid;
-      if (subject) {
-        const subjectPackage = await prisma.subjectPackage.findFirst({
-          where: {
-            subject: subject,
-            packageType: packageType,
-            kidpackage: kidPackage,
-          },
-          select: { packageId: true },
-        });
-        await prisma.wpos_wpdatatable_23.update({
-          where: { wdt_ID: channel.wdt_ID },
-          data: { youtubeSubject: subjectPackage?.packageId || null },
-        });
-      } else {
-        await prisma.wpos_wpdatatable_23.update({
-          where: { wdt_ID: channel.wdt_ID },
-          data: { youtubeSubject: null },
-        });
-      }
+    if (!student) {
+      return ctx.reply("🚫 የተመዘገበ ተማሪ አይታወቅም። አድሚኑን ያነጋግሩ፡፡");
     }
 
-    // 3. Fetch channels again to get updated youtubeSubject
-    channels = await prisma.wpos_wpdatatable_23.findMany({
+    // 2. Fetch available packages for this student
+    if (!student.package || !student.subject || student.isKid === null) {
+      return ctx.reply("🚫 ተማሪ ፓኬጅ ወይም ርዕስ መረጃ አልተገኘም። አድሚኑን ያነጋግሩ፡፡");
+    }
+    const availablePackages = await getAvailablePacakges(
+      student.package,
+      student.subject,
+      student.isKid
+    );
+
+    if (!availablePackages || availablePackages.length === 0) {
+      return ctx.reply("🚫 ምንም ፓኬጅ አልተገኘም። አድሚኑን ያነጋግሩ፡፡");
+    }
+
+    // 3. Show packages as inline buttons
+    const keyboard = new InlineKeyboard();
+    for (const pkg of availablePackages) {
+      keyboard.text(pkg.package.name, `choose_package_${pkg.package.id}`).row();
+    }
+    await ctx.reply("እባክዎ ፓኬጅ ይምረጡ፡፡\nPlease choose your package:", {
+      reply_markup: keyboard,
+    });
+  });
+
+  // 4. Handle package selection
+  bot.callbackQuery(/choose_package_(.+)/, async (ctx) => {
+    const chatId = ctx.chat?.id;
+    const packageId = ctx.match[1];
+
+    // Set the chosen package as active for the student
+    const student = await prisma.wpos_wpdatatable_23.findFirst({
       where: {
-        chat_id: chatId.toString(),
+        chat_id: chatId?.toString(),
         status: { in: ["Active", "Notyet"] },
       },
+    });
+
+    if (!student) {
+      return ctx.reply("🚫 ተማሪ አልተገኘም።");
+    }
+    // Check if the package exists
+    const validPackage = await prisma.coursePackage.findUnique({
+      where: { id: packageId },
+    });
+    if (!validPackage) {
+      return ctx.reply("🚫 ይህ ፓኬጅ አልተገኘም። አድሚኑን ያነጋ፡");
+    }
+
+    // Now update
+    await prisma.wpos_wpdatatable_23.update({
+      where: { wdt_ID: student.wdt_ID },
+      data: { youtubeSubject: packageId },
+    });
+    // Update student's youtubeSubject (or active package field as needed)
+    await prisma.wpos_wpdatatable_23.update({
+      where: { wdt_ID: student.wdt_ID },
+      data: { youtubeSubject: packageId },
+    });
+
+    // Fetch the package details (including first course/chapter)
+    const activePackage = await prisma.coursePackage.findUnique({
+      where: { id: packageId },
       select: {
-        wdt_ID: true,
+        id: true,
         name: true,
-        subject: true,
-        package: true,
-        isKid: true,
-        activePackage: {
-          where: { isPublished: true },
+        courses: {
+          where: { order: 1 },
           select: {
-            courses: {
-              where: { order: 1 },
+            id: true,
+            title: true,
+            chapters: {
+              where: { position: 1 },
               select: {
                 id: true,
                 title: true,
-                chapters: {
-                  where: { position: 1 },
-                  select: {
-                    id: true,
-                    title: true,
-                  },
-                },
               },
             },
           },
@@ -149,63 +155,53 @@ export async function startBot() {
       },
     });
 
+    if (
+      !activePackage ||
+      !activePackage.courses.length ||
+      !activePackage.courses[0].chapters.length
+    ) {
+      return ctx.reply("🚫 ይህ ፓኬጅ ትምህርት አይዟትም። አድሚኑን ያነጋግሩ፡፡");
+    }
+
+    // Ensure student progress exists
+    const course = activePackage.courses[0];
+    const chapter = course.chapters[0];
+    const studentProgress = await prisma.studentProgress.findFirst({
+      where: {
+        studentId: student.wdt_ID,
+        chapterId: chapter.id,
+      },
+    });
+
+    if (!studentProgress) {
+      await prisma.studentProgress.create({
+        data: {
+          studentId: student.wdt_ID,
+          chapterId: chapter.id,
+          isCompleted: false,
+        },
+      });
+    }
+
+    // Send the learning link
     const lang = "en";
     const stud = "student";
+    const update = await updatePathProgressData(student.wdt_ID);
+    const url = `${BASE_URL}/${lang}/${stud}/${student.wdt_ID}/${update[0]}/${update[1]}`;
 
-    if (channels && channels.length > 0) {
-      let sent;
+    const channelName = student.name || "ዳሩል-ኩብራ";
+    const packageName = activePackage.name || "የተማሪ ፓኬጅ";
+    const openKeyboard = new InlineKeyboard().url(
+      `📚 የ${channelName}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
+      url
+    );
 
-      for (const channel of channels) {
-        const studId = channel.wdt_ID;
-        if (
-          channel.activePackage &&
-          channel.activePackage.courses.length > 0 &&
-          channel.activePackage.courses[0].chapters.length > 0
-        ) {
-          const course = channel.activePackage.courses[0];
-          const chapter = course.chapters[0];
-
-          const studentProgress = await prisma.studentProgress.findFirst({
-            where: {
-              studentId: channel.wdt_ID,
-              chapterId: chapter.id,
-            },
-          });
-
-          if (!studentProgress) {
-            await prisma.studentProgress.create({
-              data: {
-                studentId: channel.wdt_ID,
-                chapterId: chapter.id,
-                isCompleted: false,
-              },
-            });
-          }
-
-          const update = await updatePathProgressData(studId);
-          const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
-
-          const channelName = channel.name || "ዳሩል-ኩብራ";
-          const keyboard = new InlineKeyboard().url(
-            `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
-            url
-          );
-
-          await ctx.reply(
-            "✅  እንኳን ወደ ዳሩል-ኩብራ የቁርአን ማእከል በደህና መጡ! ኮርሱን ለመከታተል ከታች ያለውን ማስፈንጠሪያ ይጫኑ፡፡",
-            {
-              reply_markup: keyboard,
-            }
-          );
-          sent = true;
-        }
+    await ctx.reply(
+      "✅  እንኳን ወደ ዳሩል-ኩብራ የቁርአን ማእከል በደህና መጡ! ኮርሱን ለመከታተል ከታች ያለውን ማስፈንጠሪያ ይጫኑ፡፡",
+      {
+        reply_markup: openKeyboard,
       }
-      if (!sent) {
-        return ctx.reply("🚫 የኮርሱን ፕላትፎርም ለማግኘት አልተፈቀደለዎትም!");
-      }
-    } else {
-      return ctx.reply("🚫 የኮርሱን ፕላትፎርም ለማግኘት አልተፈቀደለዎትም! አድሚኑን ያነጋግሩ፡፡");
-    }
+    );
   });
 
   // bot.on("message", (ctx) => ctx.reply("Got another message!"));
@@ -593,6 +589,96 @@ export async function startBot() {
 
   // bot.start();
   console.log("✅ አድሚን ቦት ተጀምሯል።");
+  ////////
+  bot.command("starts", async (ctx) => {
+    const chatId = ctx.chat?.id;
+    // 1. Fetch channels
+    if (!chatId) {
+      return ctx.reply("Unable to retrieve chat ID.");
+    }
+    let channels = await prisma.wpos_wpdatatable_23.findMany({
+      where: {
+        chat_id: chatId.toString(),
+        status: { in: ["Active", "Notyet"] },
+      },
+      select: {
+        wdt_ID: true,
+        name: true,
+        subject: true,
+        package: true,
+        isKid: true,
+        activePackage: {
+          where: { isPublished: true },
+          select: {
+            id: true,
+            name: true,
+            courses: {
+              where: { order: 1 },
+              select: {
+                id: true,
+                title: true,
+                chapters: {
+                  where: { position: 1 },
+                  select: {
+                    id: true,
+                    title: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    try {
+      // 2. Update youtubeSubject for all channels
+      for (const channel of channels) {
+        if (!channel.wdt_ID) continue; // Skip if wdt_ID is not set
+        const subject = channel.subject;
+        const packageType = channel.package;
+        const kidPackage = channel.isKid;
+        if (!subject || !packageType || kidPackage === null) continue; // Skip if any required field is missing
+        const availablePackageId = (
+          await getAvailablePacakges(packageType, subject, kidPackage)
+        ).map((p) => p.id);
+        if (!availablePackageId || availablePackageId.length === 0) {
+          await ctx.reply(
+            `🚫 ለተማሪ ${channel.name} ምንም ፓኬጅ አልተገኘም። አድሚኑን ያነጋግሩ፡፡`
+          );
+          return;
+        }
+
+        await prisma.wpos_wpdatatable_23.update({
+          where: { wdt_ID: channel.wdt_ID },
+          data: { youtubeSubject: availablePackageId[0] ?? null },
+        });
+
+        const keyboard = new InlineKeyboard()
+          .text("📊 Packages", `package_selection_${availablePackageId[0]}`)
+          .row();
+        await ctx.reply(
+          "👋 እንኳን ወደ አድሚን ፓነል በደህና መጡ!\n\n" +
+            "ከዚህ በታች ያሉትን ቁልፎች በመጠቀም የተማሪዎችን አካውንት መከታተል፣ መልእክት መላክ እና የትምህርት ጥራት ማጣራት ይችላሉ።\n\n" +
+            "• <b>📊 ዳሽቦርድ</b> – የተማሪዎችን ሁኔታ ይመልከቱ።\n" +
+            "• <b>✉️ መልእክት ላክ</b> – ለተመረጡ ተማሪዎች መልእክት ይላኩ።",
+          { reply_markup: keyboard, parse_mode: "HTML" }
+        );
+      }
+    } catch (error) {
+      console.error("❌ DB ERROR:", error);
+      await ctx.reply("❌ የውሂብ ችግር።");
+    }
+  });
+  bot.callbackQuery("/package_selection_(.+)/", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const keyboard = new InlineKeyboard()
+      .text("📊 ዳሽቦርድ", "admin_dashboard_page_1")
+      .row()
+      .text("✉️ መልእክት ላክ", "admin_send");
+    await ctx.editMessageText("👋 እንኳን ወደ አድሚን ፓነል በደህና መጡ!", {
+      reply_markup: keyboard,
+    });
+  });
 
   // Schedule a task to run every day at 00:00
   // import { sendProgressMessages } from "./actions/admin/analysis";
@@ -678,5 +764,3 @@ export async function startBot() {
   });
   // console.log("✅ Daily task scheduled to run at 00:00");
 }
-
-
