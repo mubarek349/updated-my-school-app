@@ -230,7 +230,7 @@
 //   const student = await prisma.wpos_wpdatatable_23.findFirst({
 //     where: {
 //       wdt_ID: chatid,
-//       status: { in: ["active", "Not yet"] },
+//       status: { in: ["Active", "Not yet"] },
 //     },
 //     select: {
 //       wdt_ID: true,
@@ -401,7 +401,7 @@
 //   const student = await prisma.wpos_wpdatatable_23.findFirst({
 //     where: {
 //       wdt_ID: chatid,
-//       status: { in: ["active", "Not yet"] },
+//       status: { in: ["Active", "Not yet"] },
 //     },
 //     select: {
 //       wdt_ID: true,
@@ -459,7 +459,7 @@
 //   const student = await prisma.wpos_wpdatatable_23.findFirst({
 //     where: {
 //       wdt_ID: chatid,
-//       status: { in: ["active", "Not yet"] },
+//       status: { in: ["Active", "Not yet"] },
 //     },
 //     select: {
 //       wdt_ID: true,

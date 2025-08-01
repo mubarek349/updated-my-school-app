@@ -1,0 +1,57 @@
+"use server";
+import prisma from "@/lib/db";
+import { correctExamAnswer } from "./question";
+
+export default async function getCertificateData(
+  studentId: number,
+  coursesPackageId: string
+) {
+  try {
+    // 1. Fetch the certificate data for the student and package
+    const student = await prisma.wpos_wpdatatable_23.findFirst({
+      where: {
+        wdt_ID: studentId,
+        status: { in: ["Active", "Not yet"] },
+      },
+      select: {
+        wdt_ID: true,
+        name: true,
+      },
+    });
+    if(!student || !student.wdt_ID || !student.name){throw Error("the student is not registerd")}
+    const studId=student.wdt_ID;
+    const sName=student.name;
+
+    const coursesPackage = await prisma.coursePackage.findFirst({
+      where: {
+        id: coursesPackageId,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+    if(!coursesPackage || !coursesPackage.id || !coursesPackage.name){throw Error("this package is not assinged")}
+   const cId=coursesPackage.id;
+   const cName=coursesPackage.name;
+    const result = (await correctExamAnswer(coursesPackageId, studentId))
+      .result;
+    const finalUpdatedTime = await prisma.finalExamResult.findFirst({
+      where: { studentId, packageId: coursesPackageId },
+      select: {
+        endingTime: true,
+        startingTime: true,
+      },
+    });
+if(!finalUpdatedTime || !finalUpdatedTime.endingTime){throw Error("the endingTime is not setted")}
+const endTime=finalUpdatedTime.endingTime;
+const startTime=finalUpdatedTime.startingTime;
+    return{
+        studId,sName,cId,cName,startTime,endTime,result
+    }
+    
+  } catch (error) {
+    console.error("Error fetching certificate data:", error);
+    throw error; // Re-throw the error to be handled by the caller
+  }
+}

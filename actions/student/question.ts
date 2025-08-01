@@ -12,7 +12,7 @@ export async function getQuestionForActivePackageLastChapter(wdt_ID: number) {
   const student = await prisma.wpos_wpdatatable_23.findFirst({
     where: {
       wdt_ID: wdt_ID,
-      status: { in: ["active", "Not yet"] },
+      status: { in: ["Active", "Not yet"] },
     },
     select: {
       wdt_ID: true,
@@ -154,7 +154,7 @@ export async function getQuestionForActivePackageLastChapter(wdt_ID: number) {
 //   const student = await prisma.wpos_wpdatatable_23.findFirst({
 //     where: {
 //       chat_id: wdt_ID,
-//       status: { in: ["active", "Not yet"] },
+//       status: { in: ["Active", "Not yet"] },
 //     },
 //     select: {
 //       wdt_ID: true,
@@ -457,7 +457,7 @@ export async function submitAnswers(
   const student = await prisma.wpos_wpdatatable_23.findFirst({
     where: {
       wdt_ID: wdt_ID,
-      status: { in: ["active", "Not yet"] },
+      status: { in: ["Active", "Not yet"] },
     },
     select: {
       wdt_ID: true,
@@ -698,7 +698,7 @@ export async function examsubmitAnswers(
   const student = await prisma.wpos_wpdatatable_23.findFirst({
     where: {
       wdt_ID: wdt_ID,
-      status: { in: ["active", "Not yet"] },
+      status: { in: ["Active", "Not yet"] },
       youtubeSubject: coursesPackageId,
     },
     select: {

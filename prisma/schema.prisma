@@ -168,15 +168,17 @@ model studentProgress {
 }
 
 model finalExamResult {
-  id                 String              @id @default(cuid())
-  student            wpos_wpdatatable_23 @relation(fields: [studentId], references: [wdt_ID])
-  studentId          Int
-  coursePackage      coursePackage       @relation(fields: [packageId], references: [id])
-  packageId          String
-  updationProhibited Boolean             @default(false)
-  result             String?
-  startingTime       DateTime            @default(now())
-  endingTime         DateTime?
+  id                           String              @id @default(cuid())
+  student                      wpos_wpdatatable_23 @relation(fields: [studentId], references: [wdt_ID])
+  studentId                    Int
+  coursePackage                coursePackage       @relation(fields: [packageId], references: [id])
+  packageId                    String
+  updationProhibited           Boolean             @default(false)
+  result                       String?
+  certificateUrl               String?
+  dateOfDownloadingCertificate DateTime?
+  startingTime                 DateTime            @default(now())
+  endingTime                   DateTime?
 }
 
 model admin {

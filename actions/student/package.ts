@@ -6,7 +6,7 @@ export async function getPackageData(wdt_ID: number) {
   const student = await prisma.wpos_wpdatatable_23.findFirst({
     where: {
       wdt_ID: wdt_ID,
-      status: { in: ["active", "Not yet"] },
+      status: { in: ["Active", "Not yet"] },
     },
     select: {
       wdt_ID: true,

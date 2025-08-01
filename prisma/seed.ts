@@ -20,7 +20,7 @@ const prisma = new PrismaClient();
         name: "Mubarak Ahmed",
         passcode: "student1",
         phoneno: "0910203040",
-        status: "active",
+        status: "Active",
         subject: "hifz",
         package: "kids",
         chat_id: "973677019",
@@ -33,7 +33,7 @@ const prisma = new PrismaClient();
         package: "kids",
         passcode: "student2",
         phoneno: "0910203041",
-        status: "active",
+        status: "Active",
         chat_id: "611321369",
         country: "Saudi Arabia", // added country
       },
@@ -44,7 +44,7 @@ const prisma = new PrismaClient();
         name: "Abdulkarim ahmed",
         passcode: "student3",
         phoneno: "0910203042",
-        status: "active",
+        status: "Active",
         chat_id: "973677021",
         country: "Dubai", // added country
       },
