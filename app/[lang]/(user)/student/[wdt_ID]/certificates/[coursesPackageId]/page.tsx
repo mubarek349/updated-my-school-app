@@ -7,6 +7,8 @@ import Certificate from "@/components/Certificate";
 import getCertificateData from "@/actions/student/certificate";
 import { useParams } from "next/navigation";
 import useAction from "@/hooks/useAction";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 // const dat=await getCertificateData(wdt_ID,coursesPackageId);
 
 export default function CertificatePage() {
@@ -23,7 +25,7 @@ export default function CertificatePage() {
   const studentId = data?.studId;
   const packageName = data?.cName;
   const packageId = data?.cId;
-  const startTime=data?.startTime.toLocaleDateString();
+  const startTime = data?.startTime.toLocaleDateString();
   const endTime = data?.endTime.toLocaleDateString();
   const score = data?.result.score;
   const correct = data?.result.correct;
@@ -92,7 +94,14 @@ export default function CertificatePage() {
 
   return (
     <div className="md:ml-35 overflow-y-auto">
-      <h1 className="text-2xl font-bold m-4">Generated Certificate</h1>
+      <Link
+        href={`/en/student/${studentId}/profile`}
+        className="flex items-center text-sm hover:opacity-75 transition mb-6 mt-4 ml-4"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        ወደ ፕሮፋይል ገጽ
+      </Link>
+      <h1 className="text-xl font-bold m-4">Generated Certificate</h1>
       <button
         className="flex md:hidden bg-blue-600 text-white mx-4 px-4 py-2 rounded"
         onClick={handleDownloadAndSave}

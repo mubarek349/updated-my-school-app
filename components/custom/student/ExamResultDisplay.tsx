@@ -1,7 +1,7 @@
 // components/custom/student/ExamResultDisplay.tsx
-import {
-  checkingUpdateProhibition,
-} from "@/actions/student/finalExamResult";
+import { checkingUpdateProhibition } from "@/actions/student/finalExamResult";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 interface QuestionOption {
@@ -56,7 +56,13 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
         }
       }, 20000);
     })();
-  }, [coursesPackageId, wdt_ID, isFinalExamCreated, setIsExamSubmitted, isClosedForUpdate]);
+  }, [
+    coursesPackageId,
+    wdt_ID,
+    isFinalExamCreated,
+    setIsExamSubmitted,
+    isClosedForUpdate,
+  ]);
 
   if (!result) {
     return (
@@ -69,7 +75,7 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
   }
 
   const scorePercentage = (result.score * 100).toFixed(2);
-
+  const router = useRouter();
   return (
     // Main container: full height, light gray background, generous padding
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 font-sans flex justify-center items-start overflow-auto">
@@ -102,9 +108,20 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
 
         {isClosedForUpdate === true ? (
           <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 mt-6">
+            <div className="flex justify-between">
+
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 mt-2">
               የጥያቄዎቹ ማረሚያ
             </h3>
+            <Button
+            className="mt-2 mb-4"
+              onClick={() => {
+                router.push(`/en/student/${wdt_ID}/certificates/${coursesPackageId}`);
+              }}
+            >
+              ወደ ሰርተፍኬት ገጽ
+            </Button>
+            </div>
             {/* Iterate through each question to display its details */}
 
             {questions.map((question, index) => {

@@ -47,16 +47,19 @@ export default async function getProfile(studentId: number) {
     }
     let resultOfEachPackage = [];
     let packageNames = [];
+    let packageIdss=[];
     const packageIds = availablePacakges.map((pkg) => pkg.package);
     for (const packageId of packageIds) {
       const result = (await correctExamAnswer(packageId.id, studentId)).result;
       if (await checkingUpdateProhibition(studentId, packageId.id)) {
         resultOfEachPackage.push(result);
         packageNames.push(packageId.name);
+        packageIdss.push(packageId.id);
       }
     }
     return {
       studentProfile,
+      packageIdss,
       packageNames,
       resultOfEachPackage,
     };
