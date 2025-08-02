@@ -39,13 +39,11 @@ function Page() {
   );
   gradeData.activeCourse.course = data.studentProfile.activePackage?.name ?? "";
   if (activePacakgeIndex >= 0) {
-    gradeData.activeCourse.grade = `${
-      result[activePacakgeIndex].score * 100
-    }%  => ${result[activePacakgeIndex].correct}/${
+    gradeData.activeCourse.grade = `${result[activePacakgeIndex].correct}/${
       result[activePacakgeIndex].total
-    }`;
+    }  => ${result[activePacakgeIndex].score * 100}%`;
     gradeData.activeCourse.remarks = `${
-      result[activePacakgeIndex].score >= 0.75 ? "አልፏል" : "ወድቋል"
+      result[activePacakgeIndex].score >= 0.75 ? "አልፈዋል" : "ወድቀዋል"
     }`;
   }
   gradeData.lastLearnedCourses = []; // Clear any placeholder
@@ -53,10 +51,10 @@ function Page() {
   for (let i = 0; i < packageName.length; i++) {
     gradeData.lastLearnedCourses.push({
       course: packageName[i],
-      grade: `${result[i].score * 100}%  => ${result[i].correct}/${
-        result[i].total
-      }`,
-      remarks: result[i].score >= 0.75 ? "አልፏል" : "ወድቋል",
+      grade: `${result[i].correct}/${result[i].total} => ${
+        result[i].score * 100
+      }% `,
+      remarks: result[i].score >= 0.75 ? "አልፈዋል" : "ወድቀዋል",
       url: `/en/student/${studentId}/certificates/${packageIds[i]}`,
     });
   }
@@ -104,7 +102,7 @@ function Page() {
 
           {/* Last Learned Courses Table */}
           <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200">
-            Completed CoursesPackages
+            ያጠናቀቋቸው የኮርስ ጥቅሎች
           </h2>
           <table className="w-full text-left rounded-lg overflow-hidden shadow border border-gray-200 dark:border-gray-700">
             <thead className="bg-gray-100 dark:bg-gray-700">

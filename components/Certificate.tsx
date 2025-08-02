@@ -92,9 +92,6 @@ const Certificate: React.FC<CertificateProps> = ({
                 have piety towards Allah and to use what he/she has learned in
                 his/her pursuit of noble Islamic knowledge.
               </p>
-              <p className="mt-2 text-xs leading-snug">
-                The center recommends piety and using this knowledge for good.
-              </p>
             </div>
             {/* Arabic Section */}
             <div className="w-1/2 text-center pr-3">

@@ -8,7 +8,7 @@ import { LightDarkToggle } from "@/components/ui/light-dark-toggle";
 
 import { cn } from "@/lib/utils";
 
-import { CheckCircle, PlayCircle, Lock, Trophy } from "lucide-react"; // Added Trophy icon
+import { CheckCircle, PlayCircle, Lock, Trophy, UserCircle } from "lucide-react"; // Added Trophy icon
 
 import {
   Accordion,
@@ -364,8 +364,19 @@ export default function MainMenu({ data, className }: MainMenuProps) {
         )}
       </div>
 
-      <footer className="flex items-center gap-3 mt-auto pt-4 border-t border-sky-200 dark:border-sky-800">
-        {/* The LightDarkToggle remains in the footer */}
+      <footer className="flex items-center justify-between gap-3 pt-2 border-t border-sky-200 dark:border-sky-800">
+        <button
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-lg font-medium"
+          )}
+          onClick={() => {
+            router.push(`/en/student/${wdt_ID}/profile`);
+          }}
+          type="button"
+          aria-label="Go to Student Dashboard"
+        >
+          <UserCircle className="w-8 h-8 text-sky-600 dark:text-sky-400" />
+        </button>
         <LightDarkToggle
           className={cn(
             "ml-auto p-2 rounded-full",
