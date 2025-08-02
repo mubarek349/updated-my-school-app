@@ -69,7 +69,7 @@ const Certificate: React.FC<CertificateProps> = ({
           {/* English & Arabic Sections Side by Side */}
           <div className="flex flex-row gap-3 mb-2 h-full">
             {/* English Section */}
-            <div className="w-1/2 text-center border-r pr-3 pl-6">
+            {/* <div className="w-1/2 text-center border-r pr-3 pl-6">
               <h2 className="text-base font-bold mb-2">
                 CoursesPackage Certificate
               </h2>
@@ -92,31 +92,60 @@ const Certificate: React.FC<CertificateProps> = ({
                 have piety towards Allah and to use what he/she has learned in
                 his/her pursuit of noble Islamic knowledge.
               </p>
+            </div> */}
+            {/* Amharic Section */}
+            <div className="w-1/2 text-center border-r pr-3 pl-6">
+              <h2 className="text-base font-bold mb-2">
+                የኮርሶች ጥቅል ማጠናቀቂያ የምስክር
+              </h2>
+              <p className="text-s leading-snug">
+                ዳር አል-ኩብራ የቁርዓን እና ኢስላሚክ ጥናት ማእከል ተማሪ
+                <span className="font-bold"> {studentName} </span> ከ
+                <span className="font-bold"> {startDate} </span>
+                እስከ
+                <span className="font-bold"> {endDate} </span> ባለው ጊዜ ውስጥ የ
+                <span className="font-bold"> {packageName} </span>
+                ኮርሶችን ፓኬጅ ማጠናቀቁን/ቋን እና ከ
+                <span className="font-bold"> {total} </span>
+                ጥያቄዎች
+                <span className="font-bold"> {correct} </span>
+                ቱን በመመለስ
+                <span className="font-bold">{score * 100}%</span>: ያገኘ/ች መሆኑን/ኗን
+                ያረጋግጣል።
+                <p className="mt-2 mb-2 text-s leading-snug">
+                  ማዕከሉ ይህንን ሰርተፍኬት ሲሰጠው/ጣት አላህን በመፍራት እና የተማረውን/ችውን ኢስላማዊ እውቀት
+                  በመተግበር ላይ ይመክራል።
+                </p>
+              </p>
             </div>
             {/* Arabic Section */}
-            <div className="w-1/2 text-center pr-3">
-              <p className="text-base font-bold mb-2">
+            <div
+              dir="rtl"
+              className="text-right font-arabic w-1/2 pr-3 font-[Noto Naskh Arabic] mr-4"
+            >
+              <p className="text-base font-bold text-center mb-2">
                 شهادة إتمام مجلد الدورات
               </p>
-              <p className="text-xs leading-snug">
-                يشهد مركز دار الكبرى للقرآن الكريم والدراسات الإسلامية أن الطالب
+              <p className="text-s leading-snug">
+                يشهد مركز الدار الكبرى للقرآن الكريم والدراسات الإسلامية أن
+                الطالب،
                 <span className="font-bold"> {studentName} </span>
-                قد أكمل مجلد الدورات
+                قد أتم\ت حزمة دورات
                 <span className="font-bold"> {packageName} </span>
                 خلال الفترة من
                 <span className="font-bold"> {startDate} </span>
                 إلى
-                <span className="font-bold"> {endDate} </span>، حيث أجاب على
+                <span className="font-bold"> {endDate} </span>
+                مجيبًا على
                 <span className="font-bold"> {correct} </span>
-                من
+                أسئلة من أصل
                 <span className="font-bold"> {total} </span>
-                سؤالاً، وحقق نسبة
-                <span className="font-bold"> {score * 100}% </span>
-                بأداء ممتاز. المركز إذ يمنحه هذه الشهادة يوصيه بتقوى الله عز وجل
-                واستخدام ما تعلمه في طلب العلم الشرعي النبيل.
+                محققًا نسبة
+                <span className="font-bold">%{(score * 100).toFixed(2)}</span> .
               </p>
-              <p className="mt-2 text-xs leading-snug">
-                ويوصى الطالب بتقوى الله واستخدام ما تعلمه في الخير.
+              <p className="mt-2 mb-2 text-s leading-snug">
+                ويوصي المركز، إذ يمنحه\تمنحه هذه الشهادة، بتقوى الله وأن
+                يوظف\توظف ما تعلمه\ته في تحصيل العلوم الشرعية النبيلة.
               </p>
             </div>
           </div>
