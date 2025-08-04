@@ -67,6 +67,7 @@ export const AssingingProgressConfirmModal = ({ children, onConfirm,chapterName 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure you want to Assign Progress for Selected Students to {chapterName} chapter?</AlertDialogTitle>

@@ -38,6 +38,7 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
   setIsExamSubmitted,
   isFinalExamCreated,
 }) => {
+  const router = useRouter();
   const { studentResponse, questionAnswers, result } = feedback;
   const [isClosedForUpdate, setIsClosedForUpdate] = useState(false);
 
@@ -75,7 +76,6 @@ const ExamResultDisplay: React.FC<ExamResultDisplayProps> = ({
   }
 
   const scorePercentage = (result.score * 100).toFixed(2);
-  const router = useRouter();
   return (
     // Main container: full height, light gray background, generous padding
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 font-sans flex justify-center items-start overflow-auto">

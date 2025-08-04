@@ -6,7 +6,7 @@ import getCertificateData from "@/actions/student/certificate";
 import { useParams } from "next/navigation";
 import useAction from "@/hooks/useAction";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 
@@ -95,16 +95,14 @@ export default function CertificatePage() {
       <h1 className="text-xl font-bold m-4">Generated Certificate</h1>
 
       <button
-        className="flex md:hidden bg-blue-600 text-white mx-4 px-4 py-2 rounded"
+        className="flex md:hidden bg-blue-600 text-white mx-4 px-4 py-2 rounded gap-2"
         onClick={handleDownload}
       >
-        Download Certificate as PDF
+       <Download className=""/>
+        Certificate as PDF
       </button>
 
-      <div
-        ref={certRef}
-        className="mx-4 overflow-hidden certificate-container"
-      >
+      <div ref={certRef} className="mx-4 overflow-hidden certificate-container">
         <Certificate
           studentName={studentName}
           packageName={packageName}
@@ -117,10 +115,11 @@ export default function CertificatePage() {
       </div>
 
       <button
-        className="hidden md:flex mb-8 bg-blue-600 text-white mx-4 px-4 py-2 rounded"
+        className="hidden md:flex mb-8 bg-blue-600 text-white mx-4 px-4 py-2 rounded gap-2"
         onClick={handleDownload}
       >
-        Download Certificate as PDF
+        <Download className=""/>
+        Certificate as PDF
       </button>
     </div>
   );

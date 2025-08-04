@@ -74,7 +74,7 @@ const prisma = new PrismaClient();
     where: { wdt_ID: 1001 },
     data: {
       packages: {
-        connect: [{ id: "pkg_001" }, { id: "pkg_002" }],
+        connect: [{ id: "pkg_001" }, { id: "pkg_002" }, { id: "pkg_003" }],
       },
       activePackage: {
         connect: { id: "pkg_001" },
@@ -97,17 +97,17 @@ const prisma = new PrismaClient();
     data: [
       {
         packageType: "kids",
-        subject: "nezer",
+        subject: "hifz",
         packageId: "pkg_001",
       },
       {
         packageType: "kids",
-        subject: "nezer",
-        packageId: "pkg_001",
+        subject: "hifz",
+        packageId: "pkg_002",
       },
       {
         packageType: "kids",
-        subject: "nezer",
+        subject: "hifz",
         packageId: "pkg_003",
       },
     ],
@@ -133,28 +133,40 @@ const prisma = new PrismaClient();
         packageId: "pkg_001",
         imageUrl: "",
       },
-    ],
-  });
-
-  // Seed Courses for Web Dev Package
-  await prisma.course.createMany({
-    data: [
       {
-        id: "course_101",
-        title: "Haraka",
-        description: "Build beautiful web pages",
+        id: "course_003",
+        title: "HAREKA",
+        description: "Introduction to programming concepts",
         isPublished: true,
         order: 1,
         packageId: "pkg_002",
         imageUrl: "",
       },
       {
-        id: "course_102",
-        title: "tanwin",
-        description: "Complete JS from basics to advanced",
+        id: "course_004",
+        title: "TENWIN",
+        description: "Learn OOP principles",
         isPublished: true,
         order: 2,
         packageId: "pkg_002",
+        imageUrl: "",
+      },
+      {
+        id: "course_005",
+        title: "HAREKA",
+        description: "Introduction to programming concepts",
+        isPublished: true,
+        order: 1,
+        packageId: "pkg_003",
+        imageUrl: "",
+      },
+      {
+        id: "course_006",
+        title: "TENWIN",
+        description: "Learn OOP principles",
+        isPublished: true,
+        order: 2,
+        packageId: "pkg_003",
         imageUrl: "",
       },
     ],
@@ -193,11 +205,10 @@ const prisma = new PrismaClient();
     ],
   });
 
-  // Seed Chapters for OOP Course
   await prisma.chapter.createMany({
     data: [
       {
-        id: "chapter_011",
+        id: "chapter_004",
         title: "SUKUN",
         description: "Introduction to OOP concepts",
         position: 1,
@@ -206,12 +217,121 @@ const prisma = new PrismaClient();
         videoUrl: "YbJAnbfN33o",
       },
       {
-        id: "chapter_012",
+        id: "chapter_005",
         title: "FETHATAIB",
         description: "Understanding class inheritance",
         position: 2,
         isPublished: true,
         courseId: "course_002",
+        videoUrl: "JnvWYDDxFuA",
+      },
+    ],
+  });
+
+  await prisma.chapter.createMany({
+    data: [
+      {
+        id: "chapter_006",
+        title: "FETHA",
+        description: "Learn about variables and basic data types",
+        position: 1,
+        isPublished: true,
+        courseId: "course_003",
+        videoUrl: "n7WNUaxPo8A",
+      },
+      {
+        id: "chapter_007",
+        title: "KESRA",
+        description: "If statements and loops",
+        position: 2,
+        isPublished: true,
+        courseId: "course_003",
+        videoUrl: "Cv0I54sHMB8",
+      },
+      {
+        id: "chapter_008",
+        title: "DOMA",
+        description: "Creating and using functions",
+        position: 3,
+        isPublished: true,
+        courseId: "course_003",
+        videoUrl: "oR5aGowK5V4",
+      },
+    ],
+  });
+
+  // Seed Chapters for OOP Course
+  await prisma.chapter.createMany({
+    data: [
+      {
+        id: "chapter_009",
+        title: "SUKUN",
+        description: "Introduction to OOP concepts",
+        position: 1,
+        isPublished: true,
+        courseId: "course_004",
+        videoUrl: "YbJAnbfN33o",
+      },
+      {
+        id: "chapter_010",
+        title: "FETHATAIB",
+        description: "Understanding class inheritance",
+        position: 2,
+        isPublished: true,
+        courseId: "course_004",
+        videoUrl: "JnvWYDDxFuA",
+      },
+    ],
+  });
+ await prisma.chapter.createMany({
+    data: [
+      {
+        id: "chapter_011",
+        title: "FETHA",
+        description: "Learn about variables and basic data types",
+        position: 1,
+        isPublished: true,
+        courseId: "course_005",
+        videoUrl: "n7WNUaxPo8A",
+      },
+      {
+        id: "chapter_012",
+        title: "KESRA",
+        description: "If statements and loops",
+        position: 2,
+        isPublished: true,
+        courseId: "course_005",
+        videoUrl: "Cv0I54sHMB8",
+      },
+      {
+        id: "chapter_013",
+        title: "DOMA",
+        description: "Creating and using functions",
+        position: 3,
+        isPublished: true,
+        courseId: "course_005",
+        videoUrl: "oR5aGowK5V4",
+      },
+    ],
+  }); 
+await prisma.chapter.createMany({
+    data: [
+      {
+        id: "chapter_014",
+        title: "SUKUN",
+        description: "Introduction to OOP concepts",
+        position: 1,
+        isPublished: true,
+        courseId: "course_006",
+        videoUrl: "YbJAnbfN33o",
+      },
+      {
+        id: "chapter_015",
+        title: "FETHATAIB",
+        description: "Understanding class inheritance",
+        position: 2,
+        isPublished: true,
+        courseId: "course_006",
         videoUrl: "JnvWYDDxFuA",
       },
     ],
@@ -280,37 +400,96 @@ const prisma = new PrismaClient();
       // Student 1 completed all chapters in Course 2
       {
         studentId: 1001,
-        chapterId: "chapter_011",
+        chapterId: "chapter_004",
         isCompleted: true,
         completedAt: new Date("2023-03-10"),
       },
       {
         studentId: 1001,
-        chapterId: "chapter_012",
+        chapterId: "chapter_005",
         isCompleted: true,
         completedAt: new Date("2023-03-15"),
       },
     ],
   });
 
-  // Seed Student Progress for In-Progress Student
+   // Seed Student Progress for Completed Student
   await prisma.studentProgress.createMany({
     data: [
-      // Student 2 completed first chapter
+      // Student 1 completed all chapters in Course 1
       {
-        studentId: 1002,
-        chapterId: "chapter_001",
+        studentId: 1001,
+        chapterId: "chapter_006",
         isCompleted: true,
-        completedAt: new Date("2023-03-05"),
+        completedAt: new Date("2023-02-01"),
       },
-      // Student 2 started second chapter but didn't complete
       {
-        studentId: 1002,
-        chapterId: "chapter_002",
+        studentId: 1001,
+        chapterId: "chapter_007",
+        isCompleted: true,
+        completedAt: new Date("2023-02-15"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_008",
+        isCompleted: true,
+        completedAt: new Date("2023-02-28"),
+      },
+      // Student 1 completed all chapters in Course 2
+      {
+        studentId: 1001,
+        chapterId: "chapter_009",
+        isCompleted: true,
+        completedAt: new Date("2023-03-10"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_010",
         isCompleted: false,
+        completedAt: new Date("2023-03-15"),
       },
     ],
   });
+
+    // Seed Student Progress for Completed Student
+  await prisma.studentProgress.createMany({
+    data: [
+      // Student 1 completed all chapters in Course 1
+      {
+        studentId: 1001,
+        chapterId: "chapter_011",
+        isCompleted: true,
+        completedAt: new Date("2023-02-01"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_012",
+        isCompleted: true,
+        completedAt: new Date("2023-02-15"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_013",
+        isCompleted: true,
+        completedAt: new Date("2023-02-28"),
+      },
+      // Student 1 completed all chapters in Course 2
+      {
+        studentId: 1001,
+        chapterId: "chapter_014",
+        isCompleted: true,
+        completedAt: new Date("2023-03-10"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_015",
+        isCompleted: false,
+        completedAt: new Date("2023-03-15"),
+      },
+    ],
+  });
+  // Seed Student Progress for In-Progress Student
+  
   const packages = ["pkg_001", "pkg_002", "pkg_003"];
 
   for (const packageId of packages) {
@@ -340,25 +519,6 @@ const prisma = new PrismaClient();
       });
     }
   }
-  await prisma.finalExamResult.createMany({
-    data: [
-      {
-        studentId: 1001,
-        packageId: "pkg_001",
-        result: "Pass",
-      },
-      {
-        studentId: 1001,
-        packageId: "pkg_002",
-        result: "Pass",
-      },
-      {
-        studentId: 1001,
-        packageId: "pkg_003",
-        result: "Fail",
-      },
-    ],
-  });
 
   console.log("🌱 Database seeded successfully with:");
   console.log("- 1 Admin user");
