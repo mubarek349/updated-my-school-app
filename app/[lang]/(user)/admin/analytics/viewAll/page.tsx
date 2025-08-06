@@ -31,6 +31,7 @@ function Page() {
     { key: "name", label: "Name" },
     { key: "isKid", label: "Is Kid" },
     { key: "phoneNo", label: "Phone Number" },
+    { key: "ustazname", label: "Ustaz Name" },
     { key: "activePackage", label: "activePackage" },
     { key: "studentProgress", label: "Student Progress" },
     { key: "finalExamStatus", label: "Final Exam Status" },
@@ -46,6 +47,7 @@ function Page() {
           phoneNo: row.phoneNo ?? "",
           activePackage: row.activePackage ?? "",
           studentProgress: row.studentProgress ?? "",
+          ustazname: row.ustazname ?? "",
           finalExamStatus: row.checkStausOfFinalExam
             ? row.checkUpdateProhibition
               ? row.result?.result.score >= 0.75

@@ -44,14 +44,12 @@ export async function getStudentProgressStatus(
       const packageName = chapter?.course?.package?.name ?? null;
 
       const percent = getProgressPercent(progress, chapterIds.length);
-     
+
       return `${packageName} > ${courseTitle} > ${chapterTitle} -> ${percent}%`;
     }
   } else {
     return "notstarted";
   }
-
-  
 }
 export async function filterStudentsByPackageandStatus(
   packageId: string,
@@ -123,7 +121,7 @@ export async function filterStudentsByPackageandStatus(
         filteredChatIds.push(student.chat_id);
       }
     } else {
-      const percent =await getProgressPercent(progress, chapterIds.length);
+      const percent = await getProgressPercent(progress, chapterIds.length);
       if (status === "inprogress_0" && percent == 0) {
         filteredChatIds.push(student.chat_id);
       } else if (status === "inprogress_10" && percent <= 10) {
@@ -209,7 +207,7 @@ export async function filterStudentsByPackageList(packageId: string) {
       if (progress.filter((p) => p.isCompleted).length === chapterIds.length) {
         completedChatIds.push(student.wdt_ID + "");
       } else {
-        const percent =await getProgressPercent(progress, chapterIds.length);
+        const percent = await getProgressPercent(progress, chapterIds.length);
         if (percent == 0) inProgress0ChatIds.push(student.wdt_ID + "");
         else if (percent <= 10) inProgress10ChatIds.push(student.wdt_ID + "");
         else if (percent <= 40) inProgress40ChatIds.push(student.wdt_ID + "");
@@ -234,8 +232,6 @@ export async function filterStudentsByPackageList(packageId: string) {
   ];
 
   return result;
-
-  
 }
 export async function getAllStudents() {
   const students = await prisma.wpos_wpdatatable_23.findMany({
@@ -672,7 +668,7 @@ export async function getStudentAnalyticsperchapter(
   // 1. Get the packageId for this chapter
   const chapter = await prisma.chapter.findUnique({
     where: { id: String(chapterId) },
-    select: {title:true, course: { select: { packageId: true } } },
+    select: { title: true, course: { select: { packageId: true } } },
   });
   const packageId = chapter?.course?.packageId;
   const chapterTitle = chapter?.title;
@@ -854,6 +850,9 @@ export async function getStudentAnalyticsperPackage(
       subject: true,
       package: true,
       chat_id: true,
+      ustazdata: {
+        select: { ustazname: true },
+      },
     },
   });
 
@@ -885,47 +884,87 @@ export async function getStudentAnalyticsperPackage(
         phoneNo = phoneNo.split("").reverse().slice(0, 9).reverse().join("");
         let countryCode = "+251"; // Default Ethiopia
         switch ((student.country || "").toLowerCase()) {
-          case "ethiopia":
+          case "Ethiopia":
             countryCode = "+251";
             break;
-          case "saudiarabia":
+          case "Anguilla":
+            countryCode = "+1";
+            break;
+          case "Saudi Arabia":
           case "saudi arabia":
             countryCode = "+966";
             break;
-          case "canada":
+          case "Canada":
             countryCode = "+1";
             break;
-          case "dubai":
-          case "uae":
+          case "United Arab Emirates":
             countryCode = "+971";
             break;
-          case "kuweit":
+          case "Kuwait":
           case "kuwait":
             countryCode = "+965";
             break;
           case "usa":
-          case "united states":
+          case "United States":
           case "united states of america":
             countryCode = "+1";
             break;
-          case "south africa":
+          case "China":
+            countryCode = "+86";
+            break;
+          case "South Africa":
             countryCode = "+27";
             break;
-          case "sweden":
+          case "Cuba":
+            countryCode = "+53";
+            break;
+          case "Equatorial Guinea":
+            countryCode = "+240";
+            break;
+          case "Sweden":
             countryCode = "+46";
             break;
-          case "qatar":
+          case "Qatar":
             countryCode = "+974";
             break;
-          case "djibouti":
+          case "Angola":
+            countryCode = "+244";
+            break;
+          case "Pakistan":
+            countryCode = "+92";
+            break;
+          case "Norway":
+            countryCode = "+47";
+            break;
+          case "Netherlands":
+            countryCode = "+31";
+            break;
+          case "Bahrain":
+            countryCode = "+973";
+            break;
+          case "Turkey":
+            countryCode = "+90";
+            break;
+          case "Egypt":
+            countryCode = "+20";
+            break;
+          case "Germany":
+            countryCode = "+49";
+            break;
+          case "Italy":
+            countryCode = "+39";
+            break;
+          case "Djibouti":
             countryCode = "+253";
+            break;
+          case "Mongolia":
+            countryCode = "+976";
             break;
           default:
             countryCode = "+251";
         }
         phoneNo = `${countryCode}${phoneNo}`;
       }
-
       const result = await correctExamAnswer(activePackageId, student.wdt_ID);
       const checkStausOfFinalExam = await checkFinalExamCreation(
         student.wdt_ID,
@@ -935,10 +974,12 @@ export async function getStudentAnalyticsperPackage(
         student.wdt_ID,
         activePackageId
       );
+
       return {
         id: student.wdt_ID,
         name: student.name,
         phoneNo,
+        ustazname: student.ustazdata?.ustazname ?? "",
         tglink: `https://t.me/${student.chat_id}`,
         whatsapplink: `https://wa.me/${phoneNo}`,
         isKid: student.isKid,
