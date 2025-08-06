@@ -1,14 +1,11 @@
 "use server";
 import prisma from "@/lib/db";
-import { NextResponse } from "next/server";
 import { getActivePackageProgress } from "@/actions/student/progress";
-import { progress } from "framer-motion";
 import { correctExamAnswer } from "../student/question";
 import {
   checkFinalExamCreation,
   checkingUpdateProhibition,
 } from "../student/finalExamResult";
-import { stat } from "fs";
 
 export async function getStudentProgressStatus(
   studentId: number,
@@ -47,41 +44,14 @@ export async function getStudentProgressStatus(
       const packageName = chapter?.course?.package?.name ?? null;
 
       const percent = getProgressPercent(progress, chapterIds.length);
-      // if (percent <= 10) return `<=10% ${packageName} > ${courseTitle} > ${chapterTitle}`;
-      // else if (percent <= 40) return `<=40% ${packageName} > ${courseTitle} > ${chapterTitle}`;
-      // else if (percent <= 70) return `<=70% ${packageName} > ${courseTitle} > ${chapterTitle}`;
-      // else return `<100% ${packageName} > ${courseTitle} > ${chapterTitle}`;
+     
       return `${packageName} > ${courseTitle} > ${chapterTitle} -> ${percent}%`;
     }
   } else {
     return "notstarted";
   }
 
-  // 2. Get all progress records for this student and these chapters
-  // const progress = await prisma.studentProgress.findMany({
-  //   where: {
-  //     studentId,
-  //     chapterId: { in: chapterIds },
-  //   },
-  //   select: { isCompleted: true, chapterId: true },
-  // });
-
-  // 3. Logic
-  //   if (chapterIds.length === 0 || progress.length === 0) {
-  //     return "notstarted";
-  //   }
-  //   if (progress.some((p) => !p.isCompleted)) {
-  //     // Find the first incomplete chapter's id
-  //     const firstIncomplete = progress.find((p) => !p.isCompleted);
-  //     // Find the chapter details for that id
-  //     const chapter = chapters.find((ch) => ch.id === firstIncomplete?.chapterId);
-  //     const chapterTitle = chapter?.title ?? null;
-  //     const courseTitle = chapter?.course?.title ?? null;
-  //     const packageName = chapter?.course?.package?.name ?? null;
-  //     return `${packageName} > ${courseTitle} > ${chapterTitle}`;
-  //   }
-  //   return "completed";
-  // }
+  
 }
 export async function filterStudentsByPackageandStatus(
   packageId: string,
@@ -153,7 +123,7 @@ export async function filterStudentsByPackageandStatus(
         filteredChatIds.push(student.chat_id);
       }
     } else {
-      const percent = getProgressPercent(progress, chapterIds.length);
+      const percent =await getProgressPercent(progress, chapterIds.length);
       if (status === "inprogress_0" && percent == 0) {
         filteredChatIds.push(student.chat_id);
       } else if (status === "inprogress_10" && percent <= 10) {
@@ -168,29 +138,15 @@ export async function filterStudentsByPackageandStatus(
     }
   }
 
-  //   let studentStatus: "completed" | "not-started" | "in-progress" = "not-started";
-  //   if (chapterIds.length === 0 || progress.length === 0) {
-  //     studentStatus = "not-started";
-  //   } else if (progress.every((p) => p.isCompleted)) {
-  //     studentStatus = "completed";
-  //   } else if (progress.some((p) => !p.isCompleted)) {
-  //     studentStatus = "in-progress";
-  //   }
-
-  //   if (studentStatus === status && student.chat_id) {
-  //     filteredChatIds.push(student.chat_id);
-  //   }
-  // }
-
   console.log("Filtered chat IDs:", filteredChatIds);
 
   return filteredChatIds;
 }
 
-function getProgressPercent(
+export async function getProgressPercent(
   progress: { isCompleted: boolean }[],
   total: number
-): number {
+): Promise<number> {
   if (progress.length === 0) return 0;
   const completed = progress.filter((p) => p.isCompleted).length;
   return Number((completed / total) * 100);
@@ -253,7 +209,7 @@ export async function filterStudentsByPackageList(packageId: string) {
       if (progress.filter((p) => p.isCompleted).length === chapterIds.length) {
         completedChatIds.push(student.wdt_ID + "");
       } else {
-        const percent = getProgressPercent(progress, chapterIds.length);
+        const percent =await getProgressPercent(progress, chapterIds.length);
         if (percent == 0) inProgress0ChatIds.push(student.wdt_ID + "");
         else if (percent <= 10) inProgress10ChatIds.push(student.wdt_ID + "");
         else if (percent <= 40) inProgress40ChatIds.push(student.wdt_ID + "");
@@ -279,23 +235,7 @@ export async function filterStudentsByPackageList(packageId: string) {
 
   return result;
 
-  //   let studentStatus: "completed" | "not-started" | "in-progress" = "not-started";
-  //   if (chapterIds.length === 0 || progress.length === 0) {
-  //     studentStatus = "not-started";
-  //   } else if (progress.every((p) => p.isCompleted)) {
-  //     studentStatus = "completed";
-  //   } else if (progress.some((p) => !p.isCompleted)) {
-  //     studentStatus = "in-progress";
-  //   }
-
-  //   if (studentStatus === status && student.chat_id) {
-  //     filteredChatIds.push(student.chat_id);
-  //   }
-  // }
-
-  // console.log("Filtered chat IDs:", filteredChatIds);
-
-  // return filteredChatIds;
+  
 }
 export async function getAllStudents() {
   const students = await prisma.wpos_wpdatatable_23.findMany({
@@ -311,26 +251,6 @@ export async function getAllStudents() {
     },
   });
 
-  // const progress = await prisma.studentProgress.findFirst({
-  //   where:{
-  //     studentId: students[0].wdt_ID, // Assuming you want progress for the first student
-  //     chapter: { course: { packageId: students[0].youtubeSubject ?? undefined } }
-  //   },
-  //   select:{
-  //     chapter: {
-  //       select: {
-  //         title: true,
-  //         course: {
-  //           select: {
-  //             title: true,
-  //             package: { select: { name: true } },
-  //           },
-  //         },
-  //       },
-  //     },
-  //   }
-  // })
-  // For each student, get their progress data
   const studentsWithProgress = await Promise.all(
     students.map(async (student) => {
       const progressData = await getActivePackageProgress(student.wdt_ID);

@@ -31,6 +31,8 @@ model coursePackage {
   students            wpos_wpdatatable_23[] @relation("PackageHistory")
   activeStudents      wpos_wpdatatable_23[] @relation("ActivePackage")
   subjectPackages     subjectPackage[] // <-- Add this line for the relation
+  ustazId             Int?
+  ustaz               ustaz?                @relation(fields: [ustazId], references: [wdt_ID])
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
 }
@@ -90,7 +92,7 @@ model chapter {
 
 model question {
   id              String           @id @default(cuid())
-   chapter         chapter?         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapter         chapter?         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   chapterId       String?
   coursePackage   coursePackage?   @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId       String?
@@ -98,7 +100,6 @@ model question {
   questionOptions questionOption[]
   questionAnswer  questionAnswer[]
   studentQuiz     studentQuiz[]
-  
 
   @@index([chapterId])
 }
@@ -219,20 +220,21 @@ model wpos_wpdatatable_23 {
 }
 
 model ustaz {
-  wdt_ID        Int                   @id @default(autoincrement())
-  picture       String?               @db.VarChar(2000)
-  control       String?               @db.VarChar(255)
-  subject       String?               @db.VarChar(255)
-  phone         String?               @db.VarChar(255)
-  schedule      String?               @db.VarChar(255)
-  password      String?               @db.VarChar(255)
-  telegramgroup String?               @db.VarChar(2000)
-  ustazname     String?               @db.VarChar(255)
-  gender        String?               @db.VarChar(255)
-  ustazid       String?               @unique @db.VarChar(255)
-  userid        Int?
-  username      String?               @db.VarChar(255)
-  stud_ustaz    wpos_wpdatatable_23[]
+  wdt_ID               Int                   @id @default(autoincrement())
+  picture              String?               @db.VarChar(2000)
+  control              String?               @db.VarChar(255)
+  subject              String?               @db.VarChar(255)
+  phone                String?               @db.VarChar(255)
+  schedule             String?               @db.VarChar(255)
+  password             String?               @db.VarChar(255)
+  telegramgroup        String?               @db.VarChar(2000)
+  ustazname            String?               @db.VarChar(255)
+  gender               String?               @db.VarChar(255)
+  ustazid              String?               @unique @db.VarChar(255)
+  userid               Int?
+  username             String?               @db.VarChar(255)
+  stud_ustaz           wpos_wpdatatable_23[]
+  coursePackage_usataz coursePackage[]
 
   @@map("wpos_wpdatatable_24")
 }

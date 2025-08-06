@@ -378,7 +378,7 @@ export async function correctAnswer(chapterId: string, studentId: number) {
 
     if (!questions.length) {
       console.error("No questions found for chapterId:", chapterId);
-      throw new Error("No questions found for the given chapterId.");
+      return null;
     }
 
     const questionIds = questions.map((q) => q.id);
@@ -451,7 +451,7 @@ export async function submitAnswers(
   courseId: string,
   chapterId: string
 ) {
-  if (!answers.length) throw new Error("No answers provided.");
+  // if (!answers.length) throw new Error("No answers provided.");
 
   const results = [];
   const student = await prisma.wpos_wpdatatable_23.findFirst({
@@ -528,7 +528,7 @@ export async function submitAnswers(
   const score = await correctAnswer(chapterId, studentId);
   // if the the score is above 0.75 then excite the unlock test  else  display message only
 
-  if (score.result.score === 1) {
+  if (score?.result.score === 1 || !score) {
     await unlockTest(wdt_ID, courseId, chapterId);
   } else {
     console.log("Score below threshold, not unlocking test.");

@@ -112,6 +112,54 @@ const prisma = new PrismaClient();
       },
     ],
   });
+
+  await prisma.ustaz.createMany({
+    data: [
+      {
+        picture: "https://example.com/images/ustaz1.jpg",
+        control: "Admin",
+        subject: "Fiqh",
+        phone: "+251911234567",
+        schedule: "Mon-Fri 8am-12pm",
+        password: "hashed_password_1",
+        telegramgroup: "https://t.me/fiqh_group",
+        ustazname: "Ustaz Ahmed",
+        gender: "Male",
+        ustazid: "UST001",
+        userid: 101,
+        username: "ahmed_fiqh",
+      },
+      {
+        picture: "https://example.com/images/ustaz2.jpg",
+        control: "Moderator",
+        subject: "Tafsir",
+        phone: "+251922345678",
+        schedule: "Sat-Sun 2pm-6pm",
+        password: "hashed_password_2",
+        telegramgroup: "https://t.me/tafsir_group",
+        ustazname: "Ustaz Fatima",
+        gender: "Female",
+        ustazid: "UST002",
+        userid: 102,
+        username: "fatima_tafsir",
+      },
+      {
+        picture: "https://example.com/images/ustaz3.jpg",
+        control: "Teacher",
+        subject: "Aqidah",
+        phone: "+251933456789",
+        schedule: "Wed-Fri 10am-1pm",
+        password: "hashed_password_3",
+        telegramgroup: "https://t.me/aqidah_group",
+        ustazname: "Ustaz Musa",
+        gender: "Male",
+        ustazid: "UST003",
+        userid: 103,
+        username: "musa_aqidah",
+      },
+    ],
+  });
+
   // Seed Courses for Programming Package
   await prisma.course.createMany({
     data: [
@@ -283,7 +331,7 @@ const prisma = new PrismaClient();
       },
     ],
   });
- await prisma.chapter.createMany({
+  await prisma.chapter.createMany({
     data: [
       {
         id: "chapter_011",
@@ -313,8 +361,8 @@ const prisma = new PrismaClient();
         videoUrl: "oR5aGowK5V4",
       },
     ],
-  }); 
-await prisma.chapter.createMany({
+  });
+  await prisma.chapter.createMany({
     data: [
       {
         id: "chapter_014",
@@ -413,7 +461,7 @@ await prisma.chapter.createMany({
     ],
   });
 
-   // Seed Student Progress for Completed Student
+  // Seed Student Progress for Completed Student
   await prisma.studentProgress.createMany({
     data: [
       // Student 1 completed all chapters in Course 1
@@ -451,7 +499,7 @@ await prisma.chapter.createMany({
     ],
   });
 
-    // Seed Student Progress for Completed Student
+  // Seed Student Progress for Completed Student
   await prisma.studentProgress.createMany({
     data: [
       // Student 1 completed all chapters in Course 1
@@ -489,7 +537,7 @@ await prisma.chapter.createMany({
     ],
   });
   // Seed Student Progress for In-Progress Student
-  
+
   const packages = ["pkg_001", "pkg_002", "pkg_003"];
 
   for (const packageId of packages) {

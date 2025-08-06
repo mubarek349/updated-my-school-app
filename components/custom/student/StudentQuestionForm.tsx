@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 // SVG Icons
 const CheckIcon = () => (
@@ -80,7 +81,7 @@ const StudentQuestionForm = ({
   const [showCorrect, setShowCorrect] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState(30);
-
+  const router = useRouter();
   interface Feedback {
     studentResponse?: Record<string, string[]>;
     questionAnswers?: Record<string, string[]>;
@@ -100,7 +101,7 @@ const StudentQuestionForm = ({
 
     wdt_ID
   );
-  const [, refetchSubmit, submitLoading] = useAction(submitAnswers, [
+  const [refree, refetchSubmit, submitLoading] = useAction(submitAnswers, [
     ,
     async () => {
       toast.success("Answers submitted!", {
@@ -175,7 +176,14 @@ const StudentQuestionForm = ({
     console.log("Selected answers in handle submit", answers);
 
     try {
-      refetchSubmit(answers, wdt_ID, courseId, chapterId);
+      const an = refetchSubmit(answers, wdt_ID, courseId, chapterId);
+      if (an === undefined && progressData) {
+        router.push(
+          `/en/student/${wdt_ID}/${progressData[0]}/${progressData[1]}`
+        );
+        refree;
+        console.log("Answer", an);
+      }
     } catch (e) {
       setError("Failed to submit answers.");
       toast.error("Failed to submit answers.", {
@@ -184,6 +192,7 @@ const StudentQuestionForm = ({
       console.error(e);
     }
   }
+ 
 
   // Progress calculation
   const answeredQuestions =
@@ -417,14 +426,23 @@ const StudentQuestionForm = ({
           </div>
         </TooltipProvider>
       ) : (
-        <motion.p
-          className="text-sm text-gray-500 dark:text-gray-400 italic text-center"
-          variants={cardVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          ለዚህ ክፍል ጥያቄ አልተቀመጥለትም፡፡
-        </motion.p>
+        <>
+          <motion.p
+            className="text-sm text-gray-500  dark:text-gray-400 italic text-center"
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <span className="">ለዚህ ክፍል ጥያቄ አልተቀመጥለትም፡፡</span>
+          </motion.p>
+          <Button
+            onClick={handleSubmit}
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold text-base py-2 px-6 rounded-md shadow-md transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            aria-label="Go to next chapter"
+          >
+            ወደ ቀጣይ ክፍል ይሂዱ
+          </Button>
+        </>
       )}
     </motion.div>
   );
