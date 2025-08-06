@@ -9,19 +9,15 @@ export default function CourseSection({
   title,
   badge,
   children,
-  badgeColor = "blue",
+  badgeColor ,
 }: CourseSectionProps) {
-  const colorMap = {
-    blue: "text-blue-600 bg-blue-100 border-blue-100",
-    green: "text-green-600 bg-green-100 border-green-100",
-  };
-
+  
   return (
     <>
       <h2 className="text-xl ml-3 font-semibold text-gray-900">
         {title}{" "}
         <span
-          className={`text-sm ${colorMap.blue} border rounded-full px-2 py-1`}
+          className={`text-sm ${badgeColor} border rounded-full px-2 py-1`}
         >
           {badge}
         </span>

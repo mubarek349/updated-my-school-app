@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import useAction from "@/hooks/useAction";
 import getProfile from "@/actions/student/profile";
 
@@ -14,7 +14,6 @@ import { BookOpen, CheckCircle, GraduationCap } from "lucide-react";
 function Page() {
   const params = useParams();
   const studentId = Number(params?.wdt_ID ?? 0);
-  const router = useRouter();
 
   const [data, , loading] = useAction(
     getProfile,
@@ -69,7 +68,10 @@ function Page() {
     result: `${resultOfCompletedPackage[idx].correct}/${resultOfCompletedPackage[idx].total} (${resultOfCompletedPackage[idx].score}%)`,
     url: `/en/student/${studentId}/certificates/${completedPackageIdss[idx]}`,
   }));
-
+const colorMap = {
+    blue: "text-blue-600 bg-blue-100 border-blue-100",
+    green: "text-green-600 bg-green-100 border-green-100",
+  };
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 lg:px-8 overflow-y-auto">
       {/* Header */}
@@ -105,7 +107,7 @@ function Page() {
           badge={`${
             totalNumberOfThePackage - totalNumberOfCompletedPackage
           } active`}
-          badgeColor="blue"
+          badgeColor={colorMap.blue}
         >
           {currentCourses.map((course, idx) => (
             <CourseCard key={idx} {...course} />

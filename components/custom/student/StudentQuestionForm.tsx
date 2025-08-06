@@ -101,7 +101,7 @@ const StudentQuestionForm = ({
 
     wdt_ID
   );
-  const [refree, refetchSubmit, submitLoading] = useAction(submitAnswers, [
+  const [, refetchSubmit, submitLoading] = useAction(submitAnswers, [
     ,
     async () => {
       toast.success("Answers submitted!", {
@@ -181,7 +181,6 @@ const StudentQuestionForm = ({
         router.push(
           `/en/student/${wdt_ID}/${progressData[0]}/${progressData[1]}`
         );
-        refree;
         console.log("Answer", an);
       }
     } catch (e) {
