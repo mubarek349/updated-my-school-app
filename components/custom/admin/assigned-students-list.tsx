@@ -20,7 +20,7 @@ type AssignedStudentsListProps = {
 
 import { useEffect, useState } from "react";
 import StudentAssignmentForm from "./student-assignment-form";
-import { Baby } from "lucide-react";
+import { Baby, Check } from "lucide-react";
 import { UnassigningConfirmModal } from "@/components/modals/confirm-modal";
 import toast from "react-hot-toast";
 
@@ -48,11 +48,15 @@ function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
         <h2 className="text-2xl font-bold text-purple-700 mb-6 text-center">
           Assigned Student Types
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           {assigned?.map((item, idx) => (
             <div
               key={item.package + item.subject + idx}
-              className="bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 rounded-xl shadow-md p-5 flex flex-col items-center hover:shadow-lg transition"
+              className="flex items-center bg-white border border-gray-200 rounded text-sm font-medium text-gray-700 px-2 py-1"
+              style={{
+                minHeight: "2rem",
+                boxShadow: "0 2px 8px 0 rgba(34,197,94,0.18)", // green shadow
+              }}
             >
               <UnassigningConfirmModal
                 onConfirm={async () => {
@@ -70,29 +74,45 @@ function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
                   }
                 }}
               >
-                <span
-                  className={cn(
-                    "flex gap-4 items-center text-lg font-semibold text-blue-700 mb-1",
-                    item.isKid && "text-yellow-700"
-                  )}
-                >
-                  {item.package} - {item.subject}
-                  {item.isKid && (
-                    <>
-                      <Baby />
-                    </>
-                  )}
-                </span>
+                <>
+                  <Check className="text-green-500 w-4 h-4 mr-2" />
+                  <span
+                    className={cn(
+                      item.isKid && "text-yellow-700 flex items-center gap-1"
+                    )}
+                  >
+                    {item.package} - {item.subject}
+                    {item.isKid && <Baby className="w-4 h-4 ml-1" />}
+                  </span>
+                </>
               </UnassigningConfirmModal>
             </div>
           ))}
         </div>
       </div>
-      <StudentAssignmentForm
-        setRefresh={setRefresh}
-      />
+      <StudentAssignmentForm setRefresh={setRefresh} />
     </>
   );
 }
 
 export default AssignedStudentsList;
+// {assigned?.map((item, idx) => (
+//             <div
+//               key={item.package + item.subject + idx}
+//               className="flex items-center bg-white border border-gray-200 rounded text-sm font-medium text-gray-700 px-2 py-1"
+//               style={{
+//                 minHeight: "2rem",
+//                 boxShadow: "0 2px 8px 0 rgba(34,197,94,0.18)", // green shadow
+//               }}
+//             >
+//               <Check className="text-green-500 w-4 h-4 mr-2" />
+//               <span
+//                 className={cn(
+//                   item.isKid && "text-yellow-700 flex items-center gap-1"
+//                 )}
+//               >
+//                 {item.package} - {item.subject}
+//                 {item.isKid && <Baby className="w-4 h-4 ml-1" />}
+//               </span>
+//             </div>
+//           ))}

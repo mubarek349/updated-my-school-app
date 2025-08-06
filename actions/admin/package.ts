@@ -1,6 +1,7 @@
 "use server";
 // import { auth } from "@/auth";
 import prisma from "@/lib/db";
+import { tr } from "zod/v4/locales";
 // import { isTeacher } from "@/lib/teacher";
 // import { redirect } from "next/navigation";
 
@@ -17,6 +18,7 @@ export async function getCoursesPackages() {
           createdAt: true,
           updatedAt: true,
           examDurationMinutes: true,
+          ustazId:true,
         },
         orderBy: {
           createdAt: "desc",
