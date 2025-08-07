@@ -112,7 +112,7 @@ export const ChaptersForm = ({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 mt-4"
+            className="space-y-4 mt-4 px-4 sm:px-0"
           >
             <FormField
               control={form.control}
@@ -122,7 +122,8 @@ export const ChaptersForm = ({
                   <FormControl>
                     <Textarea
                       disabled={isSubmitting}
-                      placeholder="e.g. 'Introducton to the course'"
+                      placeholder="e.g. 'Introduction to the course'"
+                      className="min-h-[120px] text-sm sm:text-base"
                       {...field}
                     />
                   </FormControl>
@@ -130,8 +131,12 @@ export const ChaptersForm = ({
                 </FormItem>
               )}
             />
-            <div className="flex items-center gap-x-2">
-              <Button type="submit" disabled={!isValid || isSubmitting}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Button
+                type="submit"
+                disabled={!isValid || isSubmitting}
+                className="w-full sm:w-auto"
+              >
                 Create
               </Button>
             </div>

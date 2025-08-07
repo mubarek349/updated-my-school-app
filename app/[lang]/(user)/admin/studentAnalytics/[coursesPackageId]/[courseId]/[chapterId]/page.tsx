@@ -124,7 +124,7 @@ function Page() {
         >
           <Button
             type="button"
-            disabled={isLoading}
+            disabled={isLoading||selectedRowIds.size === 0}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded shadow"
           >
             Assign

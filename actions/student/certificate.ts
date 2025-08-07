@@ -69,31 +69,31 @@ export default async function getCertificateData(
   }
 }
 
-export async function setCertificateData(
-  studentId: number,
-  coursesPackageId: string
-) {
-  try {
-    if (!studentId || !coursesPackageId) {
-     throw Error("there is no student or package");
-    }
+// export async function setCertificateData(
+//   studentId: number,
+//   coursesPackageId: string
+// ) {
+//   try {
+//     if (!studentId || !coursesPackageId) {
+//      throw Error("there is no student or package");
+//     }
 
-    const result = await prisma.finalExamResult.updateMany({
-      where: {
-        studentId,
-        packageId:coursesPackageId,
-      },
-      data: {
-        // certificateUrl: `${new Date().toISOString().replace(/[-:.]/g,"")}_certificate.pdf`,
-        certificateUrl: `${coursesPackageId}_certificate.pdf`,
-        dateOfDownloadingCertificate: new Date(),
-      },
-    });
-    console.log("resultofserverside", result);
+//     const result = await prisma.finalExamResult.updateMany({
+//       where: {
+//         studentId,
+//         packageId:coursesPackageId,
+//       },
+//       data: {
+//         // certificateUrl: `${new Date().toISOString().replace(/[-:.]/g,"")}_certificate.pdf`,
+//         certificateUrl: `${coursesPackageId}_certificate.pdf`,
+//         dateOfDownloadingCertificate: new Date(),
+//       },
+//     });
+//     console.log("resultofserverside", result);
 
-    return result;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-}
+//     return result;
+//   } catch (error) {
+//     console.error(error);
+//     throw error;
+//   }
+// }

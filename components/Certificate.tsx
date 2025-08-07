@@ -109,7 +109,7 @@ const Certificate: React.FC<CertificateProps> = ({
                 <span className="font-bold"> {total} </span>
                 ጥያቄዎች
                 <span className="font-bold"> {correct} </span>
-                ቱን በመመለስ
+                ን በመመለስ
                 <span className="font-bold">{score * 100}%</span>: ያገኘ/ች መሆኑን/ኗን
                 ያረጋግጣል።
                 <p className="mt-2 mb-2 text-s leading-snug">

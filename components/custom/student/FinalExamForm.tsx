@@ -52,6 +52,7 @@ interface FinalExamFormProps {
   feedback: { studentResponse: { [questionId: string]: string[] } }|undefined;
   updateProhibition: boolean;
   refresh: () => void;
+  packageName:string;
 }
 
 const FinalExamForm = ({
@@ -61,6 +62,7 @@ const FinalExamForm = ({
   examDurationMinutes,
   updateProhibition,
   refresh,
+  packageName,
 }: FinalExamFormProps) => {
   // Use a state for questions to allow re-randomization for retakes
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>(
@@ -389,7 +391,7 @@ const FinalExamForm = ({
 
         <header className="bg-white p-4 rounded-lg shadow-md flex flex-col md:flex-row justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-2 md:mb-0">
-            የ {coursesPackageId} ማጠቃለያ ፈተና
+            የ {packageName} ማጠቃለያ ፈተና
           </h1>
           <div className="flex items-center space-x-4">
             {!(examDurationMinutes === 0 || examDurationMinutes === null) && (

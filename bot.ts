@@ -206,7 +206,7 @@ export async function startBot() {
 
             const channelName = channel.name || "ዳሩል-ኩብራ";
             const packageName = channel.activePackage.name || "የተማሪ ፓኬጅ";
-            const keyboard = new InlineKeyboard().url(
+            const keyboard = new InlineKeyboard().webApp(
               `📚 የ${channelName}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
               url
             );
@@ -356,7 +356,7 @@ export async function startBot() {
     const url = `${BASE_URL}/${lang}/${stud}/${wdt_ID}/${update[0]}/${update[1]}`;
 
     const packageName = activePackage.name || "የተማሪ ፓኬጅ";
-    const openKeyboard = new InlineKeyboard().url(
+    const openKeyboard = new InlineKeyboard().webApp(
       `📚 የ${studentName}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
       url
     );
@@ -886,7 +886,7 @@ export async function startBot() {
           const stud = "student";
           const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
           const channelName = name || "ዳሩል-ኩብራ";
-          const keyboard = new InlineKeyboard().url(
+          const keyboard = new InlineKeyboard().webApp(
             `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
             url
           );

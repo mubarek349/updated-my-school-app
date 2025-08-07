@@ -74,7 +74,7 @@ function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
                   }
                 }}
               >
-                <>
+                <div className="flex items-center">
                   <Check className="text-green-500 w-4 h-4 mr-2" />
                   <span
                     className={cn(
@@ -84,7 +84,7 @@ function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
                     {item.package} - {item.subject}
                     {item.isKid && <Baby className="w-4 h-4 ml-1" />}
                   </span>
-                </>
+                </div>
               </UnassigningConfirmModal>
             </div>
           ))}

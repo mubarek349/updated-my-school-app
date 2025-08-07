@@ -21,14 +21,7 @@ const CoursesPackageIdPage = async ({
   params: Promise<{ coursesPackageId: string }>;
 }) => {
   const { coursesPackageId } = await params;
-  // const {userId} = auth();
-
-  // if (!session?.user) {
-  //   return redirect("/en"); // Ensure no further rendering occurs
-  // }
-
-  // const userId = session.user.id ? session.user.id : "";
-  // if (!isTeacher(userId)) return redirect("/en");
+  
   const coursesPackage = await prisma.coursePackage.findUnique({
     where: {
       id: coursesPackageId,
@@ -41,14 +34,7 @@ const CoursesPackageIdPage = async ({
   if (!coursesPackage) {
     return redirect("/en");
   }
-  // const students = await prisma.wpos_wpdatatable_23.findMany({
-  //   where: {},
-  //   select: {
-  //     subject: true,
-  //     wdt_ID: true,
-  //   },
-  // });
-
+  
   const requiredFields = [
     coursesPackage.name,
     // coursesPackage.description,

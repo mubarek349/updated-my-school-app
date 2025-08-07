@@ -68,7 +68,6 @@ export async function updateEndingExamTime(
           },
           data: {
             endingTime: new Date(),
-            result: score + "% በትክከል መልሰዋል", // Record the current date and time of registration
           },
         });
 

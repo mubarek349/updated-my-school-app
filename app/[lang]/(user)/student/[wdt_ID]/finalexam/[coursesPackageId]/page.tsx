@@ -79,6 +79,7 @@ function Page() {
       }}
       wdt_ID={wdt_ID}
       coursesPackageId={coursesPackageId}
+      packageName={data?.packageName}
       examDurationMinutes={data?.coursesPackage?.examDurationMinutes ?? 0}
       feedback={feedback}
       updateProhibition={updateProhibition}

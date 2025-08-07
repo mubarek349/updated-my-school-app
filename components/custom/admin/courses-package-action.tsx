@@ -85,34 +85,34 @@ export const CoursesPackageActions = ({
   };
   const routers = useRouter();
   return (
-    <div className="flex gap-x-1 flex-wrap items-center justify-end">
-      <div>
-        <Button
-          onClick={() => {
-            routers.push(
-              `/en/admin/coursesPackages/${coursesPackageId}/questions`
-            );
-          }}
-          size="sm"
-          className="bg-blue-600"
-        >
-          <FileQuestion className="w-4 h-4" />
-          Final Exam Questions
-        </Button>
-      </div>
+    <div className="flex gap-1 flex-wrap items-center justify-end mr-2">
       <Button
-        onClick={onClick}
-        disabled={disabled || isLoading}
-        variant="outline"
+        onClick={() => {
+          routers.push(
+            `/en/admin/coursesPackages/${coursesPackageId}/questions`
+          );
+        }}
         size="sm"
+        className="bg-blue-600"
       >
-        {isPublished ? "Unpublish" : "Publish"}
+        <FileQuestion className="w-4 h-4" />
+        Final Exam Questions
       </Button>
-      <ConfirmModal onConfirm={onDelete}>
-        <Button size="sm">
-          <Trash className="w-4 h-4" />
+      <div className="flex items-center gap-1">
+        <Button
+          onClick={onClick}
+          disabled={disabled || isLoading}
+          variant="outline"
+          size="sm"
+        >
+          {isPublished ? "Unpublish" : "Publish"}
         </Button>
-      </ConfirmModal>
+        <ConfirmModal onConfirm={onDelete}>
+          <Button size="sm">
+            <Trash className="w-4 h-4" />
+          </Button>
+        </ConfirmModal>
+      </div>
     </div>
   );
 };

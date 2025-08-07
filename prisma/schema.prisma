@@ -178,9 +178,6 @@ model finalExamResult {
   coursePackage                coursePackage       @relation(fields: [packageId], references: [id])
   packageId                    String
   updationProhibited           Boolean             @default(false)
-  result                       String?
-  certificateUrl               String?
-  dateOfDownloadingCertificate DateTime?
   startingTime                 DateTime            @default(now())
   endingTime                   DateTime?
 }
