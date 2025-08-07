@@ -702,13 +702,13 @@ export async function startBot() {
         .map(
           (s, i) =>
             `<b>${i + 1 + (pagination.currentPage - 1) * 5}. ${
-              s.name ?? "N/A"
+              s?.name ?? "N/A"
             }</b>\n` +
-            `መለያ: <code>${s.id}</code>\n` +
-            `ስልክ: <code>${s.phoneNo ?? "N/A"}</code>\n` +
-            `ልጅ ነው?: <code>${s.isKid ? "አዎ" : "አይደለም"}</code>\n` +
-            `ፓኬጅ: <code>${s.activePackage}</code>\n` +
-            `እድገት: <code>${s.studentProgress}</code>\n`
+            `መለያ: <code>${s?.id}</code>\n` +
+            `ስልክ: <code>${s?.phoneNo ?? "N/A"}</code>\n` +
+            `ልጅ ነው?: <code>${s?.isKid ? "አዎ" : "አይደለም"}</code>\n` +
+            `ፓኬጅ: <code>${s?.activePackage}</code>\n` +
+            `እድገት: <code>${s?.studentProgress}</code>\n`
         )
         .join("\n");
     }

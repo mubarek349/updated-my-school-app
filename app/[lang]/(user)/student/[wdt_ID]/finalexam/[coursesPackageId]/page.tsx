@@ -19,7 +19,7 @@ function Page() {
       true,
       (response) => {
         try {
-          if (response === false) {
+          if (response === undefined) {
             alert("እባክዎ ማጠቃለያ ፈተናውን ለመውሰድ ቅድሚያ ትምህርቱን ይጨርሱ፡፡");
           }
           console.log("API Response:", response);
@@ -70,7 +70,7 @@ function Page() {
       number: index + 1,
     })
   );
-  const feedback = data.answerCorrection || {};
+  const feedback = data.answerCorrection || undefined;
   const updateProhibition = data.updateProhibition || false;
   return (
     <FinalExamForm

@@ -39,7 +39,7 @@ interface Feedback {
   studentResponse?: Record<string, string[]>;
   questionAnswers?: Record<string, string[]>;
   result?: { score: number; correct: number; total: number };
-}
+};
 
 interface FinalExamFormProps {
   coursesPackage: CoursesPackage | null;
@@ -49,7 +49,7 @@ interface FinalExamFormProps {
   // The feedback prop from parent is now explicitly for initial student responses,
   // or it can be removed if FinalExamForm always fetches the full feedback.
   // For now, let's keep it but rely on internal state for display.
-  feedback: { studentResponse: { [questionId: string]: string[] } };
+  feedback: { studentResponse: { [questionId: string]: string[] } }|undefined;
   updateProhibition: boolean;
   refresh: () => void;
 }
@@ -89,10 +89,10 @@ const FinalExamForm = ({
 
       try {
         // Assume correctExamAnswer returns the full Feedback object as defined in ExamResultDisplay
-        const response: Feedback = await correctExamAnswer(
+        const response: Feedback|undefined = await correctExamAnswer(
           coursesPackageId,
           wdt_ID
-        );
+        )??undefined;
         if (response?.studentResponse) {
           const cleanedAnswers = Object.fromEntries(
             Object.entries(response.studentResponse).map(([qId, ans]) => [
@@ -208,7 +208,7 @@ const FinalExamForm = ({
       const newAnswer = answers[currentQuestion.id] || [];
 
       // Fetch the latest existing answer to compare before submitting
-      const response: Feedback = await correctExamAnswer(
+      const response: Feedback|undefined = await correctExamAnswer(
         coursesPackageId,
         wdt_ID
       );
@@ -227,7 +227,7 @@ const FinalExamForm = ({
     if (currentQuestion) {
       const newAnswer = answers[currentQuestion.id] || [];
       // Fetch the latest existing answer just before moving to ensure accuracy
-      const response: Feedback = await correctExamAnswer(
+      const response: Feedback|undefined = await correctExamAnswer(
         coursesPackageId,
         wdt_ID
       );
@@ -272,10 +272,13 @@ const FinalExamForm = ({
       refetchSubmit(submissionPayload, wdt_ID, coursesPackageId);
 
       // Fetch the final result after submission
-      const result: Feedback = await correctExamAnswer(
+      const result: Feedback|undefined = await correctExamAnswer(
         coursesPackageId,
         wdt_ID
       );
+      if(!result){
+        return undefined;
+      }
       setDisplayFeedback(result); // Set the full feedback for display
 
       if (

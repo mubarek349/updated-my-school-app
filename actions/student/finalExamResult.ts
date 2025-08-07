@@ -42,9 +42,12 @@ export async function updateEndingExamTime(
 ) {
   try {
     // 1. Check if a registration for this student and package already exists
-    const score =
-      (await correctExamAnswer(packageId, studentId)).result.score * 100;
+    const res = (await correctExamAnswer(packageId, studentId))?.result?.score;
 
+    if (!res) {
+      return undefined;
+    }
+    const score = res * 100;
     const existingRegistration = await prisma.finalExamResult.findFirst({
       where: {
         studentId: studentId,
@@ -128,7 +131,7 @@ export async function checkingUpdateProhibition(
         updationProhibited: true,
       },
     });
-    
+
     if (updateProhibibted?.updationProhibited === true) {
       return true;
     } else {

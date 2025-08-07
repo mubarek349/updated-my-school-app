@@ -69,11 +69,15 @@ export default async function getProfile(studentId: number) {
       const isCompleted = await checkingUpdateProhibition(studentId, packageId);
 
       if (isCompleted) {
-        const result = (await correctExamAnswer(packageId, studentId)).result;
+        const res = (await correctExamAnswer(packageId, studentId))?.result;
+        if(!res){
+          return undefined;
+        }
+        const result=res;
         resultOfCompletedPackage.push(result);
         completedPackageIdss.push(packageId);
         totalNumberOfCompletedPackage += 1;
-        averageGrade += result.score * 100;
+        averageGrade += (result.score)* 100;
 
         const rawDate = await complationDate(studentId, packageId);
         const formattedDate = rawDate

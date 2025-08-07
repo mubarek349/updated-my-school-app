@@ -209,6 +209,6 @@ export async function getQuestionForActivePackageFinalExam(
 
     return data;
   } else {
-    return false;
+    return undefined;
   }
 }

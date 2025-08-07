@@ -38,8 +38,10 @@ export default async function getCertificateData(
     }
     const cId = coursesPackage.id;
     const cName = coursesPackage.name;
-    const result = (await correctExamAnswer(coursesPackageId, studentId))
-      .result;
+    const result = (await correctExamAnswer(coursesPackageId, studentId))?.result;
+    if(!result){
+        return undefined;
+      }
     const finalUpdatedTime = await prisma.finalExamResult.findFirst({
       where: { studentId, packageId: coursesPackageId },
       select: {
