@@ -41,21 +41,21 @@ function Page() {
   const rows =
     data && "data" in data
       ? data.data.map((row) => ({
-          id: String(row.id ?? ""),
-          name: row.name ?? "",
-          isKid: row.isKid ? "Yes" : "No",
-          phoneNo: row.phoneNo ?? "",
-          activePackage: row.activePackage ?? "",
-          studentProgress: row.studentProgress ?? "",
-          ustazname: row.ustazname ?? "",
-          finalExamStatus: row.checkStausOfFinalExam
+          id: String(row?.id ?? ""),
+          name: row?.name ?? "",
+          isKid: row?.isKid ? "Yes" : "No",
+          phoneNo: row?.phoneNo ?? "",
+          activePackage: row?.activePackage ?? "",
+          studentProgress: row?.studentProgress ?? "",
+          ustazname: row?.ustazname ?? "",
+          finalExamStatus: row?.checkStausOfFinalExam
             ? row.checkUpdateProhibition
               ? row.result?.score >= 0.75
                 ? "Passed"
                 : "Failed"
               : "In Progress"
             : "Not Started",
-          result: row.checkStausOfFinalExam
+          result: row?.checkStausOfFinalExam
             ? row.result &&
               `${row.result.score * 100}% አግኝተዋል -> ${
                 row.result.correct

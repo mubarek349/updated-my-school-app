@@ -43,7 +43,7 @@ export async function getStudentProgressStatus(
       const courseTitle = chapter?.course?.title ?? null;
       const packageName = chapter?.course?.package?.name ?? null;
 
-      const percent = getProgressPercent(progress, chapterIds.length);
+      const percent = await getProgressPercent(progress, chapterIds.length);
 
       return `${packageName} > ${courseTitle} > ${chapterTitle} -> ${percent}%`;
     }
@@ -613,13 +613,13 @@ export async function getFinalExamOfPackageAnalytics() {
           student.wdt_ID,
           pkg.id
         );
-        if (checkFinalExam) {
+        const correctAnswers = await correctExamAnswer(
+          pkg.id,
+          student.wdt_ID
+        );
+        if (checkFinalExam && correctAnswers) {
           if (updateProhibition) {
             // If the student has passed the final exam
-            const correctAnswers = await correctExamAnswer(
-              pkg.id,
-              student.wdt_ID
-            );
             if (correctAnswers.result.score >= 0.75) {
               passedStudents.push(student);
             } else {
@@ -966,8 +966,10 @@ export async function getStudentAnalyticsperPackage(
         phoneNo = `${countryCode}${phoneNo}`;
       }
 
-      const result = (await correctExamAnswer(activePackageId, student.wdt_ID))
-        .result;
+      const result = (await correctExamAnswer(activePackageId, student.wdt_ID))?.result;
+        if(!result){
+          return undefined;
+        }
       const checkStausOfFinalExam = await checkFinalExamCreation(
         student.wdt_ID,
         activePackageId
@@ -1004,11 +1006,11 @@ export async function getStudentAnalyticsperPackage(
     studentsWithProgress = studentsWithProgress.filter((student) => {
       if (progressFilter === "inprogress") {
         return (
-          student.studentProgress !== "completed" &&
-          student.studentProgress !== "notstarted"
+          student?.studentProgress !== "completed" &&
+          student?.studentProgress !== "notstarted"
         );
       } else {
-        return student.studentProgress === progressFilter;
+        return student?.studentProgress === progressFilter;
       }
     });
   }
@@ -1016,23 +1018,23 @@ export async function getStudentAnalyticsperPackage(
     studentsWithProgress = studentsWithProgress.filter((student) => {
       if (statusFilter === "passed") {
         return (
-          student.checkStausOfFinalExam === true &&
-          student.checkUpdateProhibition === true &&
-          student.result.score >= 0.75
+          student?.checkStausOfFinalExam === true &&
+          student?.checkUpdateProhibition === true &&
+          student?.result.score >= 0.75
         );
       } else if (statusFilter === "failed") {
         return (
-          student.checkStausOfFinalExam === true &&
-          student.checkUpdateProhibition === true &&
-          student.result.score < 0.75
+          student?.checkStausOfFinalExam === true &&
+          student?.checkUpdateProhibition === true &&
+          student?.result.score < 0.75
         );
       } else if (statusFilter === "inprogress") {
         return (
-          student.checkStausOfFinalExam === true &&
+          student?.checkStausOfFinalExam === true &&
           student.checkUpdateProhibition === false
         );
       } else if (statusFilter === "notstarted") {
-        return student.checkStausOfFinalExam === false;
+        return student?.checkStausOfFinalExam === false;
       }
     });
   }

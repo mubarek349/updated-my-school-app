@@ -6,6 +6,7 @@ import {
   registerFinalExam,
   updateEndingExamTime,
 } from "./finalExamResult";
+import { error } from "console";
 // get a question for the specific chapter by pass the  wdt_ID packageid,courseid and chapterid help me
 export async function getQuestionForActivePackageLastChapter(wdt_ID: number) {
   // get student
@@ -534,7 +535,6 @@ export async function submitAnswers(
     console.log("Score below threshold, not unlocking test.");
   }
 
- 
   console.log("Answers submitted successfully:", results);
   return { success: true, submitted: results.length };
 }
@@ -555,11 +555,24 @@ export async function correctExamAnswer(
         "No questions found for coursesPackageId:",
         coursesPackageId
       );
-      throw new Error("No questions found for the given coursesPackageId.");
+      return undefined;
     }
 
     const questionIds = questions.map((q) => q.id);
-
+    const studentQuiz = await prisma.studentQuiz.findMany({
+      where: {
+        studentId: studentId,
+        questionId: { in: questionIds },
+        isFinalExam:true,
+      },
+      select: {
+        id:true,
+      },
+    });
+    if(!studentQuiz){
+      console.log("there is no students queiz");
+      return undefined;
+    }
     console.log("Fetching student quiz answers for studentId:", studentId);
     const studentQuizAnswers = await prisma.studentQuizAnswer.findMany({
       where: {
@@ -574,7 +587,10 @@ export async function correctExamAnswer(
         selectedOptionId: true,
       },
     });
-
+    if (!studentQuizAnswers) {
+      console.log("there is no studentsanswer for the exam");
+      return undefined;
+    }
     const studentResponse: { [questionId: string]: string[] } = {};
     for (const ans of studentQuizAnswers) {
       const qid = ans.studentQuiz.questionId;
@@ -613,7 +629,7 @@ export async function correctExamAnswer(
     };
 
     console.log("Exam Result calculated:", result);
-    return { studentResponse, questionAnswers, result };
+    return { studentResponse:await studentResponse, questionAnswers, result };
   } catch (error) {
     console.error("Error in correctAnswer:", error);
     throw new Error("Failed to calculate the correct answers.");
@@ -717,7 +733,7 @@ export async function examsubmitAnswers(
     results.push(newAnswer);
   }
 
-  const score = await correctExamAnswer(coursesPackageId, studentId);
+  // const score = await correctExamAnswer(coursesPackageId, studentId);
   // // if the the score is above 0.75 then excite the unlock test  else  display message only
 
   // if (score.result.score === 1) {
