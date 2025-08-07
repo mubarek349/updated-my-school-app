@@ -965,7 +965,9 @@ export async function getStudentAnalyticsperPackage(
         }
         phoneNo = `${countryCode}${phoneNo}`;
       }
-      const result = await correctExamAnswer(activePackageId, student.wdt_ID);
+
+      const result = (await correctExamAnswer(activePackageId, student.wdt_ID))
+        .result;
       const checkStausOfFinalExam = await checkFinalExamCreation(
         student.wdt_ID,
         activePackageId
@@ -974,6 +976,10 @@ export async function getStudentAnalyticsperPackage(
         student.wdt_ID,
         activePackageId
       );
+      let studResult = result;
+      if (!checkStausOfFinalExam) {
+        studResult = result;
+      }
 
       return {
         id: student.wdt_ID,
@@ -986,7 +992,7 @@ export async function getStudentAnalyticsperPackage(
         chatid: student.chat_id,
         activePackage: activePackage?.name ?? "",
         studentProgress: progress,
-        result: result,
+        result: studResult,
         checkStausOfFinalExam: checkStausOfFinalExam ? true : false,
         checkUpdateProhibition: checkUpdateProhibition ? true : false,
       };
@@ -1012,13 +1018,13 @@ export async function getStudentAnalyticsperPackage(
         return (
           student.checkStausOfFinalExam === true &&
           student.checkUpdateProhibition === true &&
-          student.result.result.score >= 0.75
+          student.result.score >= 0.75
         );
       } else if (statusFilter === "failed") {
         return (
           student.checkStausOfFinalExam === true &&
           student.checkUpdateProhibition === true &&
-          student.result.result.score < 0.75
+          student.result.score < 0.75
         );
       } else if (statusFilter === "inprogress") {
         return (

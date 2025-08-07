@@ -612,7 +612,7 @@ export async function correctExamAnswer(
       score: correct / total ? correct / total : 0,
     };
 
-    console.log("Result calculated:", result);
+    console.log("Exam Result calculated:", result);
     return { studentResponse, questionAnswers, result };
   } catch (error) {
     console.error("Error in correctAnswer:", error);

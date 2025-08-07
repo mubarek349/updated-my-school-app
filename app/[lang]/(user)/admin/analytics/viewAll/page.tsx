@@ -50,16 +50,16 @@ function Page() {
           ustazname: row.ustazname ?? "",
           finalExamStatus: row.checkStausOfFinalExam
             ? row.checkUpdateProhibition
-              ? row.result?.result.score >= 0.75
+              ? row.result?.score >= 0.75
                 ? "Passed"
                 : "Failed"
               : "In Progress"
             : "Not Started",
           result: row.checkStausOfFinalExam
             ? row.result &&
-              `${row.result.result.score * 100}% አግኝተዋል -> ${
-                row.result.result.correct
-              }/${row.result.result.total} በመመለስ`
+              `${row.result.score * 100}% አግኝተዋል -> ${
+                row.result.correct
+              }/${row.result.total} በመመለስ`
             : "-",
         }))
       : [];
