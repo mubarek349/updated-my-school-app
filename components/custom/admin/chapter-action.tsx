@@ -100,6 +100,7 @@ export const ChapterActions = ({
         disabled={disabled || isLoading}
         variant="outline"
         size="sm"
+        className={isPublished?"bg-red-200 hover:bg-red-300":"bg-blue-100 hover:bg-blue-300"}
       >
         {isPublished ? "Unpublish" : "Publish"}
       </Button>

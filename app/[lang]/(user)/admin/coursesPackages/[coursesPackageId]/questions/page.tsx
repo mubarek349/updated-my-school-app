@@ -29,12 +29,12 @@ const QuestionsofThePackagePage = async ({
     return redirect("/en");
   }
   return (
-    <div className="">
+    <div className="grid overflow-hidden bg-gray-100">
       <Link
         href={`/en/admin/coursesPackages/${coursesPackageId}`}
-        className="flex items-center text-sm hover:opacity-75 transition  mb-4 pt-3 pb-3 "
+        className="stick flex items-center  text-sm hover:opacity-75 transition  mb-4 pt-3 pb-3 "
       >
-        <ArrowLeft className="h-4 w-4 mr-2" />
+        <ArrowLeft className="h-4 w-4 mr-2 " />
         Back to CoursesPackage setup
       </Link>
       <PackageQuestionForm

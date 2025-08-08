@@ -58,32 +58,38 @@ export default function CustomViewAllTable({
   }, [searchValue]);
 
   return (
-    <div className="w-svw space-y-8">
+    <div className="w-full space-y-6 sm:space-y-8 px-4 sm:px-6 lg:px-8">
       {/* Search & Page Size */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex gap-2 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-y-4 gap-x-6">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Input
             placeholder="Search..."
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             disabled={isLoading}
-            className="max-w-sm border ml-3 border-gray-300 focus:border-blue-400 transition px-4 py-2 rounded w-full sm:w-auto"
+            className="border border-gray-300 focus:border-blue-500 transition px-4 py-2 rounded-md w-full sm:max-w-sm"
+            aria-label="Search input"
           />
           <Button
             type="button"
             onClick={() => onSearch(localSearch)}
             disabled={isLoading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded shadow"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md shadow-md"
           >
             Search
           </Button>
         </div>
+
         <div className="flex items-center gap-2 text-sm">
-          <span>Show:</span>
+          <label htmlFor="pageSize" className="text-gray-700">
+            Show:
+          </label>
           <select
+            id="pageSize"
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="border border-gray-300 rounded px-2 py-1 focus:border-blue-400 transition bg-white"
+            className="border border-gray-300 rounded-md px-2 py-1 focus:border-blue-500 transition bg-white"
+            aria-label="Select page size"
           >
             {PAGE_SIZES.map((size) => (
               <option key={size} value={size}>
@@ -91,22 +97,19 @@ export default function CustomViewAllTable({
               </option>
             ))}
           </select>
-          <span>entries</span>
+          <span className="text-gray-700">entries</span>
         </div>
       </div>
 
-      {/* Responsive Table */}
-      <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-gray-200 shadow bg-white p-2 sm:p-6 my-4">
-        <Table className="min-w-full">
+      {/* Table */}
+      <div className="w-full overflow-x-auto scrollbar-hide rounded-xl border border-gray-200 shadow-sm bg-white p-4 sm:p-6">
+        <Table className="min-w-max">
           <TableHeader>
             <TableRow>
               {columns.map((col) => (
                 <TableHead
                   key={col.key}
-                  className="uppercase text-xs font-semibold text-gray-700 bg-gray-100 sm:px-6 px-2 sm:py-4 py-2 rounded-t-lg tracking-wider shadow-sm"
-                  style={{
-                    borderBottom: "2px solid #e5e7eb",
-                  }}
+                  className="uppercase text-xs font-semibold text-gray-700 bg-gray-100 px-4 py-3 tracking-wide border-b border-gray-200"
                 >
                   {col.label}
                 </TableHead>
@@ -116,7 +119,10 @@ export default function CustomViewAllTable({
           <TableBody>
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-6 text-gray-500">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-6 text-gray-500"
+                >
                   No data to display.
                 </TableCell>
               </TableRow>
@@ -125,16 +131,14 @@ export default function CustomViewAllTable({
                 <TableRow
                   key={row.id || row.key}
                   className={cn(
-                    idx % 2 === 0
-                      ? "bg-white"
-                      : "bg-gray-50",
+                    idx % 2 === 0 ? "bg-white" : "bg-gray-50",
                     "hover:bg-blue-50 transition"
                   )}
                 >
                   {columns.map((col) => (
                     <TableCell
                       key={col.key}
-                      className="font-medium text-gray-700 sm:px-6 px-2 sm:py-4 py-2 text-xs sm:text-sm break-words"
+                      className="text-gray-700 px-4 py-3 text-xs sm:text-sm break-words"
                     >
                       {row[col.key]}
                     </TableCell>
@@ -146,16 +150,16 @@ export default function CustomViewAllTable({
         </Table>
       </div>
 
-      {/* Loading */}
+      {/* Loading Spinner */}
       {isLoading && rows.length === 0 && (
-        <div className="text-center text-blue-500 py-4 font-semibold">
+        <div className="flex justify-center items-center py-6 text-blue-500 font-semibold">
           <span className="inline-block w-6 h-6 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mr-2"></span>
           Loading data...
         </div>
       )}
 
       {/* Pagination */}
-      <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-y-4 gap-x-6 text-sm">
         <div>
           Showing{" "}
           <span className="font-bold text-blue-600">
@@ -165,11 +169,12 @@ export default function CustomViewAllTable({
           <span className="font-bold text-blue-600">
             {Math.min(page * pageSize, totalRows)}
           </span>{" "}
-          of <span className="font-bold text-gray-700">{totalRows}</span> results
+          of <span className="font-bold text-gray-700">{totalRows}</span>{" "}
+          results
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="sm"

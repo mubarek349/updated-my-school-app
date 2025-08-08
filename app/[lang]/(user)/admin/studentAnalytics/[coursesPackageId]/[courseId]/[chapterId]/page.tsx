@@ -88,7 +88,7 @@ function Page() {
   };
 
   return (
-    <div className="m-2 overflow-y-auto">
+    <div className="m-2 bg-blue-50 overflow-y-auto">
       <Link
         href={`/en/admin/coursesPackages/${coursesPackageId}/${courseId}`}
         className="flex items-center text-sm hover:opacity-75 transition mb-6"
@@ -98,7 +98,7 @@ function Page() {
       </Link>
       <h1 className="text-xl font-bold mb-4">Student Analytics Per Chapter</h1>
       {/* Progress Filter */}
-      <div className="m-1">
+      <div className="m-1 ">
         <label className="mr-2 font-medium">
           Assign Selected Students To start their progress from this Chapter:
         </label>
@@ -125,7 +125,7 @@ function Page() {
           <Button
             type="button"
             disabled={isLoading||selectedRowIds.size === 0}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded shadow"
+            className="mb-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded shadow"
           >
             Assign
           </Button>

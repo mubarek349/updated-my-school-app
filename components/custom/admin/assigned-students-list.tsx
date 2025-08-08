@@ -52,7 +52,7 @@ function AssignedStudentsList({ coursesPackageId }: AssignedStudentsListProps) {
           {assigned?.map((item, idx) => (
             <div
               key={item.package + item.subject + idx}
-              className="flex items-center bg-white border border-gray-200 rounded text-sm font-medium text-gray-700 px-2 py-1"
+              className="flex items-center bg-green-200 hover:bg-green-300 border border-gray-200 rounded text-sm font-medium text-gray-700 px-2 py-1"
               style={{
                 minHeight: "2rem",
                 boxShadow: "0 2px 8px 0 rgba(34,197,94,0.18)", // green shadow

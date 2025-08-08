@@ -86,13 +86,13 @@ export const CoursesForm = ({
     router.push(`/${lang}/admin/coursesPackages/${coursesPackageId}/${id}`);
   };
   return (
-    <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="relative bg-blue-50 mt-6 border rounded-md p-4">
       {isUpdating && (
         <div className="absolute w-full h-full bg-slate-500/200 top-0 right-0 rounded-m flex items-center justify-center">
           <Loader2 className="animate-spin h-6 w-6 text-sky-700" />
         </div>
       )}
-      <div className="font-medium flex items-center justify-between">
+      <div className="font-medium  flex items-center justify-between">
         Courses of the Package
         <Button onClick={toggleCreating} variant="ghost">
           {isCreating ? (

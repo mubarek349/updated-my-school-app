@@ -19,7 +19,6 @@ const CourseIdPage = async ({
   const { courseId } = await params;
   const { coursesPackageId } = await params;
 
-  
   const course = await prisma.course.findUnique({
     where: {
       id: courseId,
@@ -47,23 +46,25 @@ const CourseIdPage = async ({
   const isComplete = requiredFields.every(Boolean);
   const lang = "en";
   return (
-    <>
+    <div className="grid overflow-hidden bg-blue-50 scrollbar-hide">
       {!course.isPublished && (
         <Banner
-          variant={"warning"}
+          variant="warning"
           label="This Course is unpublished, It will not be visible in the package"
         />
       )}
-      <div className="p-6 overflow-auto">
+
+      <div className="p-4 md:p-6 overflow-auto scrollbar-hide">
         <Link
           href={`/${lang}/admin/coursesPackages/${coursesPackageId}`}
-          className="flex items-center text-sm hover:opacity-75 transition mb-6"
+          className="flex items-center text-sm hover:opacity-75 transition mb-4 md:mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to courses setup
+          Back to Courses Setup
         </Link>
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-y-2">
+
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex flex-col gap-y-1.5">
             <h1 className="text-2xl font-medium">Course Setup</h1>
             <span className="text-sm text-slate-700">
               Complete all fields {completionText}
@@ -76,11 +77,12 @@ const CourseIdPage = async ({
             coursesPackageId={coursesPackageId}
           />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
-          <div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
+          <div className="space-y-6">
             <div className="flex items-center gap-x-2">
               <IconBadge icon={LayoutDashboard} />
-              <h2 className="text-xl">coustomize your course</h2>
+              <h2 className="text-xl">Customize your Course</h2>
             </div>
             <CourseTitleForm
               initialData={course}
@@ -92,19 +94,12 @@ const CourseIdPage = async ({
               coursesPackageId={coursesPackageId}
               courseId={course.id}
             />
-            {/* <p>you can skip the image</p>
-            <ImageForm
-              initialData={course}
-              coursesPackageId={coursesPackageId}
-              courseId={course.id}
-            /> */}
           </div>
-        </div>
-        <div className="space-y-6">
-          <div>
+
+          <div className="space-y-6">
             <div className="flex items-center gap-x-2">
               <IconBadge icon={ListChecks} />
-              <h2 className="text-xl">Course chapters</h2>
+              <h2 className="text-xl">Course Chapters</h2>
             </div>
             <ChaptersForm
               initialData={course}
@@ -114,7 +109,7 @@ const CourseIdPage = async ({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 export default CourseIdPage;

@@ -94,18 +94,21 @@ export const CourseActions = ({
     }
   };
   return (
-    <div className="flex gap-x-1 ">
+    <div className="flex gap-x-1  ">
       <Button
         onClick={onClick}
         disabled={disabled || isLoading}
         variant="outline"
         size="sm"
+        className={isPublished?"bg-red-200 hover:bg-red-300":"bg-blue-100 hover:bg-blue-300"}
       >
         {isPublished ? "Unpublish" : "Publish"}
       </Button>
-      <ConfirmModal onConfirm={onDelete}>
+      <ConfirmModal onConfirm={onDelete} 
+        
+      >
         <Button size="sm">
-          <Trash className="w-4 h-4" />
+          <Trash className="w-4 h-4 " />
         </Button>
       </ConfirmModal>
     </div>

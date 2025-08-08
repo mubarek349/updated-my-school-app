@@ -50,7 +50,8 @@ const config: Config = withUt({
       },
     },
   },
-  plugins: [],
+   plugins: [
+  ],
 });
 
 export default config;

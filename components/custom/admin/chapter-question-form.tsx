@@ -108,27 +108,16 @@ export const ChapterQuestionForm = ({
       `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
     );
   };
-//  const onAdding = (id: string) => {
-//     router.push(
-//       `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
-//     );
-//   };
-//   const onRemoving = (id: string) => {
-//     router.push(
-//       `/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}/${id}`
-//     );
-//   };
 
   return (
-    <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
-      {/* {isUpdating && (
-        <div className="absolute w-full h-full bg-slate-500/200 top-0 right-0 rounded-m flex items-center justify-center">
-          <Loader2 className="animate-spin h-6 w-6 text-sky-700" />
-        </div>
-      )} */}
-      <div className="font-medium flex items-center justify-between">
+    <div className="relative mt-6 border bg-blue-100 rounded-md px-4 py-5 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between text-base sm:text-lg font-medium text-slate-800">
         Chapter Questions
-        <Button onClick={toggleCreating} variant="ghost">
+        <Button
+          onClick={toggleCreating}
+          variant="ghost"
+          className="text-sm sm:text-base"
+        >
           {isCreating ? (
             <>Cancel</>
           ) : (
@@ -143,7 +132,7 @@ export const ChapterQuestionForm = ({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 mt-4 px-4 sm:px-0"
+            className="space-y-6 mt-4"
           >
             <FormField
               control={form.control}
@@ -154,6 +143,7 @@ export const ChapterQuestionForm = ({
                     <Textarea
                       disabled={isSubmitting}
                       placeholder="e.g. 'What is the main concept of this chapter?'"
+                      className="resize-none text-sm"
                       {...field}
                     />
                   </FormControl>
@@ -161,85 +151,103 @@ export const ChapterQuestionForm = ({
                 </FormItem>
               )}
             />
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Options
               </label>
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex items-center gap-x-2 mt-2">
-                  <Input
-                    {...form.register(`options.${index}`)}
-                    placeholder={`Option ${index + 1}`}
-                    disabled={isSubmitting}
-                    className={cn(
-                      "",
-                      form
-                        .watch("answers")
-                        .includes(form.watch("options")[index])
-                        ? "bg-green-100 border-2 border-green-500 text-green-700 "
-                        : ""
-                    )}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() =>
-                      form.setValue(
-                        "answers",
+              <div className="space-y-3">
+                {fields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="flex flex-col sm:flex-row sm:items-center gap-2"
+                  >
+                    <Input
+                      {...form.register(`options.${index}`)}
+                      placeholder={`Option ${index + 1}`}
+                      disabled={isSubmitting}
+                      className={cn(
+                        "text-sm",
                         form
                           .watch("answers")
                           .includes(form.watch("options")[index])
-                          ? form
+                          ? "bg-green-100 border-2 border-green-500 text-green-700"
+                          : ""
+                      )}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() =>
+                          form.setValue(
+                            "answers",
+                            form
                               .watch("answers")
-                              .filter((v) => v !== form.watch("options")[index])
-                          : [
-                              ...form.watch("answers"),
-                              form.watch("options")[index],
-                            ]
-                      )
-                    }
-                  >
-                    {form
-                      .watch("answers")
-                      .includes(form.watch("options")[index])
-                      ? "not answer"
-                      : "answer"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => remove(index)}
-                    disabled={fields.length <= 2}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
+                              .includes(form.watch("options")[index])
+                              ? form
+                                  .watch("answers")
+                                  .filter(
+                                    (v) => v !== form.watch("options")[index]
+                                  )
+                              : [
+                                  ...form.watch("answers"),
+                                  form.watch("options")[index],
+                                ]
+                          )
+                        }
+                        className="text-xs sm:text-sm"
+                      >
+                        {form
+                          .watch("answers")
+                          .includes(form.watch("options")[index])
+                          ? "Not Answer"
+                          : "Answer"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => remove(index)}
+                        disabled={fields.length <= 2}
+                        className="text-xs sm:text-sm"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => append("")}
-                className="mt-2"
+                className="mt-3 text-sm"
               >
                 Add Option
               </Button>
             </div>
-            <div className="flex items-center gap-x-2">
-              <Button type="submit" disabled={!isValid}>
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="submit"
+                disabled={!isValid}
+                className="text-sm sm:text-base"
+              >
                 Create
               </Button>
             </div>
           </form>
         </Form>
       )}
+
       {!isCreating && (
         <div
           className={cn(
-            "text-sm mt-2",
+            "text-sm mt-4",
             !initialData.questions.length && "text-slate-500 italic"
           )}
         >
-          {!initialData.questions.length && " NO Questions"}
+          {!initialData.questions.length && "No Questions"}
           <ChapterQuestionsList
             onEdit={onEdit}
             onDelete={onDelete}

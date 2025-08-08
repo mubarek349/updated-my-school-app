@@ -132,7 +132,7 @@ export const PackageQuestionForm = ({
   };
 
   return (
-    <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="grid overflow-auto relative border bg-slate-100 rounded-md p-4">
       {/* Exam Time Setting */}
       <div className="flex items-start gap-3 mb-4">
         {" "}
