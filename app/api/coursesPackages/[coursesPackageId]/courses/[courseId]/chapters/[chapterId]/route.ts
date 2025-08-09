@@ -47,24 +47,24 @@ export async function DELETE(
     });
 
     // Optionally: Unpublish course if no published chapters remain
-    const publishedChaptersInCourse = await prisma.chapter.count({
-      where: {
-        courseId: courseId,
-        isPublished: true,
-      },
-    });
+    // const publishedChaptersInCourse = await prisma.chapter.count({
+    //   where: {
+    //     courseId: courseId,
+    //     isPublished: true,
+    //   },
+    // });
 
-    if (publishedChaptersInCourse === 0) {
-      const updatedCourse=await prisma.course.update({
-        where: {
-          id: courseId,
-        },
-        data: {
-          isPublished: false,
-        },
-      });
-      console.log("the course is updated",updatedCourse);
-    }
+    // if (publishedChaptersInCourse === 0) {
+    //   const updatedCourse=await prisma.course.update({
+    //     where: {
+    //       id: courseId,
+    //     },
+    //     data: {
+    //       isPublished: false,
+    //     },
+    //   });
+    //   console.log("the course is updated",updatedCourse);
+    // }
 
     return NextResponse.json(deletedChapter);
   } catch (error) {

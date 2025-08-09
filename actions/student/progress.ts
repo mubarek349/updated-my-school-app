@@ -2,27 +2,46 @@
 
 import prisma from "@/lib/db";
 
-export async function noProgress(wdt_ID: number, courseId: string) {
-  // gate the package usingthe courseid
-  const course = await prisma.course.findFirst({
-    where: {
-      id: courseId,
-    },
-    select: {
-      packageId: true,
-    },
-  });
+export async function noProgress(
+  wdt_ID: number,
+  courseId: string
+): Promise<boolean> {
+  try {
+    // Retrieve the packageId associated with the course
+    const course = await prisma.course.findFirst({
+      where: { id: courseId },
+      select: { packageId: true },
+    });
 
-  const progress = await prisma.studentProgress.count({
-    where: {
-      student: { wdt_ID: wdt_ID },
-      chapter: { course: { packageId: course?.packageId ?? undefined } },
-    },
-  });
-  const data = progress === 0;
+    if (!course?.packageId) {
+      console.warn(
+        `Course not found or missing packageId for courseId: ${courseId}`
+      );
+      return false;
+    }
 
-  console.log("No progress:", data);
-  return data;
+    // Count student progress within the package
+    const progressCount = await prisma.studentProgress.count({
+      where: {
+        student: { wdt_ID },
+        chapter: { course: { packageId: course.packageId } },
+      },
+    });
+
+    const hasNoProgress = progressCount === 0;
+    console.log(
+      `Student ${wdt_ID} has no progress in package ${course.packageId}:`,
+      hasNoProgress
+    );
+
+    return hasNoProgress;
+  } catch (error) {
+    console.error(
+      `Error checking progress for student ${wdt_ID} and course ${courseId}:`,
+      error
+    );
+    return false; // fallback to false in case of error
+  }
 }
 
 export async function getStudentProgressPerChapter(
@@ -221,7 +240,7 @@ export async function updatePathProgressData(wdt_ID: number) {
 
     if (!lastChapter) {
       console.log("message");
-      return cousefailedsolve(wdt_ID);
+      return await cousefailedsolve(wdt_ID);
     } else {
       console.log("Last chapter progress:", lastChapter);
       return [lastChapter.chapter.course.id, lastChapter.chapter.id];
@@ -266,10 +285,10 @@ export async function updateStartingProgress(
     });
 
     if (existingProgress) {
-      const ids=existingProgress.map((exId)=>exId.id);
+      const ids = existingProgress.map((exId) => exId.id);
       await prisma.studentProgress.deleteMany({
-        where:{id:{in: ids}}
-      })
+        where: { id: { in: ids } },
+      });
       if (idx === 0) {
         await prisma.studentProgress.create({
           data: {
@@ -538,34 +557,37 @@ export async function cousefailedsolve(wdt_ID: number) {
       const idx = allChapterIds.findIndex((c) => c === CompletedlastChapterId);
       nextChapterId = allChapterIds[idx + 1];
     }
+    if (nextChapterId) {
+      await prisma.studentProgress.create({
+        data: {
+          studentId: wdt_ID,
+          chapterId: nextChapterId,
+          isCompleted: false,
+        },
+      });
 
-    await prisma.studentProgress.create({
-      data: {
-        studentId: wdt_ID,
-        chapterId: nextChapterId,
-        isCompleted: false,
-      },
-    });
-
-    const lastChapter = await prisma.studentProgress.findFirst({
-      where: {
-        student: { wdt_ID: wdt_ID },
-        chapterId: { in: allChapterIds },
-        isCompleted: false,
-      },
-      select: {
-        chapter: {
-          select: {
-            id: true,
-            course: {
-              select: {
-                id: true,
+      const lastChapter = await prisma.studentProgress.findFirst({
+        where: {
+          student: { wdt_ID: wdt_ID },
+          chapterId: { in: allChapterIds },
+          isCompleted: false,
+        },
+        select: {
+          chapter: {
+            select: {
+              id: true,
+              course: {
+                select: {
+                  id: true,
+                },
               },
             },
           },
         },
-      },
-    });
-    return [lastChapter?.chapter.course.id, lastChapter?.chapter.id];
+      });
+      return [lastChapter?.chapter.course.id, lastChapter?.chapter.id];
+    }else{
+      return false;
+    }
   }
 }

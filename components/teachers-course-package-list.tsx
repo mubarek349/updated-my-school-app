@@ -27,9 +27,9 @@ export const CreatedCoursePackageList = ({
         <Link
           key={coursesPackage.id}
           href={`/${lang}/admin/coursesPackages/${coursesPackage.id}`}
-          className="hover:scale-[1.02] transition-transform"
+          className="hover:scale-[1.005] transition-transform"
         >
-          <Card className="h-full flex flex-col bg-blue-100 justify-between shadow-md hover:shadow-lg transition-shadow">
+          <Card className=" bg-blue-100 h-full flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center text-xl justify-between gap-2">
                 <span>{coursesPackage.name}</span>
@@ -65,14 +65,4 @@ export const CreatedCoursePackageList = ({
   );
 };
 
-// function GetSubscject({ id }: { id: string }) {
-//   const [data] = useAction(getAssignedSubjects, [true, () => {}], id);
 
-//   return !data ? (
-//     <p>loading</p>
-//   ) : data.length > 0 ? (
-//     <p>{JSON.stringify(data)}</p>
-//   ) : (
-//     <p>No subjects assigned</p>
-//   );
-// }

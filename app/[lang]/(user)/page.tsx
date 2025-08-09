@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div>
       <Navbar />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-blue-50">
         <div className="container mx-auto px-4 py-12 md:py-24">
           <div className="flex flex-col md:flex-row items-center">
             {/* Text Content - Left side on desktop, top on mobile */}

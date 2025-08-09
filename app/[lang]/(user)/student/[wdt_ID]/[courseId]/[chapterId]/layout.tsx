@@ -48,5 +48,5 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     isClicked,
   ]);
 
-  return <div className="overflow-hidden grid">{children}</div>;
+  return <div className="overflow-hidden grid  bg-blue-50">{children}</div>;
 }

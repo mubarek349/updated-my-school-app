@@ -157,18 +157,18 @@ function Page() {
 
   return (
     <motion.div
-      className="px-4 md:px-12 py-6 grid grid-rows-[auto_1fr] min-h-screen"
-      style={{
-        background:
-          "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%)",
-        backgroundAttachment: "fixed",
-      }}
+    className="px-4 md:px-12 bg-blue-50 py-6 grid grid-rows-[auto_1fr] min-h-screen"
+    style={{
+      background:
+      "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%) cl",
+      backgroundAttachment: "fixed",
+    }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       <ProgressPage />
-      <div className="flex flex-col overflow-auto">
+      <div className="flex flex-col overflow-auto px-2 bg-blue-50">
         {/* Breadcrumb */}
         <TooltipProvider>
           <Breadcrumb className="py-4 md:py-6 mb-4">

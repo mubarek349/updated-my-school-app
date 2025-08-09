@@ -77,7 +77,7 @@ export default function ProgressPage() {
   // };
 
   return (
-    <div className="py-4 md:py-6 grid">
+    <div className="py-4 md:py-6 bg-blue-50 grid">
       <TooltipProvider>
         {/* Mobile Layout */}
         {isMobile && (

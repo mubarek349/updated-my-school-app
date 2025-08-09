@@ -17,7 +17,7 @@ const coursesPackagePage = async () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 overflow-auto py-4">
+      <div className="grid grid-cols-1 overflow-auto py-4 h-full lg:h-[200px] ">
         <CreatedCoursePackageList coursesPackages={coursesPackages} />
       </div>
     </div>

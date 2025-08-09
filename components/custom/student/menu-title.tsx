@@ -109,7 +109,7 @@ const MenuTitle: React.FC<MenuTitleProps> = ({
     <motion.div
       className={cn(
         "flex items-center gap-4",
-        "transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-400",
+        "transition-all  duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-400",
         onClick ? "cursor-pointer" : "cursor-default",
         className
       )}
