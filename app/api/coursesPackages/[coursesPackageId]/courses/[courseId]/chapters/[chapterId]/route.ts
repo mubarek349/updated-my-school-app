@@ -14,7 +14,7 @@ export async function DELETE(
   }
 ) {
   try {
-    const { coursesPackageId, courseId, chapterId } = await params;
+    const { coursesPackageId, chapterId } = await params;
 
     // Check course package ownership
     const coursePackageOwner = await prisma.coursePackage.findUnique({

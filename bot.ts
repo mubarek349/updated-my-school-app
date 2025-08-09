@@ -202,6 +202,9 @@ export async function startBot() {
             }
 
             const update = await updatePathProgressData(studId);
+            if(!update){
+              return undefined;
+            }
             const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
 
             const channelName = channel.name || "ዳሩል-ኩብራ";
@@ -353,6 +356,9 @@ export async function startBot() {
     const lang = "en";
     const stud = "student";
     const update = await updatePathProgressData(wdt_ID);
+    if(!update){
+      return undefined;
+    }
     const url = `${BASE_URL}/${lang}/${stud}/${wdt_ID}/${update[0]}/${update[1]}`;
 
     const packageName = activePackage.name || "የተማሪ ፓኬጅ";
@@ -882,6 +888,9 @@ export async function startBot() {
               : `⏳ ኮርሱ በመካከለኛ ሁኔታ ነው። ሂደተዎ: ${progress} ነው።እባከዎን ት/ትዎን በርትተው ይጨርሱ።`;
 
           const update = await updatePathProgressData(studId);
+          if(!update){
+            return undefined;
+          }
           const lang = "en";
           const stud = "student";
           const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;

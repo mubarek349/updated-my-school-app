@@ -240,7 +240,7 @@ export async function updatePathProgressData(wdt_ID: number) {
 
     if (!lastChapter) {
       console.log("message");
-      return await cousefailedsolve(wdt_ID);
+      return (await cousefailedsolve(wdt_ID));
     } else {
       console.log("Last chapter progress:", lastChapter);
       return [lastChapter.chapter.course.id, lastChapter.chapter.id];
