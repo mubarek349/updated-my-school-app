@@ -19,7 +19,8 @@ export async function POST(
     console.log("below course package: ", createdCoursePackage);
 
     return NextResponse.json(createdCoursePackage);
-  } catch (error:any|null) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error:any) {
   console.error("[COURSES]", error.message, error.stack);
   return new NextResponse("Internal Error", { status: 500 });
 }
