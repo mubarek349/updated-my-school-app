@@ -55,7 +55,7 @@ const CreatePage = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 overflow-auto">
       {success && (
         <Confetti
           numberOfPieces={200}

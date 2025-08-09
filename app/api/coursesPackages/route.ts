@@ -19,8 +19,8 @@ export async function POST(
     console.log("below course package: ", createdCoursePackage);
 
     return NextResponse.json(createdCoursePackage);
-  } catch (error) {
-    console.error("[COURSES]", error);
-    return new NextResponse("Internal Error", { status: 500 });
-  }
+  } catch (error:any|null) {
+  console.error("[COURSES]", error.message, error.stack);
+  return new NextResponse("Internal Error", { status: 500 });
+}
 }
