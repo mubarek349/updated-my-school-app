@@ -29,14 +29,18 @@ const QuestionsofThePackagePage = async ({
     return redirect("/en");
   }
   return (
-    <div className="grid overflow-hidden bg-gray-100">
-      <Link
-        href={`/en/admin/coursesPackages/${coursesPackageId}`}
-        className="stick flex items-center  text-sm hover:opacity-75 transition  mb-4 pt-3 pb-3 "
-      >
-        <ArrowLeft className="h-4 w-4 mr-2 " />
-        Back to CoursesPackage setup
-      </Link>
+    <div className="bg-blue-50 grid overflow-hidden p-6 rounded-lg shadow-sm space-y-6">
+      <div>
+        <Link
+          href={`/en/admin/coursesPackages/${coursesPackageId}`}
+          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          aria-label="Back to CoursesPackage setup"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to CoursesPackage setup
+        </Link>
+      </div>
+
       <PackageQuestionForm
         initialData={coursepackage}
         coursesPackageId={coursesPackageId}

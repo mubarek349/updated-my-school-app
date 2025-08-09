@@ -27,9 +27,12 @@ export async function PATCH(
       where: {
         id: coursesPackageId,
       },
+      select:{
+        name:true
+      }
     });
     if (!coursesPackage || !coursesPackage.name) {
-      return new NextResponse("Chapter not found or missing title", {
+      return new NextResponse("Package not found or missing title", {
         status: 404,
       });
     }

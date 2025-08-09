@@ -22,7 +22,7 @@ export const CreatedCoursePackageList = ({
   coursesPackages,
 }: CreatedCoursePackageListProps) => {
   return (
-    <div className="courses-list gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="courses-list overflow-auto gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {coursesPackages.map((coursesPackage) => (
         <Link
           key={coursesPackage.id}
