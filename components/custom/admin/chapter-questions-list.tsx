@@ -10,10 +10,8 @@ import {
 } from "@hello-pangea/dnd";
 import {
   Grip,
-  Minus,
   MinusCircle,
   Pencil,
-  Plus,
   PlusCircle,
   Trash,
 } from "lucide-react";

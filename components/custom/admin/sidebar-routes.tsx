@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart, List, Layout, Sheet } from "lucide-react";
+import { BarChart, List, Layout } from "lucide-react";
 import { SidebarItem } from "./sidebar-item";
 import { usePathname } from "next/navigation";
 
