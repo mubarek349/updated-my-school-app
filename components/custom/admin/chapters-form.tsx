@@ -58,7 +58,6 @@ export const ChaptersForm = ({
       );
       if (result.status === 200) {
         toast.success("Chapter created");
-        toast.success("Chapter Created");
         toggleCreating();
         router.refresh();
       } else {
