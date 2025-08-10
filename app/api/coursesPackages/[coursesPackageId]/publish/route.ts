@@ -39,7 +39,7 @@ export async function PATCH(
     const publishedCoursesPackage = await prisma.coursePackage.update({
       where: {
         id: coursesPackageId,
-        courses: { some: { isPublished: true } },
+        // courses: { some: { isPublished: true } },
       },
       data: {
         isPublished: true,

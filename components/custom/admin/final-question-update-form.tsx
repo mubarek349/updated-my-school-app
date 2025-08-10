@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { Plus, Trash2, CheckCircle, Circle } from "lucide-react";
-import axios from "axios";
+import { updateQuestion } from "@/actions/admin/creatingQuestion";
 
 interface FinalQuestionUpdateFormProps {
   initialData: {
@@ -74,22 +74,16 @@ export default function FinalQuestionUpdateForm({
 
   const onSubmit = async (values: FormValues) => {
     try {
-      await axios.put(
-        `/api/coursesPackages/${coursesPackageId}/questions/${questionId}`,
-        {
-          question: values.question,
-          options: values.options,
-          answer: values.answer,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      toast.success("Question updated successfully!");
-      router.refresh();
-      router.push(`/en/admin/coursesPackages/${coursesPackageId}/questions`);
+      const result = await updateQuestion(questionId, {
+        question: values.question,
+        options: values.options,
+        answer: values.answer,
+      });
+      if (result.status === 200) {
+        toast.success("Question updated successfully!");
+        router.refresh();
+        router.push(`/en/admin/coursesPackages/${coursesPackageId}/questions`);
+      } else toast.error(result.error ?? "");
     } catch {
       toast.error("Failed to update question.");
     }

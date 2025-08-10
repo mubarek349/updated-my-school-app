@@ -9,9 +9,6 @@ export async function POST(
   try {
     const { coursesPackageId } = await params;
 
-    // const userId = context.userId;
-    // const userId = "clg1v2j4f0000l5v8xq3z7h4d"; // Replace with actual userId from context
-    
     const { title } = await req.json();
     
 

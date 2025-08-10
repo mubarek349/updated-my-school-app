@@ -44,25 +44,7 @@ export async function DELETE(
       },
     });
 
-    // Optionally: Unpublish course if no published courses remain
-    // const publishedCoursesInCoursePackage = await prisma.course.count({
-    //   where: {
-    //     packageId: coursesPackageId,
-    //     isPublished: true,
-    //   },
-    // });
-
-    // if (publishedCoursesInCoursePackage === 0) {
-    //   const updatedCoursePackage = await prisma.coursePackage.update({
-    //     where: {
-    //       id: course.packageId,
-    //     },
-    //     data: {
-    //       isPublished: false,
-    //     },
-    //   });
-    //   console.log("the course is updated", updatedCoursePackage);
-    // }
+    
 
     return NextResponse.json(deletedcourse);
   } catch (error) {

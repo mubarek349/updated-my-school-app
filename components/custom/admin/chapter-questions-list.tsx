@@ -8,19 +8,13 @@ import {
   Draggable,
   DropResult,
 } from "@hello-pangea/dnd";
-import {
-  Grip,
-  MinusCircle,
-  Pencil,
-  PlusCircle,
-  Trash,
-} from "lucide-react";
+import { Grip, MinusCircle, Pencil, PlusCircle, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmModal } from "../../modals/confirm-modal";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { assignQuestionToPackage } from "@/actions/admin/creatingQuestion";
 
 interface ChapterQuestionsListProps {
   items: question[];
@@ -36,8 +30,7 @@ export const ChapterQuestionsList = ({
   items,
   // onReorder,
   coursesPackageId,
-  courseId,
-  chapterId,
+ 
   onDelete,
   onEdit,
 }: ChapterQuestionsListProps) => {
@@ -122,13 +115,21 @@ export const ChapterQuestionsList = ({
                         onClick={async () => {
                           const endpoint =
                             question.packageId === coursesPackageId
-                              ? "remove"
+                              ? "remov"
                               : "add";
-                          await axios.patch(
-                            `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}/questions/${question.id}/${endpoint}`
+                          const result = await assignQuestionToPackage(
+                            question.id,
+                            coursesPackageId
                           );
-                          toast.success(`Successfully ${endpoint}ed`);
-                          router.refresh();
+
+                          if (result.status === 200) {
+                            toast.success(
+                              result.message ?? `Successfully ${endpoint}ed`
+                            );
+                            router.refresh();
+                          } else {
+                            toast.error(result.error ?? "");
+                          }
                         }}
                       >
                         {question.packageId === coursesPackageId ? (

@@ -1,5 +1,6 @@
 "use client";
 
+import {  updateCoursePackageName } from "@/actions/admin/creatingCoursesPackage";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -10,7 +11,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,7 +29,10 @@ const formSchema = z.object({
   name: z.string().min(1, { message: "name is required" }),
 });
 
-export const TitleForm = ({ initialData, coursesPackageId }: TitleFormProps) => {
+export const TitleForm = ({
+  initialData,
+  coursesPackageId,
+}: TitleFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
 
@@ -44,10 +47,14 @@ export const TitleForm = ({ initialData, coursesPackageId }: TitleFormProps) => 
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/coursesPackages/${coursesPackageId}`, values);
-      toast.success("Courses Package name Updated");
-      toggleEdit();
-      router.refresh();
+      const result = await updateCoursePackageName(coursesPackageId, values.name);
+      if (result.status === 200) {
+        toast.success("Courses Package name Updated");
+        toggleEdit();
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "");
+      }
     } catch (error) {
       console.error("Update Error:", error);
       toast.error("Something went wrong.");

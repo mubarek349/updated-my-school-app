@@ -1,5 +1,6 @@
 "use client";
 
+import { updateChapter } from "@/actions/admin/creatingChapter";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,7 +12,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { chapter } from "@prisma/client";
-import axios from "axios";
 import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -23,7 +23,7 @@ interface ChapterVideoFormProps {
   initialData: chapter;
   courseId: string;
   chapterId: string;
-  coursesPackageId:string;
+  coursesPackageId: string;
 }
 
 const formSchema = z.object({
@@ -32,7 +32,6 @@ const formSchema = z.object({
 
 export const ChapterVideoForm = ({
   initialData,
-  courseId,
   chapterId,
   coursesPackageId,
 }: ChapterVideoFormProps) => {
@@ -50,13 +49,18 @@ export const ChapterVideoForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(
-        `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}`,
-        values
-      );
-      toast.success("Chapter Updated");
-      toggleEdit();
-      router.refresh();
+      const result = await updateChapter({
+        chapterId,
+        coursesPackageId,
+        values,
+      });
+      if (result.status === 200) {
+        toast.success("Chapter Updated");
+        toggleEdit();
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "did not updated");
+      }
     } catch (error) {
       console.error("Update Error:", error);
       toast.error("Something went wrong.");

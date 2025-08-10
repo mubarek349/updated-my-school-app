@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea"; // Add Input for options
 import { Input } from "@/components/ui/input"; // Add Input for options
 // import { zodResolver } from "@hookform/resolvers/zod";
 import { chapter, question } from "@prisma/client";
-import axios from "axios";
 import { PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -21,6 +20,10 @@ import toast from "react-hot-toast";
 // import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { ChapterQuestionsList } from "./chapter-questions-list";
+import {
+  createQuestion,
+  deleteQuestion,
+} from "@/actions/admin/creatingQuestion";
 
 interface ChapterQuestionFormProps {
   initialData: chapter & { questions: question[] };
@@ -76,14 +79,16 @@ export const ChapterQuestionForm = ({
     answers: string[];
   }) => {
     try {
-      await axios.post(
-        `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}/questions`,
-        values
-      );
-      form.reset();
-      toast.success("Question Created");
-      toggleCreating();
-      router.refresh();
+      const result = await createQuestion(chapterId, values);
+
+      if (result.status === 200) {
+        form.reset();
+        toast.success(result.message ?? "Question Created");
+        toggleCreating();
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "");
+      }
     } catch (error) {
       console.error("Create Error:", error);
       toast.error("Something went wrong.");
@@ -92,11 +97,13 @@ export const ChapterQuestionForm = ({
 
   const onDelete = async (id: string) => {
     try {
-      await axios.delete(
-        `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}/questions/${id}`
-      );
-      toast.success("Question Deleted");
-      router.refresh();
+      const result = await deleteQuestion(id);
+      if (result.status === 200) {
+        toast.success(result.message ?? "Question Deleted");
+        router.refresh();
+      } else{
+        toast.error(result.error ?? "");
+      } 
     } catch (error) {
       console.error("Delete Error:", error);
       toast.error("Failed to delete the question.");

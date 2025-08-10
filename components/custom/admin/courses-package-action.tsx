@@ -4,10 +4,14 @@ import { FileQuestion, Trash } from "lucide-react";
 import { Button } from "../../ui/button";
 import { ConfirmModal } from "../../modals/confirm-modal";
 import { useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
+import {
+  deleteCoursePackage,
+  publishCoursePackage,
+  unpublishCoursePackage,
+} from "@/actions/admin/creatingCoursesPackage";
 
 interface coursesPackageActionsProps {
   disabled: boolean;
@@ -27,42 +31,57 @@ export const CoursesPackageActions = ({
     try {
       setIsLoading(true);
       if (isPublished) {
-        await axios.patch(`/api/coursesPackages/${coursesPackageId}/unpublish`);
-        toast.success("coursesPackage unpublished");
-        router.refresh();
+        const result = await unpublishCoursePackage(coursesPackageId);
+        if (result.status === 200) {
+          console.log("Unpublished:", result.data);
+          toast.success("coursesPackage unpublished");
+          router.refresh();
+          // Show success toast or update UI
+        } else {
+          console.error("Error:", result.error);
+          // Show error toast
+        }
       } else {
-        await axios.patch(`/api/coursesPackages/${coursesPackageId}/publish`);
-        toast.success("coursesPackage published");
+        const result = await publishCoursePackage(coursesPackageId);
 
-        const end = Date.now() + 3 * 1000; // 3 seconds
-        const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
+        if (result.status === 200) {
+          console.log("Published:", result.data);
+          // Show success toast or update UI
+          toast.success("coursesPackage published");
 
-        const frame = () => {
-          if (Date.now() > end) return;
+          const end = Date.now() + 3 * 1000; // 3 seconds
+          const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
 
-          confetti({
-            particleCount: 2,
-            angle: 60,
-            spread: 55,
-            startVelocity: 60,
-            origin: { x: 0, y: 0.5 },
-            colors: colors,
-          });
-          confetti({
-            particleCount: 2,
-            angle: 120,
-            spread: 55,
-            startVelocity: 60,
-            origin: { x: 1, y: 0.5 },
-            colors: colors,
-          });
+          const frame = () => {
+            if (Date.now() > end) return;
 
-          requestAnimationFrame(frame);
-        };
+            confetti({
+              particleCount: 2,
+              angle: 60,
+              spread: 55,
+              startVelocity: 60,
+              origin: { x: 0, y: 0.5 },
+              colors: colors,
+            });
+            confetti({
+              particleCount: 2,
+              angle: 120,
+              spread: 55,
+              startVelocity: 60,
+              origin: { x: 1, y: 0.5 },
+              colors: colors,
+            });
 
-        frame();
+            requestAnimationFrame(frame);
+          };
 
-        router.refresh();
+          frame();
+
+          router.refresh();
+        } else {
+          console.error("Error:", result.error);
+          // Show error toast
+        }
       }
     } catch {
       toast.error("something went wrong");
@@ -73,10 +92,14 @@ export const CoursesPackageActions = ({
   const onDelete = async () => {
     try {
       setIsLoading(true);
-      await axios.delete(`/api/coursesPackages/${coursesPackageId}`);
-      toast.success("coursesPackage deleted");
-      router.refresh();
-      router.push(`/en/admin/coursesPackages`);
+      const result = await deleteCoursePackage(coursesPackageId);
+      if (result.status === 200) {
+        toast.success("coursesPackage deleted");
+        router.refresh();
+        router.push(`/en/admin/coursesPackages`);
+      } else {
+        toast.error(result.error??"");
+      }
     } catch {
       toast.error("something went wrong");
     } finally {

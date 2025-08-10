@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea"; // Add Input for options
 import { Input } from "@/components/ui/input"; // Add Input for options
 // import { zodResolver } from "@hookform/resolvers/zod";
 import { coursePackage, question } from "@prisma/client";
-import axios from "axios";
 import { Loader2, PlusCircle, TimerIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -21,6 +20,8 @@ import toast from "react-hot-toast";
 // import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { PackageQuestionsList } from "./package-questions-list";
+import { updatingExamDurationMinute } from "@/actions/admin/creatingCoursesPackage";
+import { createPackageQuestion, deleteQuestion } from "@/actions/admin/creatingQuestion";
 // interface QuestionWithDetails extends question {
 //   questionOptionsJson: { id: string; text: string }[]; // Array of objects with id and text
 //   correctAnswerIdsJson: string[]; // Array of selected option IDs
@@ -79,11 +80,17 @@ export const PackageQuestionForm = ({
     try {
       const timeToSend =
         typeof examDurationMinutes === "number" ? examDurationMinutes : null;
-      await axios.patch(`/api/coursesPackages/${coursesPackageId}`, {
-        examDurationMinutes: timeToSend,
-      });
-      toast.success("Exam time updated successfully!");
-      router.refresh(); // Refresh data to show updated time
+      const result = await updatingExamDurationMinute(
+        coursesPackageId,
+        timeToSend
+      );
+
+      if (result.status === 200) {
+        toast.success("Exam time updated successfully!");
+        router.refresh(); // Refresh data to show updated time
+      } else {
+        toast.error(result.error ?? "");
+      }
     } catch (error) {
       console.error("Failed to update exam time:", error);
       toast.error("Failed to update exam time.");
@@ -98,14 +105,16 @@ export const PackageQuestionForm = ({
     answers: string[];
   }) => {
     try {
-      await axios.post(
-        `/api/coursesPackages/${coursesPackageId}/questions`,
-        values
-      );
-      form.reset();
-      toast.success("Question Created");
-      toggleCreating();
-      router.refresh();
+      const result = await createPackageQuestion(coursesPackageId, values);
+
+      if (result.status === 200) {
+        form.reset();
+        toast.success("Question Created");
+        toggleCreating();
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "");
+      }
     } catch (error) {
       console.error("Create Error:", error);
       toast.error("Something went wrong.");
@@ -114,11 +123,13 @@ export const PackageQuestionForm = ({
 
   const onDelete = async (id: string) => {
     try {
-      await axios.delete(
-        `/api/coursesPackages/${coursesPackageId}/questions/${id}`
-      );
-      toast.success("Question Deleted");
-      router.refresh();
+      const result = await deleteQuestion(id);
+      if (result.status === 200) {
+        toast.success(result.message ?? "Question Deleted");
+        router.refresh();
+      } else{
+        toast.error(result.error ?? "");
+      } 
     } catch (error) {
       console.error("Delete Error:", error);
       toast.error("Failed to delete the question.");

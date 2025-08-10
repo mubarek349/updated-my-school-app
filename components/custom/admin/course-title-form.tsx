@@ -1,5 +1,6 @@
 "use client";
 
+import { updateCourse } from "@/actions/admin/creatingCourse";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -10,7 +11,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -23,7 +23,7 @@ interface CourseTitleFormProps {
     title: string;
   };
   courseId: string;
-  coursesPackageId:string;
+  coursesPackageId: string;
 }
 
 const formSchema = z.object({
@@ -49,13 +49,14 @@ export const CourseTitleForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(
-        `/api/coursesPackages/${coursesPackageId}/courses/${courseId}`,
-        values
-      );
-      toast.success("Cours Title Updated");
-      toggleEdit();
-      router.refresh();
+      const result = await updateCourse(coursesPackageId, courseId, values);
+      if (result.status === 200) {
+        toast.success("Cours Title Updated");
+        toggleEdit();
+        router.refresh();
+      } else {
+        toast.error(result.error??"did not updated");
+      }
     } catch (error) {
       console.error("Update Error:", error);
       toast.error("Something went wrong.");
@@ -65,7 +66,7 @@ export const CourseTitleForm = ({
   return (
     <div className="mt-6 border bg-blue-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
-        Course  Title
+        Course Title
         <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
             "Cancel"

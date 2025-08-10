@@ -56,7 +56,6 @@ export async function PATCH(
         isPublished: true,
       },
     });
-    console.log("sjk", course?.id);
 
     console.log("publishedCourse: ", publishedCourse);
     return NextResponse.json(publishedCourse);
