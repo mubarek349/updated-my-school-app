@@ -1,5 +1,6 @@
 "use server";
 import prisma from "@/lib/db";
+import { coursePackage } from "@prisma/client";
 
 export async function getDistinctPackagesWithSubjects() {
   const result = await prisma.wpos_wpdatatable_23.findMany({
@@ -275,3 +276,71 @@ export async function displayPachageStudent(packageId: string) {
 
   return packagestudent;
 }
+export async function getAvailableUstazs(): Promise<
+  { wdt_ID: number; ustazname: string | null }[] | null
+> {
+  try {
+    const ustazs = await prisma.ustaz.findMany({
+      where: {
+        wdt_ID: { not: undefined },
+      },
+      select: {
+        wdt_ID: true,
+        ustazname: true,
+      },
+    });
+
+    return ustazs;
+  } catch (error) {
+    console.error("Failed to fetch assignable ustazs:", error);
+    return null;
+  }
+}
+
+export async function assignUstazToCoursePackage(
+  ustazId: number,
+  coursePackageId: string
+): Promise<coursePackage | null> {
+  try {
+    const updatedPackage = await prisma.coursePackage.update({
+      where: { id: coursePackageId },
+      data: { ustazId },
+    });
+
+    return updatedPackage;
+  } catch (error) {
+    console.error("Failed to assign ustaz to course package:", error);
+    return null;
+  }
+}
+
+export async function getAssignedUstazs(
+  coursePackageId: string
+): Promise<{ wdt_ID: number; ustazname: string | null }[] | null> {
+  try {
+    const coursePackage = await prisma.coursePackage.findUnique({
+      where: { id: coursePackageId },
+      select: {
+        ustaz: {
+          select: {
+            wdt_ID: true,
+            ustazname: true,
+          },
+        },
+      },
+    });
+
+    if (!coursePackage || !coursePackage.ustaz) {
+      return null;
+    }
+
+    // If ustaz is a single object, wrap it in an array
+    return Array.isArray(coursePackage.ustaz)
+      ? coursePackage.ustaz
+      : [coursePackage.ustaz];
+  } catch (error) {
+    console.error('❌ Failed to fetch assigned Ustazs:', error);
+    return null;
+  }
+}
+

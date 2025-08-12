@@ -27,9 +27,9 @@ export const CreatedCoursePackageList = ({
         <Link
           key={coursesPackage.id}
           href={`/${lang}/admin/coursesPackages/${coursesPackage.id}`}
-          className="hover:scale-[1.005] transition-transform"
+          className="hover:scale-[1.005] transition-transform h-fit"
         >
-          <Card className=" bg-blue-100 h-full flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow">
+          <Card className=" bg-blue-100 h-full sm:h-50 flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center text-xl justify-between gap-2">
                 <span>{coursesPackage.name}</span>

@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 export interface ColumnDef {
   key: string;
@@ -126,7 +127,7 @@ export default function CustomViewAllTable({
                   No data to display.
                 </TableCell>
               </TableRow>
-            ) : (
+            ) :(
               rows.map((row, idx) => (
                 <TableRow
                   key={row.id || row.key}
@@ -138,9 +139,27 @@ export default function CustomViewAllTable({
                   {columns.map((col) => (
                     <TableCell
                       key={col.key}
-                      className="text-gray-700 px-4 py-3 text-xs sm:text-sm break-words"
+                      className="font-medium text-gray-700 sm:px-6 px-2 sm:py-4 py-2 text-xs sm:text-sm break-words"
                     >
-                      {row[col.key]}
+                      {["tglink", "whatsapplink"].includes(col.key) &&
+                      typeof row[col.key] === "string" &&
+                      row[col.key] ? (
+                        <a
+                          href={row[col.key]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Image
+                            src={col.key === "tglink" ? "/tg.png" : "/wa.png"}
+                            alt={col.key === "tglink" ? "Telegram" : "WhatsApp"}
+                            width={32}
+                            height={32}
+                            style={{ objectFit: "contain", borderRadius: 6 }}
+                          />
+                        </a>
+                      ) : (
+                        row[col.key]
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>

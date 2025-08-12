@@ -4,7 +4,7 @@ export const Logo = () =>{
        return (
         <Image
           alt="logo"
-          src="/logo.jpg"
+          src="/logo.png"
           width={50}
           height={20}
           style={{ width: "auto", height: "auto" }}

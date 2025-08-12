@@ -6,7 +6,6 @@ import {
   registerFinalExam,
   updateEndingExamTime,
 } from "./finalExamResult";
-import { error } from "console";
 // get a question for the specific chapter by pass the  wdt_ID packageid,courseid and chapterid help me
 export async function getQuestionForActivePackageLastChapter(wdt_ID: number) {
   // get student

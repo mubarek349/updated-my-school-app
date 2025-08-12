@@ -12,7 +12,8 @@ import { Banner } from "@/components/custom/admin/banner";
 import { CoursesPackageActions } from "@/components/custom/admin/courses-package-action";
 import Link from "next/link";
 // import StudentAssignmentForm from "@/components/custom/admin/student-assignment-form";
-import AssignedStudentsList from "@/components/custom/admin/assigned-students-list";
+import AssignedStudentsList from "@/components/custom/admin/assigned-students-form";
+import UstazSelector from "@/components/custom/admin/assign-oustaz-form";
 // import { StudentSelectionForm } from "@/components/custom/student-selection-form";
 
 const CoursesPackageIdPage = async ({
@@ -93,6 +94,7 @@ const CoursesPackageIdPage = async ({
               initialData={coursesPackage}
               coursesPackageId={coursesPackage.id}
             />
+            <UstazSelector coursesPackageId={coursesPackage.id} />
             <AssignedStudentsList coursesPackageId={coursesPackage.id} />
           </div>
 

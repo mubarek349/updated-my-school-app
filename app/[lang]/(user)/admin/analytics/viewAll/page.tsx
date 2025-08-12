@@ -31,6 +31,8 @@ function Page() {
     { key: "name", label: "Name" },
     { key: "isKid", label: "Is Kid" },
     { key: "phoneNo", label: "Phone Number" },
+    { key: "tglink", label: "Tg" },
+    { key: "whatsapplink", label: "Wa" },
     { key: "ustazname", label: "Ustaz Name" },
     { key: "activePackage", label: "activePackage" },
     { key: "studentProgress", label: "Student Progress" },
@@ -44,26 +46,28 @@ function Page() {
           id: String(row?.id ?? ""),
           name: row?.name ?? "",
           isKid: row?.isKid ? "Yes" : "No",
-          phoneNo: row?.phoneNo ?? "",
+          phoneNo: row?.phoneNo ?? "-",
+          tglink: row?.tglink ?? "-",
+          whatsapplink: row?.whatsapplink ?? "-",
           activePackage: row?.activePackage ?? "",
           studentProgress: row?.studentProgress ?? "",
           ustazname: row?.ustazname ?? "",
-          finalExamStatus: row?.checkStausOfFinalExam
-            ? row.checkUpdateProhibition
-              ? row.result?.score >= 0.75
-                ? "Passed"
-                : "Failed"
-              : "In Progress"
-            : "Not Started",
-          result: row?.checkStausOfFinalExam
-            ? row.result &&
-              `${row.result.score * 100}% አግኝተዋል -> ${
-                row.result.correct
-              }/${row.result.total} በመመለስ`
-            : "-",
+          // finalExamStatus: row?.checkStausOfFinalExam
+          //   ? row.checkUpdateProhibition
+          //     ? row.result?.score >= 0.75
+          //       ? "Passed"
+          //       : "Failed"
+          //     : "In Progress"
+          //   : "Not Started",
+          // result: row?.checkStausOfFinalExam
+          //   ? row.result &&
+          //     `${row.result.score * 100}% አግኝተዋል -> ${row.result.correct}/${
+          //       row.result.total
+          //     } በመመለስ`
+          //   : "-",
         }))
       : [];
-
+  console.log("rows", rows);
   return (
     <div className="m-2 overflow-y-auto">
       <Link
@@ -74,7 +78,6 @@ function Page() {
         Back to Analytics
       </Link>
       <h1 className="text-xl font-bold mb-1">Student Progress In Package</h1>
-
       {/* Progress Filter */}
       <div className="m-1">
         <label className="mr-2 font-medium">Filter by Progress:</label>

@@ -1,144 +1,88 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthConfig } from "next-auth";
+import { DefaultJWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
-import prisma from "./lib/db";
-import { redirect } from "next/navigation";
+import prisma from "@/lib/db";
+import { loginSchema } from "@/lib/zodSchema";
 
-const lang = "en";
-export const { handlers, signIn, signOut, auth } = NextAuth({
+
+// EXTEND NEXT-AUTH USER
+declare module "next-auth" {
+  interface User {
+    id?: string;
+    // role: Role;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT extends DefaultJWT {
+    id: string;
+    // role: Role;
+  }
+}
+
+// ✅ FIXED CUSTOM ERROR CLASS
+export class CustomError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CustomError";
+  }
+}
+
+const authConfig = {
+  trustHost: true,
+  pages: {
+    signIn: "/en/login",
+    // signOut: "/signout",
+  },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      // console.log("AUTH >> ", auth, nextUrl.pathname);
-      if (!auth) {
-        if (nextUrl.pathname.includes(`/${lang}/admin`)) return false;
-        else return true;
-      }
-      return true;
+    authorized: async ({ auth, request: { nextUrl } }) => {
+      if (auth) {
+        if (nextUrl.pathname.startsWith("/en/login")) {
+          return Response.redirect(
+            new URL("/en/admin/coursesPackages", nextUrl)
+          );
+        } else return true;
+      } else if (nextUrl.pathname.startsWith("/en/admin")) {
+        return false;
+      } else return true;
     },
-    jwt({ token, user }) {
+    jwt: async ({ token, user }) => {
       return { ...token, ...user };
     },
-    session({ session, token }) {
+    session: async ({ session, token }) => {
       return { ...session, user: { ...session.user, ...token } };
     },
   },
   providers: [
     Credentials({
-      credentials: {
-        phoneno: { name: "phoneno", type: "text", placeholder: "Phone Number" },
-        passcode: {
-          name: "passcode",
-          type: "password",
-          placeholder: "Passcode",
-        },
-      },
+      async authorize(credentials) {
+        try {
+          console.log("Authorizing user:", credentials);
+          const { data, success } = await loginSchema.safeParseAsync(
+            credentials
+          );
+          if (!success) throw new CustomError("Invalid credentials");
+          console.log("Parsed login data:", data);
 
-      authorize: async (credentials) => {
-        const user = await prisma.admin.findFirst({
-          where: {
-            phoneno: credentials.phoneno as string,
-            passcode: credentials.passcode as string,
-          },
-          select: { id: true },
-        });
-        if (!user) {
-          return redirect("/en");
+          const user = await prisma.admin.findFirst({
+            where: { phoneno: data.phoneno },
+            select: { id: true, passcode: true },
+          });
+
+          if (!user) throw new CustomError("Invalid Phone Number");
+          if (!user.passcode) throw new CustomError("Password Not Set");
+          if (data.passcode !== user.passcode)
+            throw new CustomError("Invalid Password");
+
+          return { id: user.id };
+        } catch (error) {
+          console.error("Error authorizing user:", error);
+          throw new CustomError("Authorization failed");
         }
-
-        return user;
-
-        // student
       },
     }),
   ],
+} satisfies NextAuthConfig;
 
-  // trustHost: true,
-});
-
-// import NextAuth from "next-auth";
-// import Credentials from "next-auth/providers/credentials";
-// import prisma from "./lib/db";
-// import { DefaultJWT } from "next-auth/jwt";
-// import { loginSchema } from "./lib/zodSchema";
-
-// declare module "next-auth" {
-//   interface User {
-//     id?: string | undefined;
-//     phoneno?: string | null | undefined;
-//     passcode?: string | undefined;
-//   }
-//   interface Session {
-//     user: {
-//       id?: string;
-//       phoneno?: string | null;
-//       // ...other properties
-//     };
-//   }
-// }
-// declare module "next-auth/jwt" {
-//   interface JWT extends DefaultJWT {
-//     id: string;
-//     phoneno: string;
-//   }
-// }
-
-// export const { handlers, signIn, signOut, auth } = NextAuth({
-//   //  By default, the `id` property does not exist on `token` or `session`. See the [TypeScript](https://authjs.dev/getting-started/typescript) on how to add it.
-//   session: {
-//     strategy: "jwt",
-//   },
-//   callbacks: {
-//     async jwt({ token, user }) {
-//       if (user) {
-//         token.id = user.id ?? "";
-//         token.phoneno = user.phoneno ?? "";
-//       }
-//       return token;
-//     },
-//     async session({ session, token }) {
-//       session.user.id = token.id;
-//       session.user.phoneno = token.phoneno;
-//       return session;
-//     },
-//     authorized({ auth, request: { url } }) {
-//       if (!auth) {
-//         if (url.includes("/teacher")) return false;
-//         else return true;
-//       }
-//       return true;
-//     },
-//   },
-//   providers: [
-//     Credentials({
-//       // You can specify which fields should be submitted, by adding keys to the `credentials` object.
-//       // e.g. domain, username, password, 2FA token, etc.
-//       credentials: {
-//         phoneno: { name: "phoneno", type: "text", placeholder: "Phone Number" },
-//         passcode: {
-//           name: "passcode",
-//           type: "password",
-//           placeholder: "Passcode",
-//         },
-//       },
-
-//       async authorize(credentials) {
-//         const { phoneno, passcode } = await loginSchema.parseAsync(credentials);
-//         const user = await prisma.admin.findFirst({
-//           where: { phoneno },
-//           select: { id: true, phoneno: true, passcode: true },
-//         });
-//         if (!user) throw new Error("Invalid phoneno");
-
-//         console.log("DB passcode:", user.passcode);
-//         console.log("Input passcode:", passcode);
-//         if (!(passcode == user.passcode)) {
-//           console.log("Invalid password.");
-//           throw new Error("Invalid password.");
-//         }
-
-//         return user;
-
-//         // student
-//       },
-//     }),
-//   ],
-// });
+// EXPORT AUTH UTILS
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);

@@ -26,6 +26,7 @@ function Page() {
       <div className="p-6 text-center text-gray-500">Loading profile...</div>
     );
   }
+  console.log("Profile data:", data);
 
   if (!data) {
     return (
@@ -46,7 +47,8 @@ function Page() {
     averageGrade,
     complationDates,
   } = data;
-  if (!studentProfile.name || !studentProfile.phoneno) {
+
+  if (!studentProfile.name) {
     return (
       <div className="p-6 text-center text-red-500">
         Failed to load profile.
@@ -55,20 +57,20 @@ function Page() {
   }
   const currentCourses = inProgressPackages.map((pkg) => ({
     title: pkg.packageId.name,
-    instructor: "Darulkubra",
+    instructor: pkg.oustazName,
     chapters: `${pkg.noOfChapters} chapters`,
     progress: pkg.percent,
   }));
 
   const completedCourses = completedPackageNames.map((pkg, idx) => ({
     title: pkg.pName,
-    instructor: "Darulkubra",
+    instructor: pkg.oustazName,
     chapters: `${pkg.noOfChapters} chapters`,
     completed: complationDates[idx],
     result: `${resultOfCompletedPackage[idx].correct}/${resultOfCompletedPackage[idx].total} (${resultOfCompletedPackage[idx].score}%)`,
     url: `/en/student/${studentId}/certificates/${completedPackageIdss[idx]}`,
   }));
-const colorMap = {
+  const colorMap = {
     blue: "text-blue-600 bg-blue-100 border-blue-100",
     green: "text-green-600 bg-green-100 border-green-100",
   };
@@ -77,7 +79,7 @@ const colorMap = {
       {/* Header */}
       <StudentHeader
         name={studentProfile.name}
-        phone={studentProfile.phoneno}
+        phone={studentProfile.phoneno ?? ""}
         id={studentProfile.wdt_ID}
       />
 
@@ -110,7 +112,11 @@ const colorMap = {
           badgeColor={colorMap.blue}
         >
           {currentCourses.map((course, idx) => (
-            <CourseCard key={idx} {...course} />
+            <CourseCard
+              key={idx}
+              {...course}
+              instructor={course.instructor.filter(Boolean).join(", ")} // removes nulls and joins
+            />
           ))}
         </CourseSection>
       )}
@@ -123,7 +129,12 @@ const colorMap = {
           badgeColor="green"
         >
           {completedCourses.map((course, idx) => (
-            <CourseCard key={idx} {...course} isCompleted />
+            <CourseCard
+              key={idx}
+              {...course}
+              instructor={course.instructor.filter(Boolean).join(", ")}
+              isCompleted
+            />
           ))}
         </CourseSection>
       )}

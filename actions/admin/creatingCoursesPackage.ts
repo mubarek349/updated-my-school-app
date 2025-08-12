@@ -81,8 +81,6 @@ export async function publishCoursePackage(coursesPackageId: string) {
   }
 }
 
-
-
 export async function deleteCoursePackage(coursesPackageId: string) {
   try {
     const existingPackage = await prisma.coursePackage.findUnique({
@@ -183,3 +181,4 @@ export async function updatingExamDurationMinute(
     return { error: 'Internal Error', status: 500 };
   }
 }
+

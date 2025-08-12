@@ -7,7 +7,7 @@ const coursesPackagePage = async () => {
   const coursesPackages = await getCoursesPackages();
 
   return (
-    <div className="bg-blue-50 grid overflow-hidden p-6 sm:p-8 rounded-lg shadow-sm space-y-6 scrollbar-hide">
+    <div className="bg-blue-50 grid grid-cols-1 overflow-hidden p-6 sm:p-8 rounded-lg shadow-sm space-y-6 scrollbar-hide">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-xl font-semibold text-slate-800">

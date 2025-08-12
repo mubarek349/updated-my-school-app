@@ -48,7 +48,7 @@ export default function CourseCard({
       <CardContent className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <UserRound className="w-4 h-4 text-gray-500" />
-          {instructor}
+          {instructor??"Darulkubra"}
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <CalendarDays className="w-4 h-4 text-gray-500" />

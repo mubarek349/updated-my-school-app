@@ -95,7 +95,7 @@ export async function filterStudentsByPackageandStatus(
   });
 
   // 3. For each student, check their progress for the chapters in the package
-  let filteredChatIds: string[] = [];
+  const filteredChatIds: string[] = [];
 
   for (const student of students) {
     // Get all progress records for this student and these chapters
@@ -186,13 +186,13 @@ export async function filterStudentsByPackageList(packageId: string) {
   });
 
   // 3. For each student, check their progress for the chapters in the package
-  let notStartedChatIds: string[] = [];
-  let completedChatIds: string[] = [];
-  let inProgress0ChatIds: string[] = [];
-  let inProgress10ChatIds: string[] = [];
-  let inProgress40ChatIds: string[] = [];
-  let inProgress70ChatIds: string[] = [];
-  let inProgressOtherChatIds: string[] = [];
+  const notStartedChatIds: string[] = [];
+  const completedChatIds: string[] = [];
+  const inProgress0ChatIds: string[] = [];
+  const inProgress10ChatIds: string[] = [];
+  const inProgress40ChatIds: string[] = [];
+  const inProgress70ChatIds: string[] = [];
+  const inProgressOtherChatIds: string[] = [];
   for (const student of students) {
     // Get all progress records for this student and these chapters
     const progress = await prisma.studentProgress.findMany({
@@ -287,7 +287,7 @@ export async function getTotalStudentsThatHaveacessthePacakges() {
   });
 
   // For each group, count matching students and return multidimensional array
-  const result = subjectPackages.map((sp) => {
+  subjectPackages.map((sp) => {
     const packageName = sp.package?.name || "Unknown Package";
     return {
       packageName,
@@ -324,7 +324,6 @@ export async function getTotalStudentsThatHaveacessthePacakges() {
 
   return totalStudents;
   // Convert to multidimensional array
-  const multidimensionalArray = Object.values(packageStats);
 }
 export async function getThePackagesWhichHasLargestStudent() {
   // Get all unique combinations of subject, kidpackage, and packageType from subjectPackage
@@ -386,7 +385,7 @@ export async function getStudentsGroupedBySubjectKidType() {
   });
 
   // For each group, count matching students and return multidimensional array
-  const result = subjectPackages.map((sp) => {
+  subjectPackages.map((sp) => {
     const packageName = sp.package?.name || "Unknown Package";
     return {
       packageName,
@@ -613,10 +612,7 @@ export async function getFinalExamOfPackageAnalytics() {
           student.wdt_ID,
           pkg.id
         );
-        const correctAnswers = await correctExamAnswer(
-          pkg.id,
-          student.wdt_ID
-        );
+        const correctAnswers = await correctExamAnswer(pkg.id, student.wdt_ID);
         if (checkFinalExam && correctAnswers) {
           if (updateProhibition) {
             // If the student has passed the final exam
@@ -718,6 +714,7 @@ export async function getStudentAnalyticsperchapter(
       phoneno: true,
       isKid: true,
       chat_id: true,
+      country: true,
       activePackage: { select: { name: true } },
     },
   });
@@ -744,7 +741,86 @@ export async function getStudentAnalyticsperchapter(
       if (phoneNo) {
         phoneNo = phoneNo.split("").reverse().slice(0, 9).reverse().join("");
         let countryCode = "+251"; // Default Ethiopia
-        // You can add country code logic here if needed
+        switch ((student.country || "").toLowerCase()) {
+          case "Ethiopia":
+            countryCode = "+251";
+            break;
+          case "Anguilla":
+            countryCode = "+1";
+            break;
+          case "Saudi Arabia":
+          case "saudi arabia":
+            countryCode = "+966";
+            break;
+          case "Canada":
+            countryCode = "+1";
+            break;
+          case "United Arab Emirates":
+            countryCode = "+971";
+            break;
+          case "Kuwait":
+          case "kuwait":
+            countryCode = "+965";
+            break;
+          case "usa":
+          case "United States":
+          case "united states of america":
+            countryCode = "+1";
+            break;
+          case "China":
+            countryCode = "+86";
+            break;
+          case "South Africa":
+            countryCode = "+27";
+            break;
+          case "Cuba":
+            countryCode = "+53";
+            break;
+          case "Equatorial Guinea":
+            countryCode = "+240";
+            break;
+          case "Sweden":
+            countryCode = "+46";
+            break;
+          case "Qatar":
+            countryCode = "+974";
+            break;
+          case "Angola":
+            countryCode = "+244";
+            break;
+          case "Pakistan":
+            countryCode = "+92";
+            break;
+          case "Norway":
+            countryCode = "+47";
+            break;
+          case "Netherlands":
+            countryCode = "+31";
+            break;
+          case "Bahrain":
+            countryCode = "+973";
+            break;
+          case "Turkey":
+            countryCode = "+90";
+            break;
+          case "Egypt":
+            countryCode = "+20";
+            break;
+          case "Germany":
+            countryCode = "+49";
+            break;
+          case "Italy":
+            countryCode = "+39";
+            break;
+          case "Djibouti":
+            countryCode = "+253";
+            break;
+          case "Mongolia":
+            countryCode = "+976";
+            break;
+          default:
+            countryCode = "+251";
+        }
         phoneNo = `${countryCode}${phoneNo}`;
       }
 
@@ -857,7 +933,7 @@ export async function getStudentAnalyticsperPackage(
   });
 
   // 5. For each student, find their subjectPackage and get progress
-  let studentsWithProgress = await Promise.all(
+  const studentResults = await Promise.all(
     students.map(async (student) => {
       // Find the subjectPackage for this student
       const matchedSubjectPackage = subjectPackages.find(
@@ -966,11 +1042,11 @@ export async function getStudentAnalyticsperPackage(
         phoneNo = `${countryCode}${phoneNo}`;
       }
 
-      const result = (await correctExamAnswer(activePackageId, student.wdt_ID))?.result;
-        if(!result){
-          return undefined;
-        }
-      const checkStausOfFinalExam = await checkFinalExamCreation(
+      // const examData = await correctExamAnswer(activePackageId, student.wdt_ID);
+      // if (!examData || !examData.result) return undefined;
+
+      // const result = examData.result;
+ const checkStausOfFinalExam = await checkFinalExamCreation(
         student.wdt_ID,
         activePackageId
       );
@@ -978,11 +1054,8 @@ export async function getStudentAnalyticsperPackage(
         student.wdt_ID,
         activePackageId
       );
-      let studResult = result;
-      if (!checkStausOfFinalExam) {
-        studResult = result;
-      }
 
+      // ... logic ...
       return {
         id: student.wdt_ID,
         name: student.name,
@@ -994,13 +1067,15 @@ export async function getStudentAnalyticsperPackage(
         chatid: student.chat_id,
         activePackage: activePackage?.name ?? "",
         studentProgress: progress,
-        result: studResult,
-        checkStausOfFinalExam: checkStausOfFinalExam ? true : false,
-        checkUpdateProhibition: checkUpdateProhibition ? true : false,
+        // result,
+        checkStausOfFinalExam: !!checkStausOfFinalExam,
+        checkUpdateProhibition: !!checkUpdateProhibition,
       };
     })
   );
 
+  let studentsWithProgress = studentResults.filter(Boolean);
+  console.log("studentsWithProgress", studentsWithProgress);
   // 6. Filter by progressFilter if provided and not "all"
   if (progressFilter && progressFilter !== "all") {
     studentsWithProgress = studentsWithProgress.filter((student) => {
@@ -1019,14 +1094,14 @@ export async function getStudentAnalyticsperPackage(
       if (statusFilter === "passed") {
         return (
           student?.checkStausOfFinalExam === true &&
-          student?.checkUpdateProhibition === true &&
-          student?.result.score >= 0.75
+          student?.checkUpdateProhibition === true 
+          // student?.result.score >= 0.75
         );
       } else if (statusFilter === "failed") {
         return (
           student?.checkStausOfFinalExam === true &&
-          student?.checkUpdateProhibition === true &&
-          student?.result.score < 0.75
+          student?.checkUpdateProhibition === true 
+          // student?.result.score < 0.75
         );
       } else if (statusFilter === "inprogress") {
         return (

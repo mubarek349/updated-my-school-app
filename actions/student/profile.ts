@@ -5,6 +5,7 @@ import { getAvailablePacakges } from "./package";
 import { correctExamAnswer } from "./question";
 import { checkingUpdateProhibition } from "./finalExamResult";
 import { getProgressPercent } from "../admin/analysis";
+import { getAssignedUstazs } from "../admin/packageassign";
 
 export default async function getProfile(studentId: number) {
   try {
@@ -59,6 +60,8 @@ export default async function getProfile(studentId: number) {
     for (const pkg of availablePackages) {
       const packageId = pkg.package.id;
       const packageName = pkg.package.name;
+      const oustaz = await getAssignedUstazs(pkg.package.id);
+      const oustazName = oustaz?.map((o) => o.ustazname ?? "DarulKubra")??["Darulkubra"];
 
       const studentStatus = await getStudentProgressStatus(
         studentId,
@@ -70,14 +73,15 @@ export default async function getProfile(studentId: number) {
 
       if (isCompleted) {
         const res = (await correctExamAnswer(packageId, studentId))?.result;
-        if(!res){
+
+        if (!res) {
           return undefined;
         }
-        const result=res;
+        const result = res;
         resultOfCompletedPackage.push(result);
         completedPackageIdss.push(packageId);
         totalNumberOfCompletedPackage += 1;
-        averageGrade += (result.score)* 100;
+        averageGrade += result.score * 100;
 
         const rawDate = await complationDate(studentId, packageId);
         const formattedDate = rawDate
@@ -87,13 +91,18 @@ export default async function getProfile(studentId: number) {
             }).format(rawDate)
           : "Unknown";
 
-        completedPackageNames.push({ pName: packageName, noOfChapters });
+        completedPackageNames.push({
+          pName: packageName,
+          noOfChapters,
+          oustazName
+        });
         complationDates.push(formattedDate);
       } else {
         inProgressPackages.push({
           packageId: pkg.package,
           noOfChapters,
           percent: studentStatus.percent,
+          oustazName
         });
       }
     }
@@ -149,6 +158,7 @@ export async function getStudentProgressStatus(
     }
     console.log("progressPercent", { noOfChaptersInthePackage, percent });
     return { noOfChaptersInthePackage, percent };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     throw new Error("Error fetching student progress status.");
   }
@@ -165,6 +175,7 @@ export async function complationDate(studentId: number, packageId: string) {
     }
 
     return result.endingTime;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     throw new Error("Error fetching completion date.");
   }
