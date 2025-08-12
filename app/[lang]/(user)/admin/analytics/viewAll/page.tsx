@@ -52,19 +52,19 @@ function Page() {
           activePackage: row?.activePackage ?? "",
           studentProgress: row?.studentProgress ?? "",
           ustazname: row?.ustazname ?? "",
-          // finalExamStatus: row?.checkStausOfFinalExam
-          //   ? row.checkUpdateProhibition
-          //     ? row.result?.score >= 0.75
-          //       ? "Passed"
-          //       : "Failed"
-          //     : "In Progress"
-          //   : "Not Started",
-          // result: row?.checkStausOfFinalExam
-          //   ? row.result &&
-          //     `${row.result.score * 100}% አግኝተዋል -> ${row.result.correct}/${
-          //       row.result.total
-          //     } በመመለስ`
-          //   : "-",
+          finalExamStatus: row?.checkStausOfFinalExam
+            ? row.checkUpdateProhibition
+              ? row.result?.score >= 0.75
+                ? "Passed"
+                : "Failed"
+              : "In Progress"
+            : "Not Started",
+          result: row?.checkStausOfFinalExam
+            ? row.result &&
+              `${row.result.score * 100}% አግኝተዋል -> ${row.result.correct}/${
+                row.result.total
+              } በመመለስ`
+            : "-",
         }))
       : [];
   console.log("rows", rows);

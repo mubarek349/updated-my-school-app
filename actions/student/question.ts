@@ -543,7 +543,6 @@ export async function correctExamAnswer(
   studentId: number
 ) {
   try {
-    console.log("Fetching questions for coursesPackageId:", coursesPackageId);
     const questions = await prisma.question.findMany({
       where: { packageId: coursesPackageId },
       select: { id: true },

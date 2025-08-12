@@ -270,36 +270,34 @@ export async function startBot() {
     const wdt_ID = Number(ctx.match[1].split("@")[1]);
     console.log("Selected package:", packageId, "for student ID:", wdt_ID);
     // Set the chosen package as active for the student
-    const student = await prisma.wpos_wpdatatable_23.findFirst({
+     const validPackage = await prisma.coursePackage.findUnique({
+      where: { id: packageId },
+    });
+    if (!validPackage) {
+      return ctx.reply("🚫 ይህ ፓኬጅ አልተገኘም። አድሚኑን ያነጋግሩ፡");
+    }
+     await prisma.wpos_wpdatatable_23.update({
       where: {
         chat_id: chatId?.toString(),
         wdt_ID: wdt_ID,
         status: { in: ["Active", "Not yet"] },
       },
+      data:{
+        youtubeSubject:packageId,
+      }
     });
 
-    if (!student) {
-      return ctx.reply("🚫 ተማሪ አልተገኘም።");
-    }
-    const studentName = student.name || "ዳሩል-ኩብራ";
-    // Check if the package exists
-    const validPackage = await prisma.coursePackage.findUnique({
-      where: { id: packageId },
+    const studentName=await prisma.wpos_wpdatatable_23.findFirst({
+     where:
+     {
+      wdt_ID
+     },
+     select:
+     {
+      name:true,
+     }
     });
-    if (!validPackage) {
-      return ctx.reply("🚫 ይህ ፓኬጅ አልተገኘም። አድሚኑን ያነጋ፡");
-    }
-
-    // Now update
-    await prisma.wpos_wpdatatable_23.update({
-      where: { wdt_ID: wdt_ID },
-      data: { youtubeSubject: packageId },
-    });
-    // Update student's youtubeSubject (or active package field as needed)
-    await prisma.wpos_wpdatatable_23.update({
-      where: { wdt_ID: wdt_ID },
-      data: { youtubeSubject: packageId },
-    });
+    
 
     // Fetch the package details (including first course/chapter)
     const activePackage = await prisma.coursePackage.findUnique({
@@ -363,7 +361,7 @@ export async function startBot() {
 
     const packageName = activePackage.name || "የተማሪ ፓኬጅ";
     const openKeyboard = new InlineKeyboard().webApp(
-      `📚 የ${studentName}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
+      `📚 የ${studentName?.name??"Darulkubra"}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
       url
     );
 
@@ -528,6 +526,7 @@ export async function startBot() {
       ...pending,
       chatIds: [Number(student.chat_id)],
       studentName: student.name ?? "",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       studentId: (student as any).id ?? "",
     };
 
@@ -569,6 +568,7 @@ export async function startBot() {
       try {
         await sendFn(chatId);
         sent++;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         failed++;
       }
@@ -766,7 +766,7 @@ export async function startBot() {
     if (!chatId) {
       return ctx.reply("Unable to retrieve chat ID.");
     }
-    let channels = await prisma.wpos_wpdatatable_23.findMany({
+    const channels = await prisma.wpos_wpdatatable_23.findMany({
       where: {
         chat_id: chatId.toString(),
         status: { in: ["Active", "Not yet"] },
@@ -865,13 +865,13 @@ export async function startBot() {
 
         // Delete all previous messages for this user
         if (sentMessageIds[chatid]) {
-          for (const msgId of sentMessageIds[chatid]) {
-            try {
-              // await bot.api.deleteMessage(Number(chatid), msgId);
-            } catch (err) {
-              // Ignore errors (message might already be deleted)
-            }
-          }
+          // for (const msgId of sentMessageIds[chatid]) {
+          //   try {
+          //     // await bot.api.deleteMessage(Number(chatid), msgId);
+          //   } catch (err) {
+          //     // Ignore errors (message might already be deleted)
+          //   }
+          // }
           sentMessageIds[chatid] = [];
         }
 
@@ -926,11 +926,13 @@ export async function startBot() {
           );
           // if (!sentMessageIds[chatid]) sentMessageIds[chatid] = [];
           // sentMessageIds[chatid].push(sentMsg.message_id);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
           // console.error("Failed to send progress message to", chatid, err);
         }
       }
       // console.log("✅ Progress messages sent to all students.");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // console.error("Error in progress notification job:", error);
     }
