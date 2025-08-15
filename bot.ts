@@ -2,7 +2,6 @@ import { Bot } from "grammy";
 import cron from "node-cron";
 import prisma from "./lib/db";
 import dotenv from "dotenv";
-import { getStudentById } from "./actions/admin/adminBot";
 import { allPackages } from "./actions/admin/adminBot";
 import { sendProgressMessages } from "./actions/admin/analysis";
 import { getStudentAnalyticsperPackage } from "./actions/admin/analysis";
@@ -11,6 +10,7 @@ import { filterStudentsByPackageandStatus } from "./actions/admin/analysis";
 import { updatePathProgressData } from "./actions/student/progress";
 import { InlineKeyboard } from "grammy";
 import { getAvailablePacakges } from "./actions/student/package";
+
 dotenv.config();
 const BASE_URL = process.env.FORWARD_URL || process.env.AUTH_URL;
 const sentMessageIds: Record<string, number[]> = {};
@@ -26,16 +26,18 @@ export default async function sendMessage(chat_id: number, message: string) {
 }
 
 export async function startBot() {
+  const admins = await prisma.admin.findMany();
+
   bot.command("start", async (ctx) => {
     const chatId = ctx.chat?.id;
-
-    if (!chatId) {
-      return ctx.reply("Unable to retrieve chat ID.");
-    }
     // Check if user is admin
     const admin = await prisma.admin.findFirst({
       where: { chat_id: chatId.toString() },
     });
+
+    if (!chatId) {
+      return ctx.reply("Unable to retrieve chat ID.");
+    }
 
     if (admin) {
       // Admin help message (Amharic & English)
@@ -97,28 +99,34 @@ export async function startBot() {
       const packageType = channel.package;
       const kidPackage = channel.isKid;
       if (!packageType || !subject || kidPackage === null) continue;
-      
-        const subjectPackage = await prisma.subjectPackage.findMany({
-          where: {
-            subject: subject,
-            packageType: packageType,
-            kidpackage: kidPackage,
-          },
-          orderBy: { createdAt: "desc" },
-          select: { packageId: true },
-        });
+
+      const subjectPackage = await prisma.subjectPackage.findMany({
+        where: {
+          subject: subject,
+          packageType: packageType,
+          kidpackage: kidPackage,
+        },
+        orderBy: { createdAt: "desc" },
+        select: { packageId: true },
+      });
       if (!subjectPackage || subjectPackage.length === 0) continue;
       const lastPackageId = subjectPackage[0].packageId;
       // Check if the active package is already set
-      const activePackageAvailabilty = subjectPackage.filter((pkg) => pkg.packageId=== channel.activePackage?.id).length > 0;
+      const activePackageAvailabilty =
+        subjectPackage.filter(
+          (pkg) => pkg.packageId === channel.activePackage?.id
+        ).length > 0;
       // If no active package, set youtubeSubject to the latest subjectPackage
-        if (channel.activePackage === null || channel.activePackage === undefined || !activePackageAvailabilty) {
-          await prisma.wpos_wpdatatable_23.update({
-            where: { wdt_ID: channel.wdt_ID },
-            data: { youtubeSubject: lastPackageId },
-          });
-        }
-      
+      if (
+        channel.activePackage === null ||
+        channel.activePackage === undefined ||
+        !activePackageAvailabilty
+      ) {
+        await prisma.wpos_wpdatatable_23.update({
+          where: { wdt_ID: channel.wdt_ID },
+          data: { youtubeSubject: lastPackageId },
+        });
+      }
     }
 
     // 3. Fetch channels again to get updated youtubeSubject
@@ -202,7 +210,7 @@ export async function startBot() {
             }
 
             const update = await updatePathProgressData(studId);
-            if(!update){
+            if (!update) {
               return undefined;
             }
             const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
@@ -270,34 +278,31 @@ export async function startBot() {
     const wdt_ID = Number(ctx.match[1].split("@")[1]);
     console.log("Selected package:", packageId, "for student ID:", wdt_ID);
     // Set the chosen package as active for the student
-     const validPackage = await prisma.coursePackage.findUnique({
+    const validPackage = await prisma.coursePackage.findUnique({
       where: { id: packageId },
     });
     if (!validPackage) {
       return ctx.reply("🚫 ይህ ፓኬጅ አልተገኘም። አድሚኑን ያነጋግሩ፡");
     }
-     await prisma.wpos_wpdatatable_23.update({
+    await prisma.wpos_wpdatatable_23.update({
       where: {
         chat_id: chatId?.toString(),
         wdt_ID: wdt_ID,
         status: { in: ["Active", "Not yet"] },
       },
-      data:{
-        youtubeSubject:packageId,
-      }
+      data: {
+        youtubeSubject: packageId,
+      },
     });
 
-    const studentName=await prisma.wpos_wpdatatable_23.findFirst({
-     where:
-     {
-      wdt_ID
-     },
-     select:
-     {
-      name:true,
-     }
+    const studentName = await prisma.wpos_wpdatatable_23.findFirst({
+      where: {
+        wdt_ID,
+      },
+      select: {
+        name: true,
+      },
     });
-    
 
     // Fetch the package details (including first course/chapter)
     const activePackage = await prisma.coursePackage.findUnique({
@@ -354,14 +359,14 @@ export async function startBot() {
     const lang = "en";
     const stud = "student";
     const update = await updatePathProgressData(wdt_ID);
-    if(!update){
+    if (!update) {
       return undefined;
     }
     const url = `${BASE_URL}/${lang}/${stud}/${wdt_ID}/${update[0]}/${update[1]}`;
 
     const packageName = activePackage.name || "የተማሪ ፓኬጅ";
     const openKeyboard = new InlineKeyboard().webApp(
-      `📚 የ${studentName?.name??"Darulkubra"}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
+      `📚 የ${studentName?.name ?? "Darulkubra"}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
       url
     );
 
@@ -451,7 +456,34 @@ export async function startBot() {
           { reply_markup: keyboard, parse_mode: "HTML" }
         );
       } else {
-        await ctx.reply("🚫 ይቅርታ፣ ወደ አድሚን ፓነል ማግኘት አትችሉም።");
+        await ctx.reply("🚫 ይቅርታ፣ ወደ አድሚን ፓነል መግባት አትችሉም።");
+      }
+    } catch (error) {
+      console.error("❌ DB ERROR:", error);
+      await ctx.reply("❌ የውሂብ ችግር።");
+    }
+  });
+  // Ustaz command
+  bot.command("ustaz", async (ctx) => {
+    const chatId = ctx.chat?.id;
+    if (!chatId) {
+      return;
+    }
+    try {
+      const user = await prisma.ustaz.findFirst({
+        where: { userid: chatId },
+      });
+
+      if (user) {
+        const keyboard = new InlineKeyboard().text("✉️ ሊንክ ላክ", "ustaz_send");
+        await ctx.reply(
+          "👋 እንኳን ወደ ኡስታዝ ፓነል በደህና መጡ!\n\n" +
+            "ከዚህ በታች ያለውን ቁልፍ በመጠቀም ለተማሪዎ ሊንክ መላክ ይችላሉ።\n\n" +
+            "• <b>✉️ ሊንክ ላክ</b> – ለተመረጡ ተማሪዎች ሊንክ ይላኩ።",
+          { reply_markup: keyboard, parse_mode: "HTML" }
+        );
+      } else {
+        await ctx.reply("🚫 ይቅርታ፣ ወደ ኡስታዝ ፓነል መግባት አትችሉም።");
       }
     } catch (error) {
       console.error("❌ DB ERROR:", error);
@@ -499,85 +531,229 @@ export async function startBot() {
     await ctx.reply("እባክዎ የተማሪውን ID ያስገቡ:");
   });
 
-  // Step 2b: Listen for student ID, fetch and show student name, then prompt for message
-  bot.on("message:text", async (ctx, next) => {
-    const adminId = ctx.chat?.id;
-    const pending = adminId ? pendingAdminMessages[adminId] : undefined;
-    if (!pending || pending.status !== "individual" || pending.chatIds) {
-      return next(); // Not in individual mode, continue to other handlers
-    }
+  // Temporary in-memory log (replace with DB or file if needed)
+  const blockedMessagesLog: {
+    senderId: number;
+    senderName?: string;
+    reason: string;
+    content: string;
+    timestamp: string;
+  }[] = [];
 
-    // Try to find the student by ID using getStudentById
-    const studentId = ctx.message.text?.trim();
-    if (!studentId) {
-      await ctx.reply("የተማሪ ID ያስገቡ።");
+  // Admin to notify (can be a group or individual)
+  const NOTIFY_ADMIN_ID = 631321369; // Replace with your notification admin ID
+
+  bot.on(["message:text", "message:photo", "message:voice"], async (ctx) => {
+    const senderId = ctx.chat?.id;
+    const senderName = ctx.chat?.first_name || ctx.chat?.username || "Unknown";
+    const pending = senderId ? pendingAdminMessages[senderId] : undefined;
+    if (!pending || !pending.chatIds?.length) return;
+
+    const ADMIN_IDS = admins.map((a) => Number(a.chat_id)); // Replace with actual admin IDs
+    const isAdmin = ADMIN_IDS.includes(senderId);
+    // Restrict non-admins to text only
+    if (!isAdmin && !ctx.message.text) {
+      console.log("mubarek");
+      const reason = "Attempted to send media";
+      const content = JSON.stringify(ctx.message, null, 2);
+
+      // Log violation
+      blockedMessagesLog.push({
+        senderId,
+        senderName,
+        reason,
+        content,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Notify admin
+      await ctx.api.sendMessage(
+        NOTIFY_ADMIN_ID,
+        `🚫 Teacher ${senderName} (${senderId}) tried to send media.\nReason: ${reason}`
+      );
+
+      await ctx.reply("❌ ፎቶ፣ ድምጽ ወይም ሌላ ፋይል መላክ አይቻልም። ጽሑፍ ብቻ ያስገቡ።");
       return;
     }
 
-    const student = await getStudentById(Number(studentId));
+    // Restrict non-admins from sending non-Zoom links
+    if (!isAdmin && ctx.message.text) {
+      const text = ctx.message.text.trim();
+      const containsLink = /https?:\/\/[^\s]+/i.test(text);
+      const isZoomLink = /https?:\/\/(?:[\w-]+\.)?zoom\.us\/[^\s]*/i.test(text);
 
-    if (!student) {
-      await ctx.reply("ተማሪ አልተገኘም። እባክዎ ትክክለኛ መለያ ያስገቡ።");
-      return; // Wait for another ID input
+      if (text && !containsLink && !isZoomLink) {
+        const reason = "Non-Zoom link detected";
+        const content = text;
+
+        // Log violation
+        blockedMessagesLog.push({
+          senderId,
+          senderName,
+          reason,
+          content,
+          timestamp: new Date().toISOString(),
+        });
+
+        // Notify admin
+        await ctx.api.sendMessage(
+          NOTIFY_ADMIN_ID,
+          `🚫 Teacher ${senderName} (${senderId}) tried to send a non-Zoom link.\nContent: ${text}`
+        );
+
+        await ctx.reply("❌ ዙም (Zoom) ካልሆነ ማንኛውም አድራሻ መላክ አይቻልም።");
+        return;
+      }
     }
 
-    // Save chatId for next step
-    pendingAdminMessages[adminId] = {
-      ...pending,
-      chatIds: [Number(student.chat_id)],
-      studentName: student.name ?? "",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      studentId: (student as any).id ?? "",
-    };
-
-    await ctx.reply(
-      `ተማሪ: ${student.name}\n\n✍️ ለመላክ መልእክት ይጻፉ (ጽሑፍ፣ ፎቶ፣ ወይም ድምጽ)፡፡`
-    );
-  });
-
-  // Step 3b: Listen for message to send to individual student or group
-  bot.on(["message:text", "message:photo", "message:voice"], async (ctx) => {
-    const adminId = ctx.chat?.id;
-    const pending = adminId ? pendingAdminMessages[adminId] : undefined;
-    if (!pending || !pending.chatIds?.length) return;
-
-    // Remove pending state to avoid duplicate sends
-    delete pendingAdminMessages[adminId];
+    // Remove pending state
+    delete pendingAdminMessages[senderId];
 
     // Prepare content
     let sendFn;
     if (ctx.message.text) {
-      sendFn = (id: number) => ctx.api.sendMessage(id, ctx.message.text!);
-    } else if (ctx.message.photo) {
+      if (isAdmin) {
+        sendFn = (id: number) => ctx.api.sendMessage(id, ctx.message.text!);
+      } else {
+        const callbackData = `join_zoom~${pending.packageId}~${ctx.message.text}`;
+
+        const buttonMarkup = {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "✅ Get Zoom Link", callback_data: callbackData }],
+            ],
+          },
+        };
+
+        sendFn = (id: number) =>
+          ctx.api.sendMessage(id, "📚 የትምህርት ሊንክ፦", buttonMarkup);
+      }
+    } else if (ctx.message.photo && isAdmin) {
       const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
       sendFn = (id: number) =>
         ctx.api.sendPhoto(id, fileId, { caption: ctx.message.caption });
-    } else if (ctx.message.voice) {
+    } else if (ctx.message.voice && isAdmin) {
       const fileId = ctx.message.voice.file_id;
       sendFn = (id: number) =>
         ctx.api.sendVoice(id, fileId, { caption: ctx.message.caption });
     } else {
-      await ctx.reply("የሚደገፍ ያልሆነ ዓይነት መልእክት።");
+      await ctx.reply("❌ የሚደገፍ ያልሆነ ዓይነት መልእክት።");
       return;
     }
+    console.log("chatIds", pending.chatIds);
 
     // Send to all selected students
-    let sent = 0,
-      failed = 0;
+    const sent: number[] = [];
+    const failed: number[] = [];
     for (const chatId of pending.chatIds) {
       try {
         await sendFn(chatId);
-        sent++;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        sent.push(chatId);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
-        failed++;
+        failed.push(chatId);
       }
     }
-    await ctx.reply(
-      `✅ ለ${sent} ተማሪ${sent > 1 ? "ዎች" : ""} ተልኳል።${
-        failed ? ` ❌ አልተላከላቸውም: ${failed}` : ""
-      }`
-    );
+    // Notify admin
+    if (sent.length > 0 && !isAdmin) {
+      const statsuOfStudent = await prisma.subjectPackage.findMany({
+        where: { packageId: pending.packageId },
+        select: {
+          subject: true,
+          packageType: true,
+          kidpackage: true,
+        },
+      });
+      for (const s of statsuOfStudent) {
+        const students = await prisma.wpos_wpdatatable_23.findMany({
+          where: {
+            subject: s.subject,
+            package: s.packageType,
+            isKid: s.kidpackage,
+            chat_id: { in: sent.map(String) },
+            status: { in: ["Active", "Not yet"] },
+          },
+          select: {
+            wdt_ID: true,
+            name: true,
+          },
+        });
+
+        await Promise.all(
+          students.map(async (student) => {
+            const lastAttendance = await prisma.tarbiaAttendance.findFirst({
+              where: {
+                studId: student.wdt_ID,
+                packageId: pending.packageId,
+              },
+              orderBy: {
+                createdAt: "desc",
+              },
+              select: {
+                id: true,
+                createdAt: true,
+              },
+            });
+
+            const now = new Date();
+            const oneHourMs = 60 * 60 * 1000;
+            const isWithinOneHour =
+              lastAttendance?.createdAt &&
+              now.getTime() - lastAttendance.createdAt.getTime() <= oneHourMs;
+
+            if (isWithinOneHour && lastAttendance?.id) {
+              await prisma.tarbiaAttendance.update({
+                where: { id: lastAttendance.id },
+                data: {
+                  createdAt: new Date(),
+                  status: false,
+                },
+              });
+            } else {
+              await prisma.tarbiaAttendance.create({
+                data: {
+                  studId: student.wdt_ID,
+                  packageId: pending.packageId,
+                  status: false,
+                },
+              });
+            }
+          })
+        );
+      }
+    }
+    const failedIds = await prisma.wpos_wpdatatable_23.findMany({
+      where: {
+        chat_id: { in: failed.map(String) },
+        status: { in: ["Active", "Not yet"] },
+      },
+      select: {
+        name: true,
+        wdt_ID: true,
+      },
+    });
+    await ctx.api.sendMessage(NOTIFY_ADMIN_ID, `ሊንክ ያልደረሳቸው ተማሪዎች`);
+    for (const f of failedIds) {
+      await ctx.api.sendMessage(
+        NOTIFY_ADMIN_ID,
+        `Name:-> ${f.name} Id:->(${f.wdt_ID}) }`
+      );
+    }
+    if (isAdmin) {
+      await ctx.reply(
+        `✅ ለ${sent.length} ተማሪ${sent.length > 1 ? "ዎች" : ""} ተልኳል።${
+          failed ? ` ❌ አልተላከላቸውም: ${failed.length}` : ""
+        }`
+      );
+    } else {
+      await ctx.reply(
+        `${
+          failedIds.length === 0 && sent.length > 0
+            ? "✅ለሁሉም ተማሪዎች ተልኳል"
+            : "❌ያልተላከለት ተማሪ አለ"
+        }`
+      );
+    }
   });
 
   // Step 2: Show status options after package selection
@@ -757,94 +933,249 @@ export async function startBot() {
     });
   });
 
-  // bot.start();
-  console.log("✅ አድሚን ቦት ተጀምሯል።");
-  ////////
-  bot.command("starts", async (ctx) => {
-    const chatId = ctx.chat?.id;
-    // 1. Fetch channels
-    if (!chatId) {
-      return ctx.reply("Unable to retrieve chat ID.");
-    }
-    const channels = await prisma.wpos_wpdatatable_23.findMany({
-      where: {
-        chat_id: chatId.toString(),
-        status: { in: ["Active", "Not yet"] },
-      },
-      select: {
-        wdt_ID: true,
-        name: true,
-        subject: true,
-        package: true,
-        isKid: true,
-        activePackage: {
-          where: { isPublished: true },
-          select: {
-            id: true,
-            name: true,
-            courses: {
-              where: { order: 1 },
-              select: {
-                id: true,
-                title: true,
-                chapters: {
-                  where: { position: 1 },
-                  select: {
-                    id: true,
-                    title: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    try {
-      // 2. Update youtubeSubject for all channels
-      for (const channel of channels) {
-        if (!channel.wdt_ID) continue; // Skip if wdt_ID is not set
-        const subject = channel.subject;
-        const packageType = channel.package;
-        const kidPackage = channel.isKid;
-        if (!subject || !packageType || kidPackage === null) continue; // Skip if any required field is missing
-        const availablePackageId = (
-          await getAvailablePacakges(packageType, subject, kidPackage)
-        ).map((p) => p.id);
-        if (!availablePackageId || availablePackageId.length === 0) {
-          await ctx.reply(
-            `🚫 ለተማሪ ${channel.name} ምንም ፓኬጅ አልተገኘም። አድሚኑን ያነጋግሩ፡፡`
-          );
-          return;
-        }
-
-        await prisma.wpos_wpdatatable_23.update({
-          where: { wdt_ID: channel.wdt_ID },
-          data: { youtubeSubject: availablePackageId[0] ?? null },
-        });
-
-        const keyboard = new InlineKeyboard()
-          .text("📊 Packages", `package_selection_${availablePackageId[0]}`)
-          .row();
-        await ctx.reply(
-          "👋 እንኳን ወደ አድሚን ፓነል በደህና መጡ!\n\n" +
-            "ከዚህ በታች ያሉትን ቁልፎች በመጠቀም የተማሪዎችን አካውንት መከታተል፣ መልእክት መላክ እና የትምህርት ጥራት ማጣራት ይችላሉ።\n\n" +
-            "• <b>📊 ዳሽቦርድ</b> – የተማሪዎችን ሁኔታ ይመልከቱ።\n" +
-            "• <b>✉️ መልእክት ላክ</b> – ለተመረጡ ተማሪዎች መልእክት ይላኩ።",
-          { reply_markup: keyboard, parse_mode: "HTML" }
-        );
-      }
-    } catch (error) {
-      console.error("❌ DB ERROR:", error);
-      await ctx.reply("❌ የውሂብ ችግር።");
-    }
-  });
   bot.callbackQuery("/package_selection_(.+)/", async (ctx) => {
     await ctx.answerCallbackQuery();
     const keyboard = new InlineKeyboard()
       .text("📊 ዳሽቦርድ", "admin_dashboard_page_1")
       .row()
       .text("✉️ መልእክት ላክ", "admin_send");
+    await ctx.editMessageText("👋 እንኳን ወደ አድሚን ፓነል በደህና መጡ!", {
+      reply_markup: keyboard,
+    });
+  });
+  // bot.start();
+  console.log("✅ አድሚን ቦት ተጀምሯል።");
+
+  // Step 0: When admin clicks "መልእክት ላክ", show two options
+  bot.callbackQuery("ustaz_send", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const keyboard = new InlineKeyboard().text(
+      "ፓኬጅ በመምረጥ መልእክት ላክ",
+      "ustaz_send_package"
+    );
+    await ctx.reply("እባክዎ የመልእክት አይነት ይምረጡ:", { reply_markup: keyboard });
+  });
+
+  // Step 1a: If "Send by package" is selected, continue as before
+  bot.callbackQuery("ustaz_send_package", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const packages = await allPackages();
+    if (!packages || packages.length === 0) {
+      await ctx.reply("ምንም ፓኬጅ አልተገኘም።");
+      return;
+    }
+    const keyboard = new InlineKeyboard();
+    for (const pkg of packages) {
+      keyboard
+        .text(
+          `${pkg.name} -- ጠቅላላ ተማሪ ${pkg.totalStudents}`,
+          `ustaz_package_${pkg.id}`
+        )
+        .row();
+    }
+    await ctx.reply("📦 ፓኬጅ ይምረጡ:", { reply_markup: keyboard });
+  });
+
+  // Step 2: Show status options after package selection
+  bot.callbackQuery(/ustaz_package_(.+)/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const packageId = ctx.match[1];
+    console.log("Selected package ID:", packageId);
+    if (ctx.chat?.id) {
+      // pendingAdminMessages[ctx.chat.id] = { packageId, status: "" };
+    }
+
+   
+    const keyboard = new InlineKeyboard()
+      .row()
+      .text(`✅ ፓኬጁን ለሚወስዱት በሙሉ`, `ustaz_status_${packageId}_all`);
+
+    await ctx.reply("የተማሪዎችን ሁኔታ ይምረጡ:", { reply_markup: keyboard });
+  });
+
+  // Step 3: Prompt for message after status selection and show filtered chat_ids
+  bot.callbackQuery(
+    /ustaz_status_(.+)_(completed|notstarted|inprogress_0|inprogress_10|inprogress_40|inprogress_70|inprogress_o|all)/,
+    async (ctx) => {
+      await ctx.answerCallbackQuery();
+      const [, packageId, status] = ctx.match;
+      const adminId = ctx.chat?.id;
+      if (!adminId) return;
+
+      // Pass status directly to your filter function
+      const chatIds = await filterStudentsByPackageandStatus(packageId, status);
+
+      if (!chatIds.length) {
+        await ctx.reply("ለተመረጠው ፓኬጅ እና ሁኔታ ምንም ተማሪ አልተገኘም።");
+        return;
+      }
+
+      // Save pending state
+      pendingAdminMessages[adminId] = {
+        packageId,
+        status,
+        chatIds: chatIds.map((ch) => Number(ch)),
+      };
+
+      // Show prompt and cancel button
+      const keyboard = new InlineKeyboard().text("❌ ሰርዝ", "ustaz_cancel_send");
+      await ctx.reply("✍️ ለመላክ የሚፈልጉትን መልእክት (ጽሑፍ፣ ፎቶ፣ ወይም ድምጽ) ይጻፉ፡፡", {
+        reply_markup: keyboard,
+      });
+    }
+  );
+  bot.on("callback_query:data", async (ctx) => {
+    const data = ctx.callbackQuery.data;
+    const chatId = ctx.chat?.id;
+    if (!data.startsWith("join_zoom~")) return;
+
+    const [, packageId, zoomLink] = data.split("~");
+
+    // Step 1: Get student info
+    const student = await prisma.wpos_wpdatatable_23.findFirst({
+      where: {
+        chat_id: String(chatId),
+        status: { in: ["Active", "Not yet"] },
+      },
+      select: {
+        wdt_ID: true,
+        name: true,
+      },
+    });
+
+    if (!student) return;
+
+    // Step 2: Get last attendance record
+    const lastCreatedAttendance = await prisma.tarbiaAttendance.findFirst({
+      where: {
+        studId: student.wdt_ID,
+        packageId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        createdAt: true,
+      },
+    });
+
+    // Step 3: Check if the button was clicked within 1 hour
+    const now = new Date();
+    const sentTime = lastCreatedAttendance?.createdAt;
+    const oneHourMs = 60 * 60 * 1000;
+
+    if (
+      sentTime &&
+      now.getTime() - sentTime.getTime() - 3 * 60 * 60 * 1000 <= oneHourMs
+    ) {
+      // ✅ Within 1 hour — mark attendance and send Zoom link
+      await prisma.tarbiaAttendance.update({
+        where: {
+          id: lastCreatedAttendance?.id,
+        },
+        data: {
+          status: true,
+        },
+      });
+
+      await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`);
+      await ctx.reply(`🔗 የዙም ሊንክ፦ ${zoomLink}`);
+    } else {
+      // ❌ Expired — send fallback message
+      await ctx.reply(
+        `⏰ ይቅርታ፣ የዙም ሊንኩ አልተጠቀመም። ከተላከው ጊዜ በኋላ 1 ሰዓት አልፎበታል። እባክህ አዲስ ሊንክ ለመቀበል አስተማማኝ መንገድ ይውሰዱ።`
+      );
+    }
+  });
+
+  // Cancel handler
+  bot.callbackQuery("ustaz_cancel_send", async (ctx) => {
+    const adminId = ctx.chat?.id;
+    if (adminId) delete pendingAdminMessages[adminId];
+    await ctx.answerCallbackQuery();
+    await ctx.reply("❌ መላክ ተሰርዟል።");
+  });
+
+  // Dashboard with pagination (unchanged)
+  bot.callbackQuery(/ustaz_dashboard_page_(\d+)/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const match = ctx.callbackQuery.data.match(/ustaz_dashboard_page_(\d+)/);
+    const page = match && match[1] ? parseInt(match[1]) : 1;
+
+    const { data, pagination } = await getStudentAnalyticsperPackage(
+      undefined,
+      page,
+      5
+    );
+
+    let msg = `📊 <b>የተማሪ ትንታኔ (ገፅ ${pagination.currentPage}/${pagination.totalPages})</b>\n\n`;
+    if (data.length === 0) {
+      msg += "ተማሪዎች አልተገኙም።";
+    } else {
+      msg += data
+        .map(
+          (s, i) =>
+            `<b>${i + 1 + (pagination.currentPage - 1) * 5}. ${
+              s?.name ?? "N/A"
+            }</b>\n` +
+            `መለያ: <code>${s?.id}</code>\n` +
+            `ስልክ: <code>${s?.phoneNo ?? "N/A"}</code>\n` +
+            `ልጅ ነው?: <code>${s?.isKid ? "አዎ" : "አይደለም"}</code>\n` +
+            `ፓኬጅ: <code>${s?.activePackage}</code>\n` +
+            `እድገት: <code>${s?.studentProgress}</code>\n`
+        )
+        .join("\n");
+    }
+
+    const keyboard = new InlineKeyboard();
+    if (pagination.hasPreviousPage)
+      keyboard.text(
+        "⬅️ ቀዳሚ",
+        `ustaz_dashboard_page_${pagination.currentPage - 1}`
+      );
+    if (pagination.hasNextPage)
+      keyboard.text(
+        "ቀጣይ ➡️",
+        `ustaz_dashboard_page_${pagination.currentPage + 1}`
+      );
+    keyboard.row().text("🏠 መነሻ", "ustaz_dashboard_home");
+
+    if (ctx.update.callback_query.message) {
+      await ctx.editMessageText(msg, {
+        parse_mode: "HTML",
+        reply_markup: keyboard,
+      });
+    } else {
+      await ctx.reply(msg, {
+        parse_mode: "HTML",
+        reply_markup: keyboard,
+      });
+    }
+  });
+
+  // Home button handler (returns to main menu)
+  bot.callbackQuery("ustaz_dashboard_home", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const keyboard = new InlineKeyboard()
+      .text("📊 ዳሽቦርድ", "ustaz_dashboard_page_1")
+      .row()
+      .text("✉️ መልእክት ላክ", "ustaz_send");
+    await ctx.editMessageText("👋 እንኳን ወደ አድሚን ፓነል በደህና መጡ!", {
+      reply_markup: keyboard,
+    });
+  });
+
+  // bot.start();
+  console.log("✅ አድሚን ቦት ተጀምሯል።");
+  ////////
+
+  bot.callbackQuery("/package_selection_(.+)/", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const keyboard = new InlineKeyboard()
+      .text("📊 ዳሽቦርድ", "ustaz_dashboard_page_1")
+      .row()
+      .text("✉️ መልእክት ላክ", "ustaz_send");
     await ctx.editMessageText("👋 እንኳን ወደ አድሚን ፓነል በደህና መጡ!", {
       reply_markup: keyboard,
     });
@@ -888,7 +1219,7 @@ export async function startBot() {
               : `⏳ ኮርሱ በመካከለኛ ሁኔታ ነው። ሂደተዎ: ${progress} ነው።እባከዎን ት/ትዎን በርትተው ይጨርሱ።`;
 
           const update = await updatePathProgressData(studId);
-          if(!update){
+          if (!update) {
             return undefined;
           }
           const lang = "en";
@@ -926,13 +1257,13 @@ export async function startBot() {
           );
           // if (!sentMessageIds[chatid]) sentMessageIds[chatid] = [];
           // sentMessageIds[chatid].push(sentMsg.message_id);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
           // console.error("Failed to send progress message to", chatid, err);
         }
       }
       // console.log("✅ Progress messages sent to all students.");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // console.error("Error in progress notification job:", error);
     }

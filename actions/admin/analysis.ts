@@ -98,6 +98,11 @@ export async function filterStudentsByPackageandStatus(
   const filteredChatIds: string[] = [];
 
   for (const student of students) {
+    if (!student.chat_id) continue;
+    if (status === "all") {
+      filteredChatIds.push(student.chat_id);
+      continue;
+    }
     // Get all progress records for this student and these chapters
     const progress = await prisma.studentProgress.findMany({
       where: {
@@ -106,8 +111,6 @@ export async function filterStudentsByPackageandStatus(
       },
       select: { isCompleted: true, chapterId: true },
     });
-
-    if (!student.chat_id) continue;
 
     // if thhe pass data is packageid and not start  then return the chat_id of student not start,if t=pass complete then return the chatid of student completed and if onprogress then return the chatid of student in progress
     if (progress.length === 0) {
@@ -136,7 +139,6 @@ export async function filterStudentsByPackageandStatus(
     }
   }
 
-  console.log("Filtered chat IDs:", filteredChatIds);
 
   return filteredChatIds;
 }
@@ -887,7 +889,7 @@ export async function getStudentAnalyticsperPackage(
   });
 
   // 2. Build filters for student query
-  const subjectPackageFilters = subjectPackages.map(sp => ({
+  const subjectPackageFilters = subjectPackages.map((sp) => ({
     subject: sp.subject,
     package: sp.packageType,
     isKid: sp.kidpackage,
@@ -898,7 +900,9 @@ export async function getStudentAnalyticsperPackage(
         OR: [
           { name: { contains: searchTerm } },
           { phoneno: { contains: searchTerm } },
-          ...(Number.isNaN(Number(searchTerm)) ? [] : [{ wdt_ID: Number(searchTerm) }]),
+          ...(Number.isNaN(Number(searchTerm))
+            ? []
+            : [{ wdt_ID: Number(searchTerm) }]),
         ],
       }
     : {};
@@ -920,33 +924,40 @@ export async function getStudentAnalyticsperPackage(
       subject: true,
       package: true,
       chat_id: true,
-      youtubeSubject:true,
+      youtubeSubject: true,
       ustazdata: { select: { ustazname: true } },
     },
   });
 
   // 4. Process each student
   const studentResults = await Promise.all(
-    students.map(async student => {
+    students.map(async (student) => {
       const matchedPackage = subjectPackages.find(
-        sp =>
+        (sp) =>
           sp.subject === student.subject &&
           sp.packageType === student.package &&
           sp.kidpackage === student.isKid
       );
 
-      const activePackageId = student.youtubeSubject??matchedPackage?.packageId;
-      if(!activePackageId){
+      const activePackageId =
+        student.youtubeSubject ?? matchedPackage?.packageId;
+      if (!activePackageId) {
         return undefined;
       }
-      const progress = await getStudentProgressStatus(student.wdt_ID, activePackageId);
+      const progress = await getStudentProgressStatus(
+        student.wdt_ID,
+        activePackageId
+      );
 
       const activePackage = await prisma.coursePackage.findUnique({
         where: { id: activePackageId },
         select: { name: true },
       });
 
-      const formatPhoneNumber = (raw: string | null, country: string | null): string => {
+      const formatPhoneNumber = (
+        raw: string | null,
+        country: string | null
+      ): string => {
         if (!raw) return "";
         const trimmed = raw.split("").reverse().slice(0, 9).reverse().join("");
         const countryCodeMap: Record<string, string> = {
@@ -989,11 +1000,12 @@ export async function getStudentAnalyticsperPackage(
       let checkUpdateProhibition = false;
 
       if (progress === "completed") {
-        const [examData, finalExamStatus, updateProhibition] = await Promise.all([
-          correctExamAnswer(activePackageId, student.wdt_ID),
-          checkFinalExamCreation(student.wdt_ID, activePackageId),
-          checkingUpdateProhibition(student.wdt_ID, activePackageId),
-        ]);
+        const [examData, finalExamStatus, updateProhibition] =
+          await Promise.all([
+            correctExamAnswer(activePackageId, student.wdt_ID),
+            checkFinalExamCreation(student.wdt_ID, activePackageId),
+            checkingUpdateProhibition(student.wdt_ID, activePackageId),
+          ]);
 
         if (examData?.result) result = examData.result;
         checkStausOfFinalExam = !!finalExamStatus;
@@ -1022,7 +1034,7 @@ export async function getStudentAnalyticsperPackage(
   let filteredStudents = studentResults.filter(Boolean);
 
   if (progressFilter && progressFilter !== "all") {
-    filteredStudents = filteredStudents.filter(student => {
+    filteredStudents = filteredStudents.filter((student) => {
       if (progressFilter === "inprogress") {
         return (
           student?.studentProgress !== "completed" &&
@@ -1035,16 +1047,24 @@ export async function getStudentAnalyticsperPackage(
 
   // 6. Filter by exam status
   if (statusFilter && statusFilter !== "all") {
-    filteredStudents = filteredStudents.filter(student => {
-      if(!student){
+    filteredStudents = filteredStudents.filter((student) => {
+      if (!student) {
         return undefined;
       }
       const { checkStausOfFinalExam, checkUpdateProhibition, result } = student;
       switch (statusFilter) {
         case "passed":
-          return checkStausOfFinalExam && checkUpdateProhibition && result.score >= 0.75;
+          return (
+            checkStausOfFinalExam &&
+            checkUpdateProhibition &&
+            result.score >= 0.75
+          );
         case "failed":
-          return checkStausOfFinalExam && checkUpdateProhibition && result.score < 0.75;
+          return (
+            checkStausOfFinalExam &&
+            checkUpdateProhibition &&
+            result.score < 0.75
+          );
         case "inprogress":
           return checkStausOfFinalExam && !checkUpdateProhibition;
         case "notstarted":
