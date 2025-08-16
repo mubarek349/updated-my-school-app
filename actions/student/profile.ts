@@ -6,6 +6,7 @@ import { correctExamAnswer } from "./question";
 import { checkingUpdateProhibition } from "./finalExamResult";
 import { getProgressPercent } from "../admin/analysis";
 import { getAssignedUstazs } from "../admin/packageassign";
+import getAttendanceofStudent from "./attendance";
 
 export default async function getProfile(studentId: number) {
   try {
@@ -35,7 +36,7 @@ export default async function getProfile(studentId: number) {
       console.log("No valid student profile found.");
       return null;
     }
-
+    const attendances=await getAttendanceofStudent(studentId);
     const availablePackages = await getAvailablePacakges(
       studentProfile.package,
       studentProfile.subject,
@@ -120,7 +121,9 @@ export default async function getProfile(studentId: number) {
       totalNumberOfCompletedPackage,
       totalNumberOfThePackage,
       averageGrade,
+      attendances,
       complationDates,
+      
     };
   } catch (err) {
     console.error("Error fetching profile data:", err);

@@ -6,6 +6,7 @@ import {
   checkFinalExamCreation,
   checkingUpdateProhibition,
 } from "../student/finalExamResult";
+import { getAttendanceofAllStudents } from "../student/attendance";
 
 export async function getStudentProgressStatus(
   studentId: number,
@@ -929,6 +930,7 @@ export async function getStudentAnalyticsperPackage(
     },
   });
 
+  const attendances=await getAttendanceofAllStudents(students.map(s=>s.wdt_ID));
   // 4. Process each student
   const studentResults = await Promise.all(
     students.map(async (student) => {
@@ -948,12 +950,12 @@ export async function getStudentAnalyticsperPackage(
         student.wdt_ID,
         activePackageId
       );
-
+      
       const activePackage = await prisma.coursePackage.findUnique({
         where: { id: activePackageId },
         select: { name: true },
       });
-
+      
       const formatPhoneNumber = (
         raw: string | null,
         country: string | null
@@ -1026,6 +1028,7 @@ export async function getStudentAnalyticsperPackage(
         result,
         checkStausOfFinalExam,
         checkUpdateProhibition,
+        attendances:`P-${attendances[student.wdt_ID].present} A-${attendances[student.wdt_ID].absent} T-${attendances[student.wdt_ID].present+attendances[student.wdt_ID].absent}`,
       };
     })
   );

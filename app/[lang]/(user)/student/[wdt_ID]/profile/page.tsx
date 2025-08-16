@@ -10,6 +10,7 @@ import CourseCard from "@/components/custom/student/profile/CourseCard";
 import CourseSection from "@/components/custom/student/profile/CourseSection";
 
 import { BookOpen, CheckCircle, GraduationCap } from "lucide-react";
+import AttendanceSummary from "@/components/custom/student/profile/AttendanceSummary";
 
 function Page() {
   const params = useParams();
@@ -46,6 +47,7 @@ function Page() {
     totalNumberOfThePackage,
     averageGrade,
     complationDates,
+    attendances,
   } = data;
 
   if (!studentProfile.name) {
@@ -74,6 +76,7 @@ function Page() {
     blue: "text-blue-600 bg-blue-100 border-blue-100",
     green: "text-green-600 bg-green-100 border-green-100",
   };
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 lg:px-8 overflow-y-auto">
       {/* Header */}
@@ -84,7 +87,7 @@ function Page() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
         <StatsCard
           label="Total Courses"
           value={totalNumberOfThePackage}
@@ -100,6 +103,7 @@ function Page() {
           value={`${averageGrade.toFixed(2)} %`}
           icon={<GraduationCap className="w-5 h-5 text-yellow-500" />}
         />
+        <AttendanceSummary present={attendances.present} absent={attendances.absent} />
       </div>
 
       {/* Current Courses */}

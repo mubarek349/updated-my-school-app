@@ -38,6 +38,7 @@ function Page() {
     { key: "studentProgress", label: "Student Progress" },
     { key: "finalExamStatus", label: "Final Exam Status" },
     { key: "result", label: "Result" },
+    { key: "attendances", label: "Attendances" },
   ];
 
   const rows =
@@ -65,6 +66,7 @@ function Page() {
                 row.result.total
               } በመመለስ`
             : "-",
+          attendances: row?.attendances ?? "",
         }))
       : [];
   console.log("rows", rows);
