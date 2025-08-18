@@ -16,12 +16,12 @@ export default async function getAttendanceofStudent(studentId: number) {
       select: { status: true },
     });
 
-    if (records.length === 0) {
+    if (!records || !Array.isArray(records) || records.length === 0 ) {
       throw new Error("📭 ምንም አቴንዳንስ የለዎትም");
     }
 
-    const presentCount = records.filter(r => r.status === true).length;
-    const absentCount = records.filter(r => r.status === false).length;
+    const presentCount = records.filter(r => r.status === true).length??0;
+    const absentCount = records.filter(r => r.status === false).length??0;
 
     return {
       present: presentCount,
