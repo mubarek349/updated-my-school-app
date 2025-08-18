@@ -36,7 +36,8 @@ export default async function getProfile(studentId: number) {
       console.log("No valid student profile found.");
       return null;
     }
-    const attendances=await getAttendanceofStudent(studentId);
+    const attendances = await getAttendanceofStudent(studentId);
+   
     const availablePackages = await getAvailablePacakges(
       studentProfile.package,
       studentProfile.subject,
@@ -62,7 +63,9 @@ export default async function getProfile(studentId: number) {
       const packageId = pkg.package.id;
       const packageName = pkg.package.name;
       const oustaz = await getAssignedUstazs(pkg.package.id);
-      const oustazName = oustaz?.map((o) => o.ustazname ?? "DarulKubra")??["Darulkubra"];
+      const oustazName = oustaz?.map((o) => o.ustazname ?? "DarulKubra") ?? [
+        "Darulkubra",
+      ];
 
       const studentStatus = await getStudentProgressStatus(
         studentId,
@@ -95,7 +98,7 @@ export default async function getProfile(studentId: number) {
         completedPackageNames.push({
           pName: packageName,
           noOfChapters,
-          oustazName
+          oustazName,
         });
         complationDates.push(formattedDate);
       } else {
@@ -103,7 +106,7 @@ export default async function getProfile(studentId: number) {
           packageId: pkg.package,
           noOfChapters,
           percent: studentStatus.percent,
-          oustazName
+          oustazName,
         });
       }
     }
@@ -121,13 +124,11 @@ export default async function getProfile(studentId: number) {
       totalNumberOfCompletedPackage,
       totalNumberOfThePackage,
       averageGrade,
-      attendances,
+      attendances: attendances ?? { present: 0, absent: 0 },
       complationDates,
-      
     };
   } catch (err) {
     console.error("Error fetching profile data:", err);
-    throw new Error("Failed to fetch student profile.");
   }
 }
 export async function getStudentProgressStatus(

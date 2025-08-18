@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { CheckCircle, XCircle } from "lucide-react";
 
 type AttendanceSummaryProps = {
@@ -11,8 +12,8 @@ export default function AttendanceSummary({ present, absent }: AttendanceSummary
   const absentPercent = total ? Math.round((absent / total) * 100) : 0;
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 w-full max-w-sm">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">📋 Attendance Summary</h3>
+    <div className={cn("bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 w-full max-w-sm",!total&&"hidden")}>
+      <h3 className="font-semibold dark:text-white mb-4 text-sm text-muted-foreground">📋 Live Attendance</h3>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">

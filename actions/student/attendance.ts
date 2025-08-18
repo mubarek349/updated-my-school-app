@@ -8,7 +8,7 @@ export default async function getAttendanceofStudent(studentId: number) {
     });
 
     if (!student) {
-      throw new Error("❌ አልተመዘገቡም.");
+      return undefined;
     }
 
     const records = await prisma.tarbiaAttendance.findMany({
@@ -16,19 +16,20 @@ export default async function getAttendanceofStudent(studentId: number) {
       select: { status: true },
     });
 
-    if (!records || !Array.isArray(records) || records.length === 0 ) {
-      throw new Error("📭 ምንም አቴንዳንስ የለዎትም");
+    if (!records || !Array.isArray(records) || records.length === 0) {
+      return undefined;
     }
 
-    const presentCount = records.filter(r => r.status === true).length??0;
-    const absentCount = records.filter(r => r.status === false).length??0;
+    const presentCount = records.filter((r) => r.status === true).length ?? 0;
+    const absentCount = records.filter((r) => r.status === false).length ?? 0;
 
     return {
-      present: presentCount,
-      absent: absentCount,
+      present: presentCount ?? 0,
+      absent: absentCount ?? 0,
     };
-  } catch {
-    throw new Error("አቴንዳንስ ማሳየት ላይ ችግር አለ");
+  } catch (error) {
+    console.error("አቴንዳንስ ማሳየት ላይ ችግር አለ:",error);
+    return undefined;
   }
 }
 export async function getAttendanceofAllStudents(studentIds: number[]) {
@@ -38,7 +39,7 @@ export async function getAttendanceofAllStudents(studentIds: number[]) {
     });
 
     if (students.length === 0) {
-      throw new Error("❌ ተማሪዎች አልተገኙም።");
+      return {};
     }
 
     const records = await prisma.tarbiaAttendance.findMany({
@@ -47,11 +48,12 @@ export async function getAttendanceofAllStudents(studentIds: number[]) {
     });
 
     if (records.length === 0) {
-      throw new Error("📭 ምንም አቴንዳንስ አልተመዘገበም።");
+      return {};
     }
 
     // Group attendance by student
-    const attendanceMap: Record<number, { present: number; absent: number }> = {};
+    const attendanceMap: Record<number, { present: number; absent: number }> =
+      {};
 
     for (const id of studentIds) {
       attendanceMap[id] = { present: 0, absent: 0 };
@@ -66,8 +68,8 @@ export async function getAttendanceofAllStudents(studentIds: number[]) {
     }
 
     return attendanceMap;
-  } catch {
-    throw new Error("አቴንዳንስ ማሳየት ላይ ችግር አለ");
+  } catch (error){
+    console.log("አቴንዳንስ ማሳየት ላይ ችግር አለ: ",error);
+    return {};
   }
 }
-
