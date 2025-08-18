@@ -26,7 +26,6 @@ const CoursesPackageIdPage = async ({
   const coursesPackage = await prisma.coursePackage.findUnique({
     where: {
       id: coursesPackageId,
-      // userId,
     },
     include: {
       courses: { include: { chapters: { select: { isPublished: true } } } },

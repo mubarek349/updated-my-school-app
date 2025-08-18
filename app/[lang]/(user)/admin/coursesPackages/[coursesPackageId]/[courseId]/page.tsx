@@ -22,10 +22,11 @@ const CourseIdPage = async ({
   const course = await prisma.course.findUnique({
     where: {
       id: courseId,
-      packageId: coursesPackageId,
     },
     include: {
-      chapters: { include: { course: { select: { isPublished: true } } } },
+      chapters: {
+        include: { questions: { include: { questionOptions: true } } },
+      },
     },
   });
 
