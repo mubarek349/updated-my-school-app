@@ -168,107 +168,96 @@ export async function startBot() {
     const lang = "en";
     const stud = "student";
 
-    if (channels && channels.length > 0) {
-      let sent;
-
-      for (const channel of channels) {
-        const packageType = channel.package;
-        const subject = channel.subject;
-        const isKid = channel.isKid;
-        if (!packageType || !subject || isKid === null) continue;
-        const availablePackages = await getAvailablePacakges(
-          packageType,
-          subject,
-          isKid
-        );
-        if (!availablePackages || availablePackages.length === 0) continue;
-        const studId = channel.wdt_ID;
-        if (availablePackages.filter((p) => p.id).length === 1) {
-          if (
-            channel.activePackage &&
-            channel.activePackage.courses.length > 0 &&
-            channel.activePackage.courses[0].chapters.length > 0
-          ) {
-            const course = channel.activePackage.courses[0];
-            const chapter = course.chapters[0];
-
-            const studentProgress = await prisma.studentProgress.findFirst({
-              where: {
-                studentId: studId,
-                chapterId: chapter.id,
-              },
-            });
-
-            if (!studentProgress) {
-              await prisma.studentProgress.create({
-                data: {
-                  studentId: studId,
-                  chapterId: chapter.id,
-                  isCompleted: false,
-                },
-              });
-            }
-
-            const update = await updatePathProgressData(studId);
-            if (!update) {
-              return undefined;
-            }
-            const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
-
-            const channelName = channel.name || "ዳሩል-ኩብራ";
-            const packageName = channel.activePackage.name || "የተማሪ ፓኬጅ";
-            const keyboard = new InlineKeyboard().webApp(
-              `📚 የ${channelName}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
-              url
-            );
-
-            await ctx.reply(
-              "✅  እንኳን ወደ ዳሩል-ኩብራ የቁርአን ማእከል በደህና መጡ! ኮርሱን ለመከታተል ከታች ያለውን ማስፈንጠሪያ ይጫኑ፡፡",
-              {
-                reply_markup: keyboard,
-              }
-            );
-            sent = true;
-          }
-        } else {
-          // 2. Fetch available packages for this student
-          if (!channel.package || !channel.subject || channel.isKid === null) {
-            return ctx.reply("🚫 ተማሪ ፓኬጅ ወይም ርዕስ መረጃ አልተገኘም። አድሚኑን ያነጋግሩ፡፡");
-          }
-          const availablePackages = await getAvailablePacakges(
-            channel.package,
-            channel.subject,
-            channel.isKid
-          );
-
-          if (!availablePackages || availablePackages.length === 0) {
-            return ctx.reply("🚫 ምንም ፓኬጅ አልተገኘም። አድሚኑን ያነጋግሩ፡፡");
-          }
-
-          // 3. Show packages as inline buttons
-          const keyboard = new InlineKeyboard();
-          for (const pkg of availablePackages) {
-            keyboard
-              .text(
-                pkg.package.name,
-                `choose_package_${pkg.package.id}@${studId}`
-              )
-              .row();
-          }
-          await ctx.reply(
-            `ለተማሪ ${channel.name} እባክዎ ፓኬጅ ይምረጡ፡፡\nPlease choose your package:`,
-            {
-              reply_markup: keyboard,
-            }
-          );
-          sent = true;
-        }
-      }
-      if (!sent) {
-        return ctx.reply("🚫 የኮርሱን ፕላትፎርም ለማግኘት አልተፈቀደለዎትም!");
-      }
-    } else {
+    if (!channels || channels.length === 0) {
       return ctx.reply("🚫 የኮርሱን ፕላትፎርም ለማግኘት አልተፈቀደለዎትም! አድሚኑን ያነጋግሩ፡፡");
+    }
+
+    let hasSentReply = false;
+
+    for (const channel of channels) {
+      const {
+        package: packageType,
+        subject,
+        isKid,
+        wdt_ID: studentId,
+        name: channelName,
+        activePackage,
+      } = channel;
+
+      // Validate essential channel data
+      if (!packageType || !subject || isKid === null) continue;
+
+      const availablePackages = await getAvailablePacakges(
+        packageType,
+        subject,
+        isKid
+      );
+      if (!availablePackages || availablePackages.length === 0) continue;
+
+      const validPackages = availablePackages.filter((pkg) => pkg.id);
+      const isSinglePackage = validPackages.length === 1;
+
+      if (isSinglePackage && activePackage?.courses?.[0]?.chapters?.[0]) {
+        const course = activePackage.courses[0];
+        const chapter = course.chapters[0];
+
+        // Ensure student progress is initialized
+        const existingProgress = await prisma.studentProgress.findFirst({
+          where: { studentId, chapterId: chapter.id },
+        });
+
+        if (!existingProgress) {
+          await prisma.studentProgress.create({
+            data: {
+              studentId,
+              chapterId: chapter.id,
+              isCompleted: false,
+            },
+          });
+        }
+
+        // Update path progress and construct URL
+        const progressPath = await updatePathProgressData(studentId);
+        if (!progressPath) return;
+
+        const [courseId, chapterId] = progressPath;
+        const url = `${BASE_URL}/${lang}/${stud}/${studentId}/${courseId}/${chapterId}`;
+
+        const packageName = activePackage.name || "የተማሪ ፓኬጅ";
+        const keyboard = new InlineKeyboard().webApp(
+          `📚 የ${channelName || "ዳሩል-ኩብራ"}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
+          url
+        );
+
+        await ctx.reply(
+          "✅  እንኳን ወደ ዳሩል-ኩብራ የቁርአን ማእከል በደህና መጡ! ኮርሱን ለመከታተል ከታች ያለውን ማስፈንጠሪያ ይጫኑ፡፡",
+          { reply_markup: keyboard }
+        );
+
+        hasSentReply = true;
+      } else {
+        // Show available packages for selection
+        const keyboard = new InlineKeyboard();
+        for (const pkg of availablePackages) {
+          keyboard
+            .text(
+              pkg.package.name,
+              `choose_package_${pkg.package.id}@${studentId}`
+            )
+            .row();
+        }
+
+        await ctx.reply(
+          `ለተማሪ ${channelName} እባክዎ ፓኬጅ ይምረጡ፡፡\nPlease choose your package:`,
+          { reply_markup: keyboard }
+        );
+
+        hasSentReply = true;
+      }
+    }
+
+    if (!hasSentReply) {
+      return ctx.reply("🚫 የኮርሱን ፕላትፎርም ለማግኘት አልተፈቀደለዎትም!");
     }
   });
   // 4. Handle package selection
@@ -985,7 +974,6 @@ export async function startBot() {
       // pendingAdminMessages[ctx.chat.id] = { packageId, status: "" };
     }
 
-   
     const keyboard = new InlineKeyboard()
       .row()
       .text(`✅ ፓኬጁን ለሚወስዱት በሙሉ`, `ustaz_status_${packageId}_all`);

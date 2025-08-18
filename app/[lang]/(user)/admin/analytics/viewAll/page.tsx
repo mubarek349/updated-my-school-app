@@ -53,14 +53,14 @@ function Page() {
           activePackage: row?.activePackage ?? "",
           studentProgress: row?.studentProgress ?? "",
           ustazname: row?.ustazname ?? "",
-          finalExamStatus: row?.checkStausOfFinalExam
-            ? row.checkUpdateProhibition
+          finalExamStatus: row?.hasFinalExam
+            ? row.isUpdateProhibited
               ? row.result?.score >= 0.75
                 ? "Passed"
                 : "Failed"
               : "In Progress"
             : "Not Started",
-          result: row?.checkStausOfFinalExam
+          result: row?.hasFinalExam
             ? row.result &&
               `${row.result.score * 100}% አግኝተዋል -> ${row.result.correct}/${
                 row.result.total

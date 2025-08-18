@@ -889,26 +889,24 @@ export async function getStudentAnalyticsperPackage(
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  // 2. Build filters for student query
-  const subjectPackageFilters = subjectPackages.map((sp) => ({
+  const subjectPackageFilters = subjectPackages.map(sp => ({
     subject: sp.subject,
     package: sp.packageType,
     isKid: sp.kidpackage,
   }));
 
+  // 2. Build search filter
   const searchFilter = searchTerm
     ? {
         OR: [
           { name: { contains: searchTerm } },
           { phoneno: { contains: searchTerm } },
-          ...(Number.isNaN(Number(searchTerm))
-            ? []
-            : [{ wdt_ID: Number(searchTerm) }]),
+          ...(Number.isNaN(Number(searchTerm)) ? [] : [{ wdt_ID: Number(searchTerm) }]),
         ],
       }
     : {};
 
-  // 3. Fetch students matching filters
+  // 3. Fetch students
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
       status: { in: ["Active", "Not yet"] },
@@ -930,90 +928,65 @@ export async function getStudentAnalyticsperPackage(
     },
   });
 
-  const attendances=await getAttendanceofAllStudents(students.map(s=>s.wdt_ID));
- 
-  // 4. Process each student
+  const attendanceMap = await getAttendanceofAllStudents(students.map(s => s.wdt_ID));
+
+  // 4. Helper: Format phone number
+  const formatPhoneNumber = (raw: string | null, country: string | null): string => {
+    if (!raw) return "";
+    const trimmed = raw.split("").reverse().slice(0, 9).reverse().join("");
+    const countryCodeMap: Record<string, string> = {
+      ethiopia: "+251", anguilla: "+1", "saudi arabia": "+966", canada: "+1",
+      "united arab emirates": "+971", kuwait: "+965", usa: "+1",
+      "united states": "+1", "united states of america": "+1", china: "+86",
+      "south africa": "+27", cuba: "+53", "equatorial guinea": "+240",
+      sweden: "+46", qatar: "+974", angola: "+244", pakistan: "+92",
+      norway: "+47", netherlands: "+31", bahrain: "+973", turkey: "+90",
+      egypt: "+20", germany: "+49", italy: "+39", djibouti: "+253", mongolia: "+976",
+    };
+    const key = (country || "").toLowerCase();
+    const code = countryCodeMap[key] ?? "+251";
+    return `${code}${trimmed}`;
+  };
+
+  // 5. Process each student
   const studentResults = await Promise.all(
-    students.map(async (student) => {
+    students.map(async student => {
       const matchedPackage = subjectPackages.find(
-        (sp) =>
+        sp =>
           sp.subject === student.subject &&
           sp.packageType === student.package &&
           sp.kidpackage === student.isKid
       );
 
-      const activePackageId =
-        student.youtubeSubject ?? matchedPackage?.packageId;
-      if (!activePackageId) {
-        return undefined;
-      }
-      const progress = await getStudentProgressStatus(
-        student.wdt_ID,
-        activePackageId
-      );
-      
+      const activePackageId = student.youtubeSubject ?? matchedPackage?.packageId;
+      if (!activePackageId) return undefined;
+
+      const progress = await getStudentProgressStatus(student.wdt_ID, activePackageId);
       const activePackage = await prisma.coursePackage.findUnique({
         where: { id: activePackageId },
         select: { name: true },
       });
-      
-      const formatPhoneNumber = (
-        raw: string | null,
-        country: string | null
-      ): string => {
-        if (!raw) return "";
-        const trimmed = raw.split("").reverse().slice(0, 9).reverse().join("");
-        const countryCodeMap: Record<string, string> = {
-          ethiopia: "+251",
-          anguilla: "+1",
-          "saudi arabia": "+966",
-          canada: "+1",
-          "united arab emirates": "+971",
-          kuwait: "+965",
-          usa: "+1",
-          "united states": "+1",
-          "united states of america": "+1",
-          china: "+86",
-          "south africa": "+27",
-          cuba: "+53",
-          "equatorial guinea": "+240",
-          sweden: "+46",
-          qatar: "+974",
-          angola: "+244",
-          pakistan: "+92",
-          norway: "+47",
-          netherlands: "+31",
-          bahrain: "+973",
-          turkey: "+90",
-          egypt: "+20",
-          germany: "+49",
-          italy: "+39",
-          djibouti: "+253",
-          mongolia: "+976",
-        };
-        const key = (country || "").toLowerCase();
-        const code = countryCodeMap[key] ?? "+251";
-        return `${code}${trimmed}`;
-      };
 
       const phoneNo = formatPhoneNumber(student.phoneno, student.country);
 
       let result = { total: 0, correct: 0, score: 0 };
-      let checkStausOfFinalExam = false;
-      let checkUpdateProhibition = false;
+      let hasFinalExam = false;
+      let isUpdateProhibited = false;
 
       if (progress === "completed") {
-        const [examData, finalExamStatus, updateProhibition] =
-          await Promise.all([
-            correctExamAnswer(activePackageId, student.wdt_ID),
-            checkFinalExamCreation(student.wdt_ID, activePackageId),
-            checkingUpdateProhibition(student.wdt_ID, activePackageId),
-          ]);
+        const [examData, finalExamStatus, updateProhibition] = await Promise.all([
+          correctExamAnswer(activePackageId, student.wdt_ID),
+          checkFinalExamCreation(student.wdt_ID, activePackageId),
+          checkingUpdateProhibition(student.wdt_ID, activePackageId),
+        ]);
 
         if (examData?.result) result = examData.result;
-        checkStausOfFinalExam = !!finalExamStatus;
-        checkUpdateProhibition = !!updateProhibition;
+        hasFinalExam = !!finalExamStatus;
+        isUpdateProhibited = !!updateProhibition;
       }
+
+      const attendance = attendanceMap[student.wdt_ID] ?? { present: 0, absent: 0 };
+      const totalSessions = attendance.present + attendance.absent;
 
       return {
         id: student.wdt_ID,
@@ -1027,59 +1000,47 @@ export async function getStudentAnalyticsperPackage(
         activePackage: activePackage?.name ?? "",
         studentProgress: progress,
         result,
-        checkStausOfFinalExam,
-        checkUpdateProhibition,
-        attendances:`P-${attendances[student.wdt_ID].present} A-${attendances[student.wdt_ID].absent} T-${attendances[student.wdt_ID].present+attendances[student.wdt_ID].absent}`,
+        hasFinalExam,
+        isUpdateProhibited,
+        attendances: `P-${attendance.present} A-${attendance.absent} T-${totalSessions}`,
       };
     })
   );
 
-  // 5. Filter by progress
+  // 6. Filter by progress
   let filteredStudents = studentResults.filter(Boolean);
 
   if (progressFilter && progressFilter !== "all") {
-    filteredStudents = filteredStudents.filter((student) => {
+    filteredStudents = filteredStudents.filter(student => {
+      if (!student) return false;
       if (progressFilter === "inprogress") {
-        return (
-          student?.studentProgress !== "completed" &&
-          student?.studentProgress !== "notstarted"
-        );
+        return student.studentProgress !== "completed" && student.studentProgress !== "notstarted";
       }
-      return student?.studentProgress === progressFilter;
+      return student.studentProgress === progressFilter;
     });
   }
 
-  // 6. Filter by exam status
+  // 7. Filter by exam status
   if (statusFilter && statusFilter !== "all") {
-    filteredStudents = filteredStudents.filter((student) => {
-      if (!student) {
-        return undefined;
-      }
-      const { checkStausOfFinalExam, checkUpdateProhibition, result } = student;
+    filteredStudents = filteredStudents.filter(student => {
+      if (!student) return false;
+      const { hasFinalExam, isUpdateProhibited, result } = student;
       switch (statusFilter) {
         case "passed":
-          return (
-            checkStausOfFinalExam &&
-            checkUpdateProhibition &&
-            result.score >= 0.75
-          );
+          return hasFinalExam && isUpdateProhibited && result.score >= 0.75;
         case "failed":
-          return (
-            checkStausOfFinalExam &&
-            checkUpdateProhibition &&
-            result.score < 0.75
-          );
+          return hasFinalExam && isUpdateProhibited && result.score < 0.75;
         case "inprogress":
-          return checkStausOfFinalExam && !checkUpdateProhibition;
+          return hasFinalExam && !isUpdateProhibited;
         case "notstarted":
-          return !checkStausOfFinalExam;
+          return !hasFinalExam;
         default:
           return true;
       }
     });
   }
 
-  // 7. Paginate
+  // 8. Paginate
   const totalRecords = filteredStudents.length;
   const totalPages = Math.ceil(totalRecords / itemsPerPage);
   const paginatedStudents = filteredStudents.slice(skip, skip + itemsPerPage);

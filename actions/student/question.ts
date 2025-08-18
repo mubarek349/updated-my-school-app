@@ -553,7 +553,6 @@ export async function correctExamAnswer(
         "No questions found for coursesPackageId:",
         coursesPackageId
       );
-      return undefined;
     }
 
     const questionIds = questions.map((q) => q.id);
