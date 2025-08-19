@@ -31,7 +31,7 @@ model coursePackage {
   students            wpos_wpdatatable_23[] @relation("PackageHistory")
   activeStudents      wpos_wpdatatable_23[] @relation("ActivePackage")
   subjectPackages     subjectPackage[] // <-- Add this line for the relation
-  terbiaAttendance tarbiaAttendance[]
+  terbiaAttendance    tarbiaAttendance[]
   ustazId             Int?
   ustaz               ustaz?                @relation(fields: [ustazId], references: [wdt_ID])
   createdAt           DateTime              @default(now())
@@ -193,29 +193,29 @@ model admin {
 }
 
 model wpos_wpdatatable_23 {
-  wdt_ID           Int               @id @default(autoincrement())
+  wdt_ID           Int                @id @default(autoincrement())
   name             String?
-  passcode         String?           @unique
-  phoneno          String?           @unique
+  passcode         String?            @unique
+  phoneno          String?            @unique
   country          String?
   status           String?
-  isKid            Boolean?          @default(false)
+  isKid            Boolean?           @default(false)
   // History of all packages (many-to-many)
-  packages         coursePackage[]   @relation("PackageHistory")
+  packages         coursePackage[]    @relation("PackageHistory")
   // Active package (one-to-one or many-to-one)
   ustaz            String?
-  ustazdata        ustaz?            @relation(fields: [ustaz], references: [ustazid])
+  ustazdata        ustaz?             @relation(fields: [ustaz], references: [ustazid])
   subject          String?
   package          String?
   terbiaAttendance tarbiaAttendance[]
   youtubeSubject   String?
-  activePackage    coursePackage?    @relation("ActivePackage", fields: [youtubeSubject], references: [id])
+  activePackage    coursePackage?     @relation("ActivePackage", fields: [youtubeSubject], references: [id])
   progress         studentProgress[]
   studentQuizzes   studentQuiz[]
   finalExamResults finalExamResult[]
-  chat_id          String?           @default("")
-  u_control        String?           @db.VarChar(255)
-  controller       controller?       @relation(fields: [u_control], references: [code])
+  chat_id          String?            @default("")
+  u_control        String?            @db.VarChar(255)
+  controller       controller?        @relation(fields: [u_control], references: [code])
 }
 
 model ustaz {
@@ -232,6 +232,7 @@ model ustaz {
   ustazid              String?               @unique @db.VarChar(255)
   userid               Int?
   username             String?               @db.VarChar(255)
+  chat_id              String?               @default("")
   stud_ustaz           wpos_wpdatatable_23[]
   coursePackage_usataz coursePackage[]
 
@@ -256,12 +257,12 @@ model controller {
 }
 
 model tarbiaAttendance {
-  id        String   @id @default(cuid())
-  studId    Int
-  student   wpos_wpdatatable_23 @relation(fields: [studId], references: [wdt_ID], onDelete: Cascade)
-  packageId String
-  coursesPackage coursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  status    Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String              @id @default(cuid())
+  studId         Int
+  student        wpos_wpdatatable_23 @relation(fields: [studId], references: [wdt_ID], onDelete: Cascade)
+  packageId      String
+  coursesPackage coursePackage       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  status         Boolean             @default(false)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 }

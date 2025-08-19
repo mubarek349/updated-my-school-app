@@ -176,11 +176,11 @@ export async function startBot() {
 
     for (const channel of channels) {
       const allChapterIds =
-      channel?.activePackage?.courses
-        ?.map((c) => c.chapters.map((ch) => ch.id))
-        ?.reduce((acc, cc) => [...acc, ...cc], []) ?? [];
-        const chapter1Id = allChapterIds[0];
-     
+        channel?.activePackage?.courses
+          ?.map((c) => c.chapters.map((ch) => ch.id))
+          ?.reduce((acc, cc) => [...acc, ...cc], []) ?? [];
+      const chapter1Id = allChapterIds[0];
+
       const activePackageName = channel.activePackage?.name;
 
       const {
@@ -458,32 +458,72 @@ export async function startBot() {
     }
   });
   // Ustaz command
-  bot.command("ustaz", async (ctx) => {
-    const chatId = ctx.chat?.id;
-    if (!chatId) {
-      return;
+  const pendingPassword = new Map<number, boolean>();
+
+bot.command("ustaz", async (ctx) => {
+  const chatId = ctx.chat?.id;
+  if (!chatId) return;
+
+  try {
+    const user = await prisma.ustaz.findFirst({
+      where: { chat_id: chatId + "" },
+    });
+
+    if (user) {
+      const keyboard = new InlineKeyboard().text("✉️ ሊንክ ላክ", "ustaz_send");
+      await ctx.reply(
+        "👋 እንኳን ወደ ኡስታዝ ፓነል በደህና መጡ!\n\n" +
+          "• <b>✉️ ሊንክ ላክ</b> – ለተመረጡ ተማሪዎች ሊንክ ይላኩ።",
+        { reply_markup: keyboard, parse_mode: "HTML" }
+      );
+    } else {
+      pendingPassword.set(chatId, true);
+      await ctx.reply("🔐 እባኮትን የኡስታዝ የይለፍ ቃልዎን ያስገቡ።");
     }
+  } catch (error) {
+    console.error("❌ DB ERROR:", error);
+    await ctx.reply("❌ የውሂብ ችግር።");
+  }
+});
+
+// Handle password reply
+bot.on("message:text", async (ctx) => {
+  const chatId = ctx.chat?.id;
+  const text = ctx.message?.text;
+  if (!chatId || !text) return;
+
+  if (pendingPassword.has(chatId)) {
     try {
-      const user = await prisma.ustaz.findFirst({
-        where: { userid: chatId },
+      const ustaz = await prisma.ustaz.findFirst({
+        where: { password: text },
+        select:{
+          wdt_ID: true,
+        }
       });
 
-      if (user) {
+      if (ustaz) {
+        await prisma.ustaz.updateMany({
+          where: { wdt_ID: ustaz.wdt_ID },
+          data: { chat_id: chatId.toString() },
+        });
+
+        pendingPassword.delete(chatId);
+
         const keyboard = new InlineKeyboard().text("✉️ ሊንክ ላክ", "ustaz_send");
         await ctx.reply(
-          "👋 እንኳን ወደ ኡስታዝ ፓነል በደህና መጡ!\n\n" +
-            "ከዚህ በታች ያለውን ቁልፍ በመጠቀም ለተማሪዎ ሊንክ መላክ ይችላሉ።\n\n" +
+          "✅ ምዝገባ ተሳክቷል። እንኳን ደህና መጡ!\n\n" +
             "• <b>✉️ ሊንክ ላክ</b> – ለተመረጡ ተማሪዎች ሊንክ ይላኩ።",
           { reply_markup: keyboard, parse_mode: "HTML" }
         );
       } else {
-        await ctx.reply("🚫 ይቅርታ፣ ወደ ኡስታዝ ፓነል መግባት አትችሉም።");
+        await ctx.reply("❌ የተሳሳተ የይለፍ ቃል። እባኮትን ደግመው ይሞክሩ።");
       }
     } catch (error) {
       console.error("❌ DB ERROR:", error);
       await ctx.reply("❌ የውሂብ ችግር።");
     }
-  });
+  }
+});
 
   // Step 0: When admin clicks "መልእክት ላክ", show two options
   bot.callbackQuery("admin_send", async (ctx) => {
@@ -949,26 +989,48 @@ export async function startBot() {
     );
     await ctx.reply("እባክዎ የመልእክት አይነት ይምረጡ:", { reply_markup: keyboard });
   });
-
+ 
   // Step 1a: If "Send by package" is selected, continue as before
   bot.callbackQuery("ustaz_send_package", async (ctx) => {
-    await ctx.answerCallbackQuery();
-    const packages = await allPackages();
-    if (!packages || packages.length === 0) {
-      await ctx.reply("ምንም ፓኬጅ አልተገኘም።");
-      return;
-    }
-    const keyboard = new InlineKeyboard();
-    for (const pkg of packages) {
-      keyboard
-        .text(
-          `${pkg.name} -- ጠቅላላ ተማሪ ${pkg.totalStudents}`,
-          `ustaz_package_${pkg.id}`
-        )
-        .row();
-    }
-    await ctx.reply("📦 ፓኬጅ ይምረጡ:", { reply_markup: keyboard });
+  await ctx.answerCallbackQuery();
+
+  const chatId = ctx.chat?.id;
+  if (!chatId) return;
+
+  // Step 1: Find the ustaz by chat_id
+  const ustaz = await prisma.ustaz.findFirst({
+    where: { chat_id: chatId.toString() },
   });
+
+  if (!ustaz) {
+    await ctx.reply("🚫 ይቅርታ፣ እባኮትን እርስዎን አልተመዘገቡም።");
+    return;
+  }
+
+  // Step 2: Get only packages assigned to this ustaz
+  const packages = await prisma.coursePackage.findMany({
+    where: { ustazId: ustaz.wdt_ID },
+  });
+
+  if (!packages || packages.length === 0) {
+    await ctx.reply("📦 ምንም ፓኬጅ አልተመዘገበም።");
+    return;
+  }
+
+  // Step 3: Build the keyboard
+  const keyboard = new InlineKeyboard();
+  for (const pkg of packages) {
+    keyboard
+      .text(
+        `${pkg.name}`,
+        `ustaz_package_${pkg.id}`
+      )
+      .row();
+  }
+
+  await ctx.reply("📦 የእርስዎን ፓኬጅ ይምረጡ:", { reply_markup: keyboard });
+});
+
 
   // Step 2: Show status options after package selection
   bot.callbackQuery(/ustaz_package_(.+)/, async (ctx) => {
