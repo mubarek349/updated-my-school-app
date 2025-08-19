@@ -241,7 +241,6 @@ export async function startBot() {
 
         hasSentReply = true;
       } else {
-        console.log("Student ID:", studentId);
         // Show available packages for selection
         const keyboard = new InlineKeyboard();
         for (const pkg of availablePackages) {
