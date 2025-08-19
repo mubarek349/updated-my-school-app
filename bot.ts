@@ -175,13 +175,20 @@ export async function startBot() {
     let hasSentReply = false;
 
     for (const channel of channels) {
+      const allChapterIds =
+      channel?.activePackage?.courses
+        ?.map((c) => c.chapters.map((ch) => ch.id))
+        ?.reduce((acc, cc) => [...acc, ...cc], []) ?? [];
+        const chapter1Id = allChapterIds[0];
+     
+      const activePackageName = channel.activePackage?.name;
+
       const {
         package: packageType,
         subject,
         isKid,
         wdt_ID: studentId,
         name: channelName,
-        activePackage,
       } = channel;
 
       // Validate essential channel data
@@ -197,20 +204,18 @@ export async function startBot() {
       const validPackages = availablePackages.filter((pkg) => pkg.id);
       const isSinglePackage = validPackages.length === 1;
 
-      if (isSinglePackage && activePackage?.courses?.[0]?.chapters?.[0]) {
-        const course = activePackage.courses[0];
-        const chapter = course.chapters[0];
-
+      if (isSinglePackage) {
+        // Check if student progress exists
         // Ensure student progress is initialized
         const existingProgress = await prisma.studentProgress.findFirst({
-          where: { studentId, chapterId: chapter.id },
+          where: { studentId, chapterId: chapter1Id },
         });
 
         if (!existingProgress) {
           await prisma.studentProgress.create({
             data: {
               studentId,
-              chapterId: chapter.id,
+              chapterId: chapter1Id,
               isCompleted: false,
             },
           });
@@ -223,7 +228,7 @@ export async function startBot() {
         const [courseId, chapterId] = progressPath;
         const url = `${BASE_URL}/${lang}/${stud}/${studentId}/${courseId}/${chapterId}`;
 
-        const packageName = activePackage.name || "የተማሪ ፓኬጅ";
+        const packageName = activePackageName || "የተማሪ ፓኬጅ";
         const keyboard = new InlineKeyboard().webApp(
           `📚 የ${channelName || "ዳሩል-ኩብራ"}ን የ${packageName}ትምህርት ገጽ ይክፈቱ`,
           url
@@ -236,6 +241,7 @@ export async function startBot() {
 
         hasSentReply = true;
       } else {
+        console.log("Student ID:", studentId);
         // Show available packages for selection
         const keyboard = new InlineKeyboard();
         for (const pkg of availablePackages) {
