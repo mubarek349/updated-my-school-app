@@ -251,7 +251,7 @@ function Page() {
           ) : (
             <>
               <iframe
-                className="w-full mx-auto aspect-video max-md:sticky top-0 z-50 rounded-lg shadow-lg"
+                className="w-full text-sm mx-auto aspect-video max-md:sticky top-0 z-50 rounded-lg shadow-lg"
                 src={
                   data && "chapter" in data && data.chapter?.videoUrl
                     ? `https://www.youtube.com/embed/${data.chapter.videoUrl}`
