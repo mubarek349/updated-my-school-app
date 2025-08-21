@@ -38,10 +38,11 @@ export default async function getCertificateData(
     }
     const cId = coursesPackage.id;
     const cName = coursesPackage.name;
-    const result = (await correctExamAnswer(coursesPackageId, studentId))?.result;
-    if(!result){
-        return undefined;
-      }
+    const result = (await correctExamAnswer(coursesPackageId, studentId))
+      ?.result;
+    if (!result) {
+      return undefined;
+    }
     const finalUpdatedTime = await prisma.finalExamResult.findFirst({
       where: { studentId, packageId: coursesPackageId },
       select: {
@@ -49,11 +50,8 @@ export default async function getCertificateData(
         startingTime: true,
       },
     });
-    if (!finalUpdatedTime || !finalUpdatedTime.endingTime) {
-      throw Error("the endingTime is not setted");
-    }
-    const endTime = finalUpdatedTime.endingTime;
-    const startTime = finalUpdatedTime.startingTime;
+    const endTime = finalUpdatedTime?.endingTime ?? new Date();
+    const startTime = finalUpdatedTime?.startingTime ?? new Date();
     return {
       studId,
       sName,
