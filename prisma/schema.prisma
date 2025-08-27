@@ -97,7 +97,7 @@ model question {
   chapterId       String?
   coursePackage   coursePackage?   @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId       String?
-  question        String
+  question        String  @db.Text
   questionOptions questionOption[]
   questionAnswer  questionAnswer[]
   studentQuiz     studentQuiz[]

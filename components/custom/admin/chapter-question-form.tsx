@@ -32,16 +32,6 @@ interface ChapterQuestionFormProps {
   coursesPackageId: string;
 }
 
-// const formSchema = z.object({
-//   title: z.string().min(1, "Title is required"),
-//   options: z
-//     .array(z.string().nonempty("Option is required"))
-//     .min(2, "At least two options are required"),
-//   answers: z
-//     .array(z.string().min(1, "Option is required"))
-//     .min(1, "At least two options are required"),
-// });
-
 export const ChapterQuestionForm = ({
   initialData,
   courseId,
@@ -101,9 +91,9 @@ export const ChapterQuestionForm = ({
       if (result.status === 200) {
         toast.success(result.message ?? "Question Deleted");
         router.refresh();
-      } else{
+      } else {
         toast.error(result.error ?? "");
-      } 
+      }
     } catch (error) {
       console.error("Delete Error:", error);
       toast.error("Failed to delete the question.");
@@ -152,6 +142,24 @@ export const ChapterQuestionForm = ({
                       placeholder="e.g. 'What is the main concept of this chapter?'"
                       className="resize-none text-sm"
                       {...field}
+                      onPaste={(e) => {
+                        e.preventDefault(); // Prevent default paste behavior
+                        const pastedText = e.clipboardData.getData("text");
+                        const lines = pastedText
+                          .split(/\r?\n/)
+                          .filter((line) => line.trim() !== "");
+
+                        form.setValue("title", lines.shift() ?? "");
+
+                        lines.forEach((line, i) => {
+                          if (fields[i]) {
+                            form.setValue(`options.${i}`, line);
+                          } else {
+                            // Optionally add new fields if needed
+                            append(line);
+                          }
+                        });
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

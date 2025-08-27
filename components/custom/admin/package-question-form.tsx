@@ -223,6 +223,24 @@ export const PackageQuestionForm = ({
                       disabled={isSubmitting}
                       placeholder="e.g. 'What is the main concept of this package?'"
                       {...field}
+                      onPaste={(e) => {
+                        e.preventDefault(); // Prevent default paste behavior
+                        const pastedText = e.clipboardData.getData("text");
+                        const lines = pastedText
+                          .split(/\r?\n/)
+                          .filter((line) => line.trim() !== "");
+
+                        form.setValue("title", lines.shift() ?? "");
+
+                        lines.forEach((line, i) => {
+                          if (fields[i]) {
+                            form.setValue(`options.${i}`, line);
+                          } else {
+                            // Optionally add new fields if needed
+                            append(line);
+                          }
+                        });
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
