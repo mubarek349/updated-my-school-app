@@ -36,6 +36,7 @@ function Page() {
     { key: "ustazname", label: "Ustaz Name" },
     { key: "activePackage", label: "activePackage" },
     { key: "studentProgress", label: "Student Progress" },
+    { key: "lastseen", label: "Last Seen" },
     { key: "finalExamStatus", label: "Final Exam Status" },
     { key: "result", label: "Result" },
     { key: "attendances", label: "Attendances" },
@@ -52,6 +53,7 @@ function Page() {
           whatsapplink: row?.whatsapplink ?? "-",
           activePackage: row?.activePackage ?? "",
           studentProgress: row?.studentProgress ?? "",
+          lastseen: row?.lastseen ?? "",
           ustazname: row?.ustazname ?? "",
           finalExamStatus: row?.hasFinalExam
             ? row.isUpdateProhibited

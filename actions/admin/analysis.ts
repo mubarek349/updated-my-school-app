@@ -7,6 +7,7 @@ import {
   checkingUpdateProhibition,
 } from "../student/finalExamResult";
 import { getAttendanceofAllStudents } from "../student/attendance";
+import { differenceInDays } from "date-fns";
 
 export async function getStudentProgressStatus(
   studentId: number,
@@ -1079,7 +1080,6 @@ export async function getStudentAnalyticsperPackage(
       let result = { total: 0, correct: 0, score: 0 };
       let hasFinalExam = false;
       let isUpdateProhibited = false;
-
       if (progress === "completed") {
         const [examData, finalExamStatus, updateProhibition] =
           await Promise.all([
@@ -1098,6 +1098,7 @@ export async function getStudentAnalyticsperPackage(
         absent: 0,
       };
       const totalSessions = attendance.present + attendance.absent;
+      const lastseen = await getLastSeen(student.wdt_ID);
 
       return {
         id: student.wdt_ID,
@@ -1112,6 +1113,7 @@ export async function getStudentAnalyticsperPackage(
         studentProgress: progress,
         result,
         hasFinalExam,
+        lastseen,
         isUpdateProhibited,
         attendances: `P-${attendance.present} A-${attendance.absent} T-${totalSessions}`,
       };
@@ -1239,4 +1241,32 @@ export async function sendProgressMessages() {
   // Return array of { chatid, progress }
   console.log("Students with progress:", studentsWithProgress);
   return studentsWithProgress;
+}
+
+async function getLastSeen(studentId: number): Promise<string> {
+  const lastProgressUpdatedDate = await prisma.studentProgress.findFirst({
+    where: {
+      studentId,
+    },
+    select: {
+      updatedAt: true,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+
+  if (!lastProgressUpdatedDate) return "-";
+
+  const daysAgo = differenceInDays(
+    new Date(),
+    lastProgressUpdatedDate.updatedAt
+  );
+
+  if (daysAgo === 0) return "Today";
+  if (daysAgo === 1) return "1 day ago";
+  if (daysAgo === 2) return "2 days ago";
+  if (daysAgo === 3) return "3 days ago";  
+
+  return `${daysAgo}+ days ago`;
 }
