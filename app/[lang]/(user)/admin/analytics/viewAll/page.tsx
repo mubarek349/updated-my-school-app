@@ -36,7 +36,7 @@ function Page() {
     { key: "ustazname", label: "Ustaz Name" },
     { key: "activePackage", label: "activePackage" },
     { key: "studentProgress", label: "Student Progress" },
-    { key: "lastseen", label: "Last Seen" },
+    { key: "lastseen", label: "Last Seen " },
     { key: "finalExamStatus", label: "Final Exam Status" },
     { key: "result", label: "Result" },
     { key: "attendances", label: "Attendances" },
