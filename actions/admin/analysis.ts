@@ -146,7 +146,7 @@ export async function filterStudentsByPackageandStatus(
 // All students assigned to a specific package
 export async function getStudentsByPackage(
   packageId: string
-): Promise<{ chat_id: string | null; wdt_ID: number; name: string|null }[]> {
+): Promise<{ chat_id: string | null; wdt_ID: number; name: string | null }[]> {
   const subjectPackages = await prisma.subjectPackage.findMany({
     where: { packageId },
     select: {
@@ -186,7 +186,7 @@ export async function getStudentsByPackage(
 export async function getStudentsByPackageAndTeacher(
   packageId: string,
   ustazId: string
-): Promise<{ chat_id: string | null; wdt_ID: number; name: string |null}[]> {
+): Promise<{ chat_id: string | null; wdt_ID: number; name: string | null }[]> {
   const subjectPackages = await prisma.subjectPackage.findMany({
     where: { packageId },
     select: {
@@ -946,13 +946,43 @@ export async function getStudentAnalyticsperchapter(
     },
   };
 }
+async function getLastSeen(studentId: number): Promise<string> {
+  const lastProgressUpdatedDate = await prisma.studentProgress.findFirst({
+    where: {
+      studentId,
+    },
+    select: {
+      updatedAt: true,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
 
+  if (!lastProgressUpdatedDate) return "-";
+
+  const daysAgo = differenceInDays(
+    new Date(),
+    lastProgressUpdatedDate.updatedAt
+  );
+
+  if (daysAgo === 0) return "Today";
+  if (daysAgo === 1) return "1 day ago";
+  if (daysAgo <= 7) return `${daysAgo} days ago`;
+  if (daysAgo <= 14) return "1 week ago";
+  if (daysAgo <= 30) return `${Math.floor(daysAgo / 7)} weeks ago`;
+  if (daysAgo <= 60) return "1 month ago";
+  if (daysAgo <= 365) return `${Math.floor(daysAgo / 30)} months ago`;
+  if (daysAgo <= 730) return "1 year ago";
+  return `${Math.floor(daysAgo / 365)} years ago`;
+}
 export async function getStudentAnalyticsperPackage(
   searchTerm?: string,
   currentPage: number = 1,
   itemsPerPage: number = 10,
   progressFilter?: "notstarted" | "inprogress" | "completed" | "all",
-  statusFilter?: "notstarted" | "inprogress" | "failed" | "passed" | "all"
+  statusFilter?: "notstarted" | "inprogress" | "failed" | "passed" | "all",
+  lastSeenFilter?: "today" | "1day" | "2days" | "3days" | "3plus" | "all"
 ) {
   const skip = (currentPage - 1) * itemsPerPage;
 
@@ -1156,7 +1186,29 @@ export async function getStudentAnalyticsperPackage(
     });
   }
 
-  // 8. Paginate
+  // 8. Filter by last seen
+  if (lastSeenFilter && lastSeenFilter !== "all") {
+    filteredStudents = filteredStudents.filter((student) => {
+      if (!student) return false;
+      const { lastseen } = student;
+      switch (lastSeenFilter) {
+        case "today":
+          return lastseen === "Today";
+        case "1day":
+          return lastseen === "1 day ago";
+        case "2days":
+          return lastseen === "2 days ago";
+        case "3days":
+          return lastseen === "3 days ago";
+        case "3plus":
+          return lastseen.includes("+ days ago");
+        default:
+          return true;
+      }
+    });
+  }
+
+  // 9. Paginate
   const totalRecords = filteredStudents.length;
   const totalPages = Math.ceil(totalRecords / itemsPerPage);
   const paginatedStudents = filteredStudents.slice(skip, skip + itemsPerPage);
@@ -1172,6 +1224,90 @@ export async function getStudentAnalyticsperPackage(
       hasPreviousPage: currentPage > 1,
     },
   };
+}
+
+export async function getAvailablePackagesForStudent(studentId: number) {
+  // Get student details
+  const student = await prisma.wpos_wpdatatable_23.findUnique({
+    where: { wdt_ID: studentId },
+    select: {
+      subject: true,
+      package: true,
+      isKid: true,
+      youtubeSubject: true, // Current active package
+    },
+  });
+
+  if (!student) return [];
+
+  // Get all packages available for this student's subject/package/isKid combination
+  const availablePackages = await prisma.subjectPackage.findMany({
+    where: {
+      subject: student.subject,
+      packageType: student.package,
+      kidpackage: student.isKid,
+    },
+    select: {
+      packageId: true,
+      package: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  // For each package, get the student's progress status and details
+  const packagesWithProgress = await Promise.all(
+    availablePackages.map(async (pkg) => {
+      const progress = await getStudentProgressStatus(studentId, pkg.packageId);
+
+      let status: "notstarted" | "inprogress" | "completed" = "notstarted";
+      let progressDetails = null;
+
+      if (progress === "completed") {
+        status = "completed";
+      } else if (progress !== "notstarted") {
+        status = "inprogress";
+        progressDetails = progress; // This contains the detailed progress string
+      }
+
+      // Get total chapters and completed chapters for progress percentage
+      const chapters = await prisma.chapter.findMany({
+        where: { course: { packageId: pkg.packageId } },
+        select: { id: true },
+      });
+      const chapterIds = chapters.map((ch) => ch.id);
+
+      const completedChapters = await prisma.studentProgress.count({
+        where: {
+          studentId,
+          chapterId: { in: chapterIds },
+          isCompleted: true,
+        },
+      });
+
+      const progressPercentage =
+        chapterIds.length > 0
+          ? Math.round((completedChapters / chapterIds.length) * 100)
+          : 0;
+      const isActive = student.youtubeSubject === pkg.packageId;
+
+      return {
+        id: pkg.package.id,
+        name: pkg.package.name,
+        status,
+        progressDetails,
+        progressPercentage,
+        totalChapters: chapterIds.length,
+        completedChapters,
+        isActive,
+      };
+    })
+  );
+
+  return packagesWithProgress;
 }
 
 export async function sendProgressMessages() {
@@ -1241,32 +1377,4 @@ export async function sendProgressMessages() {
   // Return array of { chatid, progress }
   console.log("Students with progress:", studentsWithProgress);
   return studentsWithProgress;
-}
-
-async function getLastSeen(studentId: number): Promise<string> {
-  const lastProgressUpdatedDate = await prisma.studentProgress.findFirst({
-    where: {
-      studentId,
-    },
-    select: {
-      updatedAt: true,
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-  });
-
-  if (!lastProgressUpdatedDate) return "-";
-
-  const daysAgo = differenceInDays(
-    new Date(),
-    lastProgressUpdatedDate.updatedAt
-  );
-
-  if (daysAgo === 0) return "Today";
-  if (daysAgo === 1) return "1 day ago";
-  if (daysAgo === 2) return "2 days ago";
-  if (daysAgo === 3) return "3 days ago";  
-
-  return `${daysAgo}+ days ago`;
 }

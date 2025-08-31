@@ -32,6 +32,7 @@ interface CustomViewAllTableProps {
   searchValue: string;
   onSearch: (value: string) => void;
   isLoading?: boolean;
+  onActivePackageClick?: (studentId: string) => void;
 }
 
 const PAGE_SIZES = [10, 25, 100, 250, 500];
@@ -47,6 +48,7 @@ export default function CustomViewAllTable({
   searchValue,
   onSearch,
   isLoading = false,
+  onActivePackageClick,
 }: CustomViewAllTableProps) {
   const totalPages = Math.max(Math.ceil(totalRows / pageSize), 1);
 
@@ -157,6 +159,13 @@ export default function CustomViewAllTable({
                             style={{ objectFit: "contain", borderRadius: 6 }}
                           />
                         </a>
+                      ) : col.key === "activePackage" && onActivePackageClick ? (
+                        <button
+                          onClick={() => onActivePackageClick(String(row.id || row.key))}
+                          className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                        >
+                          {row[col.key]}
+                        </button>
                       ) : (
                         row[col.key]
                       )}
