@@ -62,7 +62,7 @@ export async function authenticate(
       redirectTo: "/en/admin/coursesPackages",
     };
   } catch (err) {
-    console.error("Authentication error:", err);
+    console.log("Authentication error:", err);
     // Map common auth errors to clean, user-safe messages. Avoid returning raw error objects.
     const message = deriveAuthMessage(err);
     const field = deriveField(err);
