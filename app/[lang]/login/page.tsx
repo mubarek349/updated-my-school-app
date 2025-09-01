@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useTransition } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,38 +28,38 @@ function LoginPage() {
     reValidateMode: "onBlur",
   });
 
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
-  const onSubmit = (values: FormValues) => {
-    startTransition(async () => {
-      try {
-        const result = await authenticate(values);
+  const onSubmit = async (values: FormValues) => {
+    setPending(true);
+    try {
+      const result = await authenticate(values);
 
-        if (result?.ok) {
-          toast.success(result.message);
-          router.push(result.redirectTo ?? "/en/admin/coursesPackages");
-          return;
-        }
+      if (result?.ok) {
+        toast.success(result.message);
+        router.push(result.redirectTo ?? "/en/admin/coursesPackages");
+        return;
+      }
 
-        // Show precise inline error when possible
-        if (result?.field && result.field !== "form") {
-          setError(result.field, { type: "server", message: result.message });
-        } else {
-          setError("root", {
-            type: "server",
-            message: result?.message || "Authentication failed",
-          });
-        }
-        toast.error(result?.message || "Authentication failed");
-      } catch (error) {
-        console.error("Authentication error:", error);
+      if (result?.field && result.field !== "form") {
+        setError(result.field, { type: "server", message: result.message });
+      } else {
         setError("root", {
           type: "server",
-          message: "Authentication failed. Please try again.",
+          message: result?.message || "Authentication failed",
         });
-        toast.error("Authentication failed. Please try again.");
       }
-    });
+      toast.error(result?.message || "Authentication failed");
+    } catch (error) {
+      console.error("Authentication error:", error);
+      setError("root", {
+        type: "server",
+        message: "Authentication failed. Please try again.",
+      });
+      toast.error("Authentication failed. Please try again.");
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
