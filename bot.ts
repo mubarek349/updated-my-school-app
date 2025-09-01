@@ -1251,6 +1251,10 @@ export async function startBot() {
     console.log("Running progress notification job...");
     console.log("Current time:", new Date().toLocaleString());
     console.log("current time zone  >>>", new Date().getTimezoneOffset());
+    const today = new Date();
+    const dayOfMonth = today.getDate();
+
+    if (dayOfMonth % 3 !== 0) return;
     try {
       const studentsWithProgress = await sendProgressMessages();
 
