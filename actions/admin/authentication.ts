@@ -1,6 +1,6 @@
 "use server";
 
-import { signOut } from "@/auth";
+import { signIn, signOut } from "@/auth";
 import { auth } from "@/auth";
 import { loginSchema } from "@/lib/zodSchema";
 import { redirect } from "next/navigation";
@@ -33,6 +33,7 @@ function normalizePhone(phone: string) {
 export async function authenticate(
   raw: z.infer<typeof loginSchema>
 ): Promise<AuthResult> {
+  // Validate on the server as well (never trust client)
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
     return {
@@ -47,63 +48,53 @@ export async function authenticate(
   const phoneno = normalizePhone(data.phoneno);
 
   try {
-    const admin = await prisma.admin.findFirst({
-      where: {
-        phoneno: phoneno,
-        passcode: data.passcode,
-      },
+    // In NextAuth v5, signIn throws on failure. We keep redirect disabled and handle client-side navigation.
+    await signIn("credentials", {
+      phoneno,
+      passcode: data.passcode,
+      redirect: false,
     });
 
-    if (!admin) {
-      return {
-        ok: false,
-        message: "Invalid phone number or password.",
-        field: "form",
-      };
-    }
-
+    // Optional: Hand back a canonical post-login path for the client to use.
     return {
       ok: true,
       message: "Login successful",
-      redirectTo: "/",
+      redirectTo: "/en/admin/coursesPackages",
     };
   } catch (err) {
     console.log("Authentication error:", err);
-    return {
-      ok: false,
-      message: "Authentication service unavailable",
-      field: "form",
-    };
+    // Map common auth errors to clean, user-safe messages. Avoid returning raw error objects.
+    const message = deriveAuthMessage(err);
+    const field = deriveField(err);
+    return { ok: false, message, field };
   }
 }
 
-// function deriveAuthMessage(err: unknown): string {
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   const msg =
-//     typeof err === "object" && err !== null
-//       ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//         String((err as any).message ?? "")
-//       : String(err ?? "");
-//   // Common NextAuth credential error identifiers
-//   if (msg.includes("CredentialsSignin"))
-//     return "Invalid phone number or password.";
-//   if (msg.toLowerCase().includes("accessdenied"))
-//     return "You don’t have access to this resource.";
-//   // Fallback
-//   return "Unable to sign in. Please try again.";
-// }
+function deriveAuthMessage(err: unknown): string {
+  const msg =
+    typeof err === "object" && err !== null
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        String((err as any).message ?? "")
+      : String(err ?? "");
+  // Common NextAuth credential error identifiers
+  if (msg.includes("CredentialsSignin"))
+    return "Invalid phone number or password.";
+  if (msg.toLowerCase().includes("accessdenied"))
+    return "You don’t have access to this resource.";
+  // Fallback
+  return "Unable to sign in. Please try again.";
+}
 
-// function deriveField(err: unknown): "phoneno" | "passcode" | "form" {
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   const msg =
-//     typeof err === "object" && err !== null
-//       ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//         String((err as any).message ?? "")
-//       : String(err ?? "");
-//   if (msg.toLowerCase().includes("password")) return "passcode";
-//   if (msg.toLowerCase().includes("phone")) return "phoneno";
-//   return "form";
-// }
+function deriveField(err: unknown): "phoneno" | "passcode" | "form" {
+  const msg =
+    typeof err === "object" && err !== null
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        String((err as any).message ?? "")
+      : String(err ?? "");
+  if (msg.toLowerCase().includes("password")) return "passcode";
+  if (msg.toLowerCase().includes("phone")) return "phoneno";
+  return "form";
+}
 
 export async function logout(): Promise<AuthResults> {
   try {
@@ -205,7 +196,6 @@ export async function getCurrentUser(): Promise<UserData> {
   }
 }
 
-// Helper function for redirecting unauthenticated users
 export async function requireAuthentication(redirectTo = "/en/login") {
   const isAuth = await checkAuthentication();
 
