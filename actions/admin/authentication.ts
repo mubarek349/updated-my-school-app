@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn, signOut } from "@/auth";
+import { signOut } from "@/auth";
 import { auth } from "@/auth";
 import { loginSchema } from "@/lib/zodSchema";
 import { redirect } from "next/navigation";
@@ -33,7 +33,6 @@ function normalizePhone(phone: string) {
 export async function authenticate(
   raw: z.infer<typeof loginSchema>
 ): Promise<AuthResult> {
-  // Validate on the server as well (never trust client)
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
     return {
@@ -48,55 +47,63 @@ export async function authenticate(
   const phoneno = normalizePhone(data.phoneno);
 
   try {
-    // In NextAuth v5, signIn throws on failure. We keep redirect disabled and handle client-side navigation.
-    await signIn("credentials", {
-      phoneno,
-      passcode: data.passcode,
-      redirect: false,
+    const admin = await prisma.admin.findFirst({
+      where: {
+        phoneno: phoneno,
+        passcode: data.passcode,
+      },
     });
 
-    // Optional: Hand back a canonical post-login path for the client to use.
+    if (!admin) {
+      return {
+        ok: false,
+        message: "Invalid phone number or password.",
+        field: "form",
+      };
+    }
+
     return {
       ok: true,
       message: "Login successful",
-      redirectTo: "/en/admin/coursesPackages",
+      redirectTo: "/",
     };
   } catch (err) {
     console.log("Authentication error:", err);
-    // Map common auth errors to clean, user-safe messages. Avoid returning raw error objects.
-    const message = deriveAuthMessage(err);
-    const field = deriveField(err);
-    return { ok: false, message, field };
+    return {
+      ok: false,
+      message: "Authentication service unavailable",
+      field: "form",
+    };
   }
 }
 
-function deriveAuthMessage(err: unknown): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const msg =
-    typeof err === "object" && err !== null
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        String((err as any).message ?? "")
-      : String(err ?? "");
-  // Common NextAuth credential error identifiers
-  if (msg.includes("CredentialsSignin"))
-    return "Invalid phone number or password.";
-  if (msg.toLowerCase().includes("accessdenied"))
-    return "You don’t have access to this resource.";
-  // Fallback
-  return "Unable to sign in. Please try again.";
-}
+// function deriveAuthMessage(err: unknown): string {
+//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//   const msg =
+//     typeof err === "object" && err !== null
+//       ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//         String((err as any).message ?? "")
+//       : String(err ?? "");
+//   // Common NextAuth credential error identifiers
+//   if (msg.includes("CredentialsSignin"))
+//     return "Invalid phone number or password.";
+//   if (msg.toLowerCase().includes("accessdenied"))
+//     return "You don’t have access to this resource.";
+//   // Fallback
+//   return "Unable to sign in. Please try again.";
+// }
 
-function deriveField(err: unknown): "phoneno" | "passcode" | "form" {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const msg =
-    typeof err === "object" && err !== null
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        String((err as any).message ?? "")
-      : String(err ?? "");
-  if (msg.toLowerCase().includes("password")) return "passcode";
-  if (msg.toLowerCase().includes("phone")) return "phoneno";
-  return "form";
-}
+// function deriveField(err: unknown): "phoneno" | "passcode" | "form" {
+//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//   const msg =
+//     typeof err === "object" && err !== null
+//       ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//         String((err as any).message ?? "")
+//       : String(err ?? "");
+//   if (msg.toLowerCase().includes("password")) return "passcode";
+//   if (msg.toLowerCase().includes("phone")) return "phoneno";
+//   return "form";
+// }
 
 export async function logout(): Promise<AuthResults> {
   try {
