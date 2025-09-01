@@ -1,6 +1,7 @@
 "use server";
 
-import { signIn, signOut } from "@/auth";
+import { signOut } from "@/auth";
+import { signIn } from "next-auth/react";
 import { auth } from "@/auth";
 import { loginSchema } from "@/lib/zodSchema";
 import { redirect } from "next/navigation";
