@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/zodSchema";
-import { authenticate } from "@/actions/admin/authentication";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -32,8 +31,22 @@ function LoginPage() {
 
   const onSubmit = async (values: FormValues) => {
     setPending(true);
+
+    // Create FormData to avoid server action binding issues
+    const formData = new FormData();
+    formData.append("phoneno", values.phoneno);
+    formData.append("passcode", values.passcode);
+
     try {
-      const result = await authenticate(values);
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      const result = await response.json();
 
       if (result?.ok) {
         toast.success(result.message);
