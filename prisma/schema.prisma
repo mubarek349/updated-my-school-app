@@ -189,13 +189,12 @@ model finalExamResult {
 }
 
 model admin {
-  id            String          @id @default(cuid())
-  name          String
-  phoneno       String          @unique
-  chat_id       String          @unique
-  passcode      String
-  createdAt     DateTime        @default(now())
-  qandAResponse qandAResponse[]
+  id        String   @id @default(cuid())
+  name      String
+  phoneno   String   @unique
+  chat_id   String   @unique
+  passcode  String
+  createdAt DateTime @default(now())
 }
 
 model wpos_wpdatatable_23 {
@@ -301,8 +300,6 @@ model qandAResponse {
   response        String        @db.Text
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  admin           admin?        @relation(fields: [adminId], references: [id])
-  adminId         String?
 
   @@index([videoQuestionId])
   @@index([ustazId])

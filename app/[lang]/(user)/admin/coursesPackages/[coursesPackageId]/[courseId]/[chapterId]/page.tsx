@@ -9,6 +9,7 @@ import { ChapterVideoForm } from "@/components/custom/admin/chapter-video-form";
 import { Banner } from "@/components/custom/admin/banner";
 import { ChapterActions } from "@/components/custom/admin/chapter-action";
 import { ChapterQuestionForm } from "@/components/custom/admin/chapter-question-form";
+// import VideoUploadButton from "@/components/VideoUploadButton";
 
 const ChapterIdPage = async ({
   params,
@@ -114,6 +115,12 @@ const ChapterIdPage = async ({
                 courseId={courseId}
                 chapterId={chapterId} // Pass chapterId to the for
               />
+              {/* <VideoUploadButton
+                coursesPackageId={coursesPackageId}
+                initialData={chapter}
+                courseId={courseId}
+                chapterId={chapterId} // Pass chapterId to the for
+              /> */}
             </div>
             <div>
               <div className="flex items-center gap-x-2">

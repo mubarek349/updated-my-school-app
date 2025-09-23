@@ -33,11 +33,7 @@ function LoginPage() {
   const onSubmit = async (values: FormValues) => {
     setPending(true);
     try {
-      const result = await authenticate(values).catch(() => ({
-        ok: false,
-        message: "Authentication service unavailable",
-        field: "form" as const,
-      }));
+      const result = await authenticate(values);
 
       if (result?.ok) {
         toast.success(result.message);
@@ -56,6 +52,14 @@ function LoginPage() {
       }
       toast.error(result?.message || "Authentication failed");
     } catch (error) {
+      // Check if it's a Next.js redirect error (which is expected)
+      if (error && typeof error === 'object' && 'digest' in error && 
+          typeof error.digest === 'string' && error.digest.includes('NEXT_REDIRECT')) {
+        // This is a successful redirect, show success toast
+        toast.success('Login successful');
+        return;
+      }
+      
       console.error("Authentication error:", error);
       setError("root", {
         type: "server",

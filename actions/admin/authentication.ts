@@ -1,7 +1,6 @@
 "use server";
 
-import { signOut } from "@/auth";
-import { signIn } from "next-auth/react";
+import { signOut, signIn } from "@/auth";
 import { auth } from "@/auth";
 import { loginSchema } from "@/lib/zodSchema";
 import { redirect } from "next/navigation";
@@ -49,52 +48,23 @@ export async function authenticate(
   const phoneno = normalizePhone(data.phoneno);
 
   try {
-    // In NextAuth v5, signIn throws on failure. We keep redirect disabled and handle client-side navigation.
+    // Use NextAuth signIn to create session
     await signIn("credentials", {
       phoneno,
       passcode: data.passcode,
       redirect: false,
     });
-
-    // Optional: Hand back a canonical post-login path for the client to use.
-    return {
-      ok: true,
-      message: "Login successful",
-      redirectTo: "/en/admin/coursesPackages",
-    };
   } catch (err) {
     console.log("Authentication error:", err);
-    // Map common auth errors to clean, user-safe messages. Avoid returning raw error objects.
-    const message = deriveAuthMessage(err);
-    const field = deriveField(err);
-    return { ok: false, message, field };
+    return {
+      ok: false,
+      message: "Invalid phone number or password.",
+      field: "form",
+    };
   }
-}
 
-function deriveAuthMessage(err: unknown): string {
-  const msg =
-    typeof err === "object" && err !== null
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        String((err as any).message ?? "")
-      : String(err ?? "");
-  // Common NextAuth credential error identifiers
-  if (msg.includes("CredentialsSignin"))
-    return "Invalid phone number or password.";
-  if (msg.toLowerCase().includes("accessdenied"))
-    return "You don’t have access to this resource.";
-  // Fallback
-  return "Unable to sign in. Please try again.";
-}
-
-function deriveField(err: unknown): "phoneno" | "passcode" | "form" {
-  const msg =
-    typeof err === "object" && err !== null
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        String((err as any).message ?? "")
-      : String(err ?? "");
-  if (msg.toLowerCase().includes("password")) return "passcode";
-  if (msg.toLowerCase().includes("phone")) return "phoneno";
-  return "form";
+  // Redirect server-side after successful authentication
+  redirect("/en/admin/coursesPackages");
 }
 
 export async function logout(): Promise<AuthResults> {
