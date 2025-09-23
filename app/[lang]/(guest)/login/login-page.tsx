@@ -8,9 +8,10 @@ import useAction from "@/hooks/useAction";
 import { authenticate } from "@/actions/admin/authentication";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Loading from "@/components/custom/common/loading"; // Optional: if you're using a custom one
+import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 function LoginPage() {
   const {
@@ -22,12 +23,13 @@ function LoginPage() {
   });
 
   const router = useRouter();
-
   const [, action, loading] = useAction(authenticate, [
-    undefined,
+    ,
     (response) => {
-      console.log("Response from action:", response);
-      if (response?.message == "Login successful") {
+      if (response) {
+        toast.error("Login failed");
+      } else {
+        toast.success("Login successful!");
         router.push("/en/admin/coursesPackages");
       }
     },
@@ -88,7 +90,11 @@ function LoginPage() {
             )}
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? <Loading /> : "Login"}
+            {loading ? (
+              <Loader2 className="animate-spin w-5 h-5 mx-auto" />
+            ) : (
+              "Login12"
+            )}
           </Button>
         </form>
       </div>

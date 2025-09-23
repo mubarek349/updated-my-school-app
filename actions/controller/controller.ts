@@ -7,18 +7,8 @@ export async function getStudentAnalyticsperPackageForEachController(
   currentPage?: number,
   itemsPerPage?: number,
   progressFilter?: "notstarted" | "inprogress" | "completed" | "all",
-  controllerId?: string | number
+  controllerId?: string
 ) {
-  // gate the code from the login user session id thn the login user is a controller
-  // const session = await auth();
-  // const wdt_ID = Number(session?.user?.id);
-  // if (!session) {
-  //   throw new Error("Unauthorized");
-  // }
-  // if (!wdt_ID) {
-  //   throw new Error("Invalid user ID");
-  // }
-
   // gate the code of login controller
   const code = await prisma.controller.findFirst({
     where: {

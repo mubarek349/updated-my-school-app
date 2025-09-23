@@ -13,6 +13,8 @@
 # testing
 /coverage
 
+# video prevent
+/fuad
 # next.js
 /.next/
 /out/

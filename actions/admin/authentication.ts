@@ -1,8 +1,8 @@
 "use server";
 
-import { signOut } from "@/auth";
+import { signOut } from "@/lib/auth";
 import { signIn } from "next-auth/react";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { loginSchema } from "@/lib/zodSchema";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/db";

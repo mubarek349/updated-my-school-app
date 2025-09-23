@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const hostname = process.env.HOST || "localhost",
-  port = parseInt(process.env.PORT || "3200", 10),
+  port = parseInt(process.env.PORT || "3000", 10),
   dev = process.env.NODE_ENV !== "production",
   app = next({ dev, hostname, port, turbo: true });
 

@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       currentPage,
       itemsPerPage,
       progressFilter,
-      Number(session.user.id) // Ensure ID is a number
+      (session.user.id) // Ensure ID is a number
     );
     return NextResponse.json(data);
   } catch (error) {
