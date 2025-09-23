@@ -24,9 +24,7 @@ const prisma = new PrismaClient();
         subject: "hifz",
         package: "kids",
         chat_id: "973677019",
-        country: "Ethiopia",
-        ustaz: "ustaz_002", // assign ustaz by wdt_ID
-        u_control: "ctrl_001", // relation to controller.code
+        country: "Ethiopia", // added country
       },
       {
         wdt_ID: 1002,
@@ -37,9 +35,7 @@ const prisma = new PrismaClient();
         phoneno: "0910203041",
         status: "Active",
         chat_id: "611321369",
-        country: "Saudi Arabia",
-        ustaz: "ustaz_002", // assign ustaz by wdt_ID
-        u_control: "ctrl_002", // relation to controller.code
+        country: "Saudi Arabia", // added country
       },
       {
         wdt_ID: 1003,
@@ -50,9 +46,7 @@ const prisma = new PrismaClient();
         phoneno: "0910203042",
         status: "Active",
         chat_id: "973677021",
-        country: "Dubai",
-        ustaz: "ustaz_004", // assign ustaz by wdt_ID
-        u_control: "ctrl_003", // relation to controller.code
+        country: "Dubai", // added country
       },
     ],
   });
