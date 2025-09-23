@@ -3,6 +3,7 @@
 import React from "react";
 
 import MenuTitle from "./menu-title";
+
 import { LightDarkToggle } from "@/components/ui/light-dark-toggle";
 
 import { cn } from "@/lib/utils";
@@ -114,9 +115,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       }
     }
     fetchAllProgress();
-
-  }, [data, wdt_ID]);
-
+  }, [data, wdt_ID]); // Add chapterProgress to dependency array
 
   // Calculate course completion percentage
   const getCourseProgress = (chapters: { id: string }[]) => {
@@ -197,7 +196,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
               {data.activePackage.name}
             </motion.h3>
             <TooltipProvider>
-              <Accordion type="single" collapsible className="space-y-3">
+              <Accordion type="single" collapsible className="space-y-3 w-60">
                 <AnimatePresence>
                   {data.activePackage.courses.map((course) => (
                     <motion.div
@@ -279,9 +278,6 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                       : "Locked"}
                                   </TooltipContent>
                                 </Tooltip>
-                                <span className="text-sm text-sky-600 dark:text-sky-400">
-                                  Lesson {chapter.position}:
-                                </span>
                                 <button
                                   disabled={!isCompleted}
                                   className={cn(
@@ -293,7 +289,9 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                   )}
                                   onClick={() => {
                                     if (isCompleted) {
-                                      window.location.href = `${chapterLink}?isClicked=true`;
+                                      router.push(
+                                        `${chapterLink}?isClicked=true`
+                                      );
                                     }
                                   }}
                                   tabIndex={isCompleted ? 0 : -1}
@@ -303,7 +301,9 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                     isCompleted ? "" : "(Locked)"
                                   }`}
                                 >
-                                  {chapter.title}
+                                  <span className="text-sm text-sky-600 dark:text-sky-400">
+                                    Lesson {chapter.position} : {chapter.title}
+                                  </span>
                                 </button>
                               </motion.div>
                             );
@@ -312,6 +312,51 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                       </AccordionItem>
                     </motion.div>
                   ))}
+
+                  {/* Final Exam Accordion Item */}
+                  <motion.div
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                  >
+                    <AccordionItem
+                      value="final-exam"
+                      className={cn(
+                        "border border-blue-300 dark:border-blue-700 rounded-lg",
+                        "bg-blue-50/80 dark:bg-blue-900/80 backdrop-blur-sm",
+                        "shadow-lg hover:shadow-xl transition-all duration-300"
+                      )}
+                    >
+                      <AccordionTrigger
+                        onClick={handleFinalExamClick} // Trigger navigation directly on click
+                        className={cn(
+                          "px-4 py-3 text-base md:text-lg font-semibold",
+                          "text-blue-800 dark:text-blue-200",
+                          "hover:bg-blue-100/50 dark:hover:bg-blue-800/50",
+                          "rounded-lg transition-colors duration-200", // Rounded all corners
+                          !allCoursesCompleted &&
+                            "cursor-not-allowed opacity-50" // Disable if not all courses completed
+                        )}
+                        disabled={!allCoursesCompleted} // Disable the trigger if not all courses completed
+                      >
+                        <div className="flex items-center gap-3">
+                          <Trophy className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                          <span className="truncate">Final Exam</span>
+                          {!allCoursesCompleted && (
+                            <span className="ml-auto text-xss font-medium text-gray-500 dark:text-gray-400">
+                              (Complete all to unlock)
+                            </span>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      {/* You can optionally add AccordionContent here if there's any info to show before clicking */}
+                      {/* <AccordionContent className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                        Click to begin your final assessment!
+                      </AccordionContent> */}
+                    </AccordionItem>
+                  </motion.div>
+                  {/* End Final Exam Accordion Item */}
                 </AnimatePresence>
               </Accordion>
             </TooltipProvider>
@@ -319,7 +364,19 @@ export default function MainMenu({ data, className }: MainMenuProps) {
         )}
       </div>
 
-      <footer className="flex items-center gap-3 mt-auto pt-4 border-t border-sky-200 dark:border-sky-800">
+      <footer className="flex items-center justify-between gap-3 pt-2 border-t border-sky-200 dark:border-sky-800">
+        <button
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-lg font-medium"
+          )}
+          onClick={() => {
+            router.push(`/en/student/${wdt_ID}/profile`);
+          }}
+          type="button"
+          aria-label="Go to Student Dashboard"
+        >
+          <UserCircle className="w-8 h-8 text-sky-600 dark:text-sky-400" />
+        </button>
         <LightDarkToggle
           className={cn(
             "ml-auto p-2 rounded-full",
