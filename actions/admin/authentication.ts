@@ -1,10 +1,10 @@
 "use server";
 
-import { signOut, signIn } from "@/auth";
-import { auth } from "@/auth";
-import { loginSchema } from "@/lib/zodSchema";
+import { signOut, signIn } from "../../auth";
+import { auth } from "../../auth";
+import { loginSchema } from "../../lib/zodSchema";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/db";
+import prisma from "../../lib/db";
 import z from "zod";
 
 // Types for consistent return values
