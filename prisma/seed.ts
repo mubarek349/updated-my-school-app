@@ -12,124 +12,6 @@ const prisma = new PrismaClient();
     },
   });
 
-  // seed the ustaz
-  await prisma.ustaz.createMany({
-    data: [
-      {
-        wdt_ID: 2001,
-        ustazname: "Sheikh Ahmed Ali",
-        subject: "Tajweed",
-        phone: "0911002001",
-        password: "ustaz1",
-        gender: "male",
-        ustazid: "ustaz_001",
-        username: "ahmedali",
-        schedule: "Mon-Wed-Fri",
-        telegramgroup: "@tajweed_group",
-        picture: "",
-        control: "active",
-      },
-      {
-        wdt_ID: 2002,
-        ustazname: "Ustaz Fatima Noor",
-        subject: "Hifz",
-        phone: "0911002002",
-        password: "ustaz2",
-        gender: "female",
-        ustazid: "ustaz_002",
-        username: "fatimanoor",
-        schedule: "Tue-Thu",
-        telegramgroup: "@hifz_group",
-        picture: "",
-        control: "active",
-      },
-      {
-        wdt_ID: 2003,
-        ustazname: "Sheikh Musa Idris",
-        subject: "Fiqh",
-        phone: "0911002003",
-        password: "ustaz3",
-        gender: "male",
-        ustazid: "ustaz_003",
-        username: "musaidris",
-        schedule: "Sat-Sun",
-        telegramgroup: "@fiqh_group",
-        picture: "",
-        control: "active",
-      },
-      {
-        wdt_ID: 2004,
-        ustazname: "Ustazah Amina Yusuf",
-        subject: "Aqeedah",
-        phone: "0911002004",
-        password: "ustaz4",
-        gender: "female",
-        ustazid: "ustaz_004",
-        username: "aminayusuf",
-        schedule: "Mon-Thu",
-        telegramgroup: "@aqeedah_group",
-        picture: "",
-        control: "active",
-      },
-      {
-        wdt_ID: 2005,
-        ustazname: "Sheikh Bilal Osman",
-        subject: "Arabic",
-        phone: "0911002005",
-        password: "ustaz5",
-        gender: "male",
-        ustazid: "ustaz_005",
-        username: "bilalosman",
-        schedule: "Wed-Fri",
-        telegramgroup: "@arabic_group",
-        picture: "",
-        control: "active",
-      },
-    ],
-  });
-
-  // seed controller
-  await prisma.controller.createMany({
-    data: [
-      {
-        bot: "main_bot",
-        chatid: "123456789",
-        name: "Controller One",
-        code: "ctrl_001",
-        topic: "General Management",
-        team_id: 1,
-        Phone: "0911003001",
-        username: "controller1",
-        password: "ctrlpass1",
-        is_leader: true,
-      },
-      {
-        bot: "main_bot",
-        chatid: "987654321",
-        name: "Controller Two",
-        code: "ctrl_002",
-        topic: "Student Affairs",
-        team_id: 2,
-        Phone: "0911003002",
-        username: "controller2",
-        password: "ctrlpass2",
-        is_leader: false,
-      },
-      {
-        bot: "main_bot",
-        chatid: "555666777",
-        name: "Controller Three",
-        code: "ctrl_003",
-        topic: "Academic",
-        team_id: 3,
-        Phone: "0911003003",
-        username: "controller3",
-        password: "ctrlpass3",
-        is_leader: false,
-      },
-    ],
-  });
-
   // Seed Students
   await prisma.wpos_wpdatatable_23.createMany({
     data: [
@@ -138,8 +20,9 @@ const prisma = new PrismaClient();
         name: "Mubarak Ahmed",
         passcode: "student1",
         phoneno: "0910203040",
-        status: "active",
+        status: "Active",
         subject: "hifz",
+        package: "kids",
         chat_id: "973677019",
         country: "Ethiopia",
         ustaz: "ustaz_002", // assign ustaz by wdt_ID
@@ -149,9 +32,10 @@ const prisma = new PrismaClient();
         wdt_ID: 1002,
         name: "Fuad Abdurahman",
         subject: "hifz",
+        package: "kids",
         passcode: "student2",
         phoneno: "0910203041",
-        status: "active",
+        status: "Active",
         chat_id: "611321369",
         country: "Saudi Arabia",
         ustaz: "ustaz_002", // assign ustaz by wdt_ID
@@ -160,10 +44,11 @@ const prisma = new PrismaClient();
       {
         wdt_ID: 1003,
         subject: "hifz",
+        package: "kids",
         name: "Abdulkarim ahmed",
         passcode: "student3",
         phoneno: "0910203042",
-        status: "active",
+        status: "Active",
         chat_id: "973677021",
         country: "Dubai",
         ustaz: "ustaz_004", // assign ustaz by wdt_ID
@@ -195,7 +80,7 @@ const prisma = new PrismaClient();
     where: { wdt_ID: 1001 },
     data: {
       packages: {
-        connect: [{ id: "pkg_001" }, { id: "pkg_002" }],
+        connect: [{ id: "pkg_001" }, { id: "pkg_002" }, { id: "pkg_003" }],
       },
       activePackage: {
         connect: { id: "pkg_001" },
@@ -218,21 +103,69 @@ const prisma = new PrismaClient();
     data: [
       {
         packageType: "kids",
-        subject: "nezer",
+        subject: "hifz",
         packageId: "pkg_001",
       },
       {
         packageType: "kids",
-        subject: "nezer",
-        packageId: "pkg_001",
+        subject: "hifz",
+        packageId: "pkg_002",
       },
       {
         packageType: "kids",
-        subject: "nezer",
+        subject: "hifz",
         packageId: "pkg_003",
       },
     ],
   });
+
+  await prisma.ustaz.createMany({
+    data: [
+      {
+        picture: "https://example.com/images/ustaz1.jpg",
+        control: "Admin",
+        subject: "Fiqh",
+        phone: "+251911234567",
+        schedule: "Mon-Fri 8am-12pm",
+        password: "hashed_password_1",
+        telegramgroup: "https://t.me/fiqh_group",
+        ustazname: "Ustaz Ahmed",
+        gender: "Male",
+        ustazid: "UST001",
+        userid: 101,
+        username: "ahmed_fiqh",
+      },
+      {
+        picture: "https://example.com/images/ustaz2.jpg",
+        control: "Moderator",
+        subject: "Tafsir",
+        phone: "+251922345678",
+        schedule: "Sat-Sun 2pm-6pm",
+        password: "hashed_password_2",
+        telegramgroup: "https://t.me/tafsir_group",
+        ustazname: "Ustaz Fatima",
+        gender: "Female",
+        ustazid: "UST002",
+        userid: 102,
+        username: "fatima_tafsir",
+      },
+      {
+        picture: "https://example.com/images/ustaz3.jpg",
+        control: "Teacher",
+        subject: "Aqidah",
+        phone: "+251933456789",
+        schedule: "Wed-Fri 10am-1pm",
+        password: "hashed_password_3",
+        telegramgroup: "https://t.me/aqidah_group",
+        ustazname: "Ustaz Musa",
+        gender: "Male",
+        ustazid: "UST003",
+        userid: 103,
+        username: "musa_aqidah",
+      },
+    ],
+  });
+
   // Seed Courses for Programming Package
   await prisma.course.createMany({
     data: [
@@ -254,28 +187,40 @@ const prisma = new PrismaClient();
         packageId: "pkg_001",
         imageUrl: "",
       },
-    ],
-  });
-
-  // Seed Courses for Web Dev Package
-  await prisma.course.createMany({
-    data: [
       {
-        id: "course_101",
-        title: "Haraka",
-        description: "Build beautiful web pages",
+        id: "course_003",
+        title: "HAREKA",
+        description: "Introduction to programming concepts",
         isPublished: true,
         order: 1,
         packageId: "pkg_002",
         imageUrl: "",
       },
       {
-        id: "course_102",
-        title: "tanwin",
-        description: "Complete JS from basics to advanced",
+        id: "course_004",
+        title: "TENWIN",
+        description: "Learn OOP principles",
         isPublished: true,
         order: 2,
         packageId: "pkg_002",
+        imageUrl: "",
+      },
+      {
+        id: "course_005",
+        title: "HAREKA",
+        description: "Introduction to programming concepts",
+        isPublished: true,
+        order: 1,
+        packageId: "pkg_003",
+        imageUrl: "",
+      },
+      {
+        id: "course_006",
+        title: "TENWIN",
+        description: "Learn OOP principles",
+        isPublished: true,
+        order: 2,
+        packageId: "pkg_003",
         imageUrl: "",
       },
     ],
@@ -314,11 +259,10 @@ const prisma = new PrismaClient();
     ],
   });
 
-  // Seed Chapters for OOP Course
   await prisma.chapter.createMany({
     data: [
       {
-        id: "chapter_011",
+        id: "chapter_004",
         title: "SUKUN",
         description: "Introduction to OOP concepts",
         position: 1,
@@ -327,12 +271,121 @@ const prisma = new PrismaClient();
         videoUrl: "YbJAnbfN33o",
       },
       {
-        id: "chapter_012",
+        id: "chapter_005",
         title: "FETHATAIB",
         description: "Understanding class inheritance",
         position: 2,
         isPublished: true,
         courseId: "course_002",
+        videoUrl: "JnvWYDDxFuA",
+      },
+    ],
+  });
+
+  await prisma.chapter.createMany({
+    data: [
+      {
+        id: "chapter_006",
+        title: "FETHA",
+        description: "Learn about variables and basic data types",
+        position: 1,
+        isPublished: true,
+        courseId: "course_003",
+        videoUrl: "n7WNUaxPo8A",
+      },
+      {
+        id: "chapter_007",
+        title: "KESRA",
+        description: "If statements and loops",
+        position: 2,
+        isPublished: true,
+        courseId: "course_003",
+        videoUrl: "Cv0I54sHMB8",
+      },
+      {
+        id: "chapter_008",
+        title: "DOMA",
+        description: "Creating and using functions",
+        position: 3,
+        isPublished: true,
+        courseId: "course_003",
+        videoUrl: "oR5aGowK5V4",
+      },
+    ],
+  });
+
+  // Seed Chapters for OOP Course
+  await prisma.chapter.createMany({
+    data: [
+      {
+        id: "chapter_009",
+        title: "SUKUN",
+        description: "Introduction to OOP concepts",
+        position: 1,
+        isPublished: true,
+        courseId: "course_004",
+        videoUrl: "YbJAnbfN33o",
+      },
+      {
+        id: "chapter_010",
+        title: "FETHATAIB",
+        description: "Understanding class inheritance",
+        position: 2,
+        isPublished: true,
+        courseId: "course_004",
+        videoUrl: "JnvWYDDxFuA",
+      },
+    ],
+  });
+  await prisma.chapter.createMany({
+    data: [
+      {
+        id: "chapter_011",
+        title: "FETHA",
+        description: "Learn about variables and basic data types",
+        position: 1,
+        isPublished: true,
+        courseId: "course_005",
+        videoUrl: "n7WNUaxPo8A",
+      },
+      {
+        id: "chapter_012",
+        title: "KESRA",
+        description: "If statements and loops",
+        position: 2,
+        isPublished: true,
+        courseId: "course_005",
+        videoUrl: "Cv0I54sHMB8",
+      },
+      {
+        id: "chapter_013",
+        title: "DOMA",
+        description: "Creating and using functions",
+        position: 3,
+        isPublished: true,
+        courseId: "course_005",
+        videoUrl: "oR5aGowK5V4",
+      },
+    ],
+  });
+  await prisma.chapter.createMany({
+    data: [
+      {
+        id: "chapter_014",
+        title: "SUKUN",
+        description: "Introduction to OOP concepts",
+        position: 1,
+        isPublished: true,
+        courseId: "course_006",
+        videoUrl: "YbJAnbfN33o",
+      },
+      {
+        id: "chapter_015",
+        title: "FETHATAIB",
+        description: "Understanding class inheritance",
+        position: 2,
+        isPublished: true,
+        courseId: "course_006",
         videoUrl: "JnvWYDDxFuA",
       },
     ],
@@ -401,37 +454,125 @@ const prisma = new PrismaClient();
       // Student 1 completed all chapters in Course 2
       {
         studentId: 1001,
-        chapterId: "chapter_011",
+        chapterId: "chapter_004",
         isCompleted: true,
         completedAt: new Date("2023-03-10"),
       },
       {
         studentId: 1001,
-        chapterId: "chapter_012",
+        chapterId: "chapter_005",
         isCompleted: true,
         completedAt: new Date("2023-03-15"),
       },
     ],
   });
 
-  // Seed Student Progress for In-Progress Student
+  // Seed Student Progress for Completed Student
   await prisma.studentProgress.createMany({
     data: [
-      // Student 2 completed first chapter
+      // Student 1 completed all chapters in Course 1
       {
-        studentId: 1002,
-        chapterId: "chapter_001",
+        studentId: 1001,
+        chapterId: "chapter_006",
         isCompleted: true,
-        completedAt: new Date("2023-03-05"),
+        completedAt: new Date("2023-02-01"),
       },
-      // Student 2 started second chapter but didn't complete
       {
-        studentId: 1002,
-        chapterId: "chapter_002",
+        studentId: 1001,
+        chapterId: "chapter_007",
+        isCompleted: true,
+        completedAt: new Date("2023-02-15"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_008",
+        isCompleted: true,
+        completedAt: new Date("2023-02-28"),
+      },
+      // Student 1 completed all chapters in Course 2
+      {
+        studentId: 1001,
+        chapterId: "chapter_009",
+        isCompleted: true,
+        completedAt: new Date("2023-03-10"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_010",
         isCompleted: false,
+        completedAt: new Date("2023-03-15"),
       },
     ],
   });
+
+  // Seed Student Progress for Completed Student
+  await prisma.studentProgress.createMany({
+    data: [
+      // Student 1 completed all chapters in Course 1
+      {
+        studentId: 1001,
+        chapterId: "chapter_011",
+        isCompleted: true,
+        completedAt: new Date("2023-02-01"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_012",
+        isCompleted: true,
+        completedAt: new Date("2023-02-15"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_013",
+        isCompleted: true,
+        completedAt: new Date("2023-02-28"),
+      },
+      // Student 1 completed all chapters in Course 2
+      {
+        studentId: 1001,
+        chapterId: "chapter_014",
+        isCompleted: true,
+        completedAt: new Date("2023-03-10"),
+      },
+      {
+        studentId: 1001,
+        chapterId: "chapter_015",
+        isCompleted: false,
+        completedAt: new Date("2023-03-15"),
+      },
+    ],
+  });
+  // Seed Student Progress for In-Progress Student
+
+  const packages = ["pkg_001", "pkg_002", "pkg_003"];
+
+  for (const packageId of packages) {
+    for (let i = 1; i <= 5; i++) {
+      const question = await prisma.question.create({
+        data: {
+          packageId,
+          question: `Sample Question ${i} for ${packageId}`,
+          questionOptions: {
+            create: [
+              { option: `Option 1 for Q${i}` },
+              { option: `Option 2 for Q${i}` },
+              { option: `Option 3 for Q${i}` },
+              { option: `Option 4 for Q${i}` },
+            ],
+          },
+        },
+        include: { questionOptions: true },
+      });
+
+      // Optionally, set the first option as the correct answer
+      await prisma.questionAnswer.create({
+        data: {
+          questionId: question.id,
+          answerId: question.questionOptions[0].id,
+        },
+      });
+    }
+  }
 
   console.log("🌱 Database seeded successfully with:");
   console.log("- 1 Admin user");

@@ -2,18 +2,24 @@ import { getCoursesPackages } from "@/actions/admin/package";
 import { CreatedCoursePackageList } from "@/components/teachers-course-package-list";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-const lang="en";
+const lang = "en";
 const coursesPackagePage = async () => {
   const coursesPackages = await getCoursesPackages();
- 
+
   return (
-    <div className="p-6 overflow-auto">
-      <Link href={`/${lang}/admin/create`}>
-        <Button>Create Courses Package</Button>
-      </Link>
-      <div>
-        <CreatedCoursePackageList coursesPackages={coursesPackages}/>
+    <div className="bg-blue-50 grid grid-cols-1 overflow-hidden p-6 sm:p-8 rounded-lg shadow-sm space-y-6 scrollbar-hide">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-xl font-semibold text-slate-800">
+          Manage Course Packages
+        </h1>
+        <Link href={`/${lang}/admin/create`}>
+          <Button className="w-full sm:w-auto">Create Courses Package</Button>
+        </Link>
       </div>
+
+      {/* Scrollable List Section */}
+      <CreatedCoursePackageList coursesPackages={coursesPackages} />
     </div>
   );
 };

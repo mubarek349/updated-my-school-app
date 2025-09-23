@@ -20,16 +20,22 @@ datasource db {
 // }
 
 model coursePackage {
-  id              String                @id @default(uuid())
-  name            String                @db.Text
-  description     String?               @db.Text
-  courses         course[]
-  isPublished     Boolean               @default(false)
-  students        wpos_wpdatatable_23[] @relation("PackageHistory")
-  activeStudents  wpos_wpdatatable_23[] @relation("ActivePackage")
-  subjectPackages subjectPackage[] // <-- Add this line for the relation
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id                  String                @id @default(uuid())
+  name                String                @db.Text
+  description         String?               @db.Text
+  courses             course[]
+  questions           question[]
+  finalExamResult     finalExamResult[]
+  examDurationMinutes Int?
+  isPublished         Boolean               @default(false)
+  students            wpos_wpdatatable_23[] @relation("PackageHistory")
+  activeStudents      wpos_wpdatatable_23[] @relation("ActivePackage")
+  subjectPackages     subjectPackage[] // <-- Add this line for the relation
+  terbiaAttendance    tarbiaAttendance[]
+  ustazId             Int?
+  ustaz               ustaz?                @relation(fields: [ustazId], references: [wdt_ID])
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
 }
 
 model subjectPackage {
@@ -39,7 +45,7 @@ model subjectPackage {
   subject     String?
   package     coursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId   String
-
+  createdAt   DateTime      @default(now())
   // @@unique([subject, packageId])
 }
 
@@ -68,6 +74,7 @@ model chapter {
   title       String
   description String? @db.Text
   videoUrl    String? @db.Text
+  customVideo String?  @db.Text
   position    Int
   isPublished Boolean @default(false)
   // isFree      Boolean @default(false)
@@ -87,9 +94,11 @@ model chapter {
 
 model question {
   id              String           @id @default(cuid())
-  chapter         chapter          @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  chapterId       String
-  question        String
+  chapter         chapter?         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId       String?
+  coursePackage   coursePackage?   @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  packageId       String?
+  question        String  @db.Text
   questionOptions questionOption[]
   questionAnswer  questionAnswer[]
   studentQuiz     studentQuiz[]
@@ -125,6 +134,7 @@ model studentQuiz {
   studentId          Int
   question           question            @relation(fields: [questionId], references: [id], onDelete: Cascade)
   questionId         String
+  isFinalExam        Boolean             @default(false)
   takenAt            DateTime            @default(now())
   studentQuizAnswers studentQuizAnswer[]
 
@@ -163,6 +173,17 @@ model studentProgress {
   @@index([studentId])
 }
 
+model finalExamResult {
+  id                 String              @id @default(cuid())
+  student            wpos_wpdatatable_23 @relation(fields: [studentId], references: [wdt_ID])
+  studentId          Int
+  coursePackage      coursePackage       @relation(fields: [packageId], references: [id])
+  packageId          String
+  updationProhibited Boolean             @default(false)
+  startingTime       DateTime            @default(now())
+  endingTime         DateTime?
+}
+
 model admin {
   id        String   @id @default(cuid())
   name      String
@@ -173,44 +194,48 @@ model admin {
 }
 
 model wpos_wpdatatable_23 {
-  wdt_ID         Int               @id @default(autoincrement())
-  name           String?
-  passcode       String?           @unique
-  phoneno        String?           @unique
-  country        String?
-  status         String?
-  isKid          Boolean?          @default(false)
+  wdt_ID           Int                @id @default(autoincrement())
+  name             String?
+  passcode         String?            @unique
+  phoneno          String?            @unique
+  country          String?
+  status           String?
+  isKid            Boolean?           @default(false)
   // History of all packages (many-to-many)
-  packages       coursePackage[]   @relation("PackageHistory")
+  packages         coursePackage[]    @relation("PackageHistory")
   // Active package (one-to-one or many-to-one)
-  ustaz          String?
-  ustazdata      ustaz?            @relation(fields: [ustaz], references: [ustazid])
-  subject        String?
-  package        String?
-  youtubeSubject String?
-  activePackage  coursePackage?    @relation("ActivePackage", fields: [youtubeSubject], references: [id])
-  progress       studentProgress[]
-  studentQuizzes studentQuiz[]
-  chat_id        String?           @default("")
-  u_control      String?           @db.VarChar(255)
-  controller     controller?       @relation(fields: [u_control], references: [code])
+  ustaz            String?
+  ustazdata        ustaz?             @relation(fields: [ustaz], references: [ustazid])
+  subject          String?
+  package          String?
+  terbiaAttendance tarbiaAttendance[]
+  youtubeSubject   String?
+  activePackage    coursePackage?     @relation("ActivePackage", fields: [youtubeSubject], references: [id])
+  progress         studentProgress[]
+  studentQuizzes   studentQuiz[]
+  finalExamResults finalExamResult[]
+  chat_id          String?            @default("")
+  u_control        String?            @db.VarChar(255)
+  controller       controller?        @relation(fields: [u_control], references: [code])
 }
 
 model ustaz {
-  wdt_ID        Int                   @id @default(autoincrement())
-  picture       String?               @db.VarChar(2000)
-  control       String?               @db.VarChar(255)
-  subject       String?               @db.VarChar(255)
-  phone         String?               @db.VarChar(255)
-  schedule      String?               @db.VarChar(255)
-  password      String?               @db.VarChar(255)
-  telegramgroup String?               @db.VarChar(2000)
-  ustazname     String?               @db.VarChar(255)
-  gender        String?               @db.VarChar(255)
-  ustazid       String?               @unique @db.VarChar(255)
-  userid        Int?
-  username      String?               @db.VarChar(255)
-  stud_ustaz    wpos_wpdatatable_23[]
+  wdt_ID               Int                   @id @default(autoincrement())
+  picture              String?               @db.VarChar(2000)
+  control              String?               @db.VarChar(255)
+  subject              String?               @db.VarChar(255)
+  phone                String?               @db.VarChar(255)
+  schedule             String?               @db.VarChar(255)
+  password             String?               @db.VarChar(255)
+  telegramgroup        String?               @db.VarChar(2000)
+  ustazname            String?               @db.VarChar(255)
+  gender               String?               @db.VarChar(255)
+  ustazid              String?               @unique @db.VarChar(255)
+  userid               Int?
+  username             String?               @db.VarChar(255)
+  chat_id              String?               @default("")
+  stud_ustaz           wpos_wpdatatable_23[]
+  coursePackage_usataz coursePackage[]
 
   @@map("wpos_wpdatatable_24")
 }
@@ -230,4 +255,15 @@ model controller {
   wpos_wpdatatable_23 wpos_wpdatatable_23[]
 
   @@map("wpos_wpdatatable_28")
+}
+
+model tarbiaAttendance {
+  id             String              @id @default(cuid())
+  studId         Int
+  student        wpos_wpdatatable_23 @relation(fields: [studId], references: [wdt_ID], onDelete: Cascade)
+  packageId      String
+  coursesPackage coursePackage       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  status         Boolean             @default(false)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 }

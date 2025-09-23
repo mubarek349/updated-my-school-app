@@ -22,13 +22,13 @@ export default function AnimatedCircularProgress({
   const strokeDashoffset = circumference * (1 - count / max); // Adjust stroke dynamically
 
   // Animation variants
-  const circleVariants = {
-    initial: { strokeDashoffset: circumference },
-    animate: {
-      strokeDashoffset,
-      transition: { duration: 1, ease: "easeInOut" },
-    },
-  };
+  // const circleVariants = {
+  //   initial: { strokeDashoffset: circumference },
+  //   animate: {
+  //     strokeDashoffset,
+  //     transition: { duration: 1, ease: "easeInOut" },
+  //   },
+  // };
 
   const textVariants = {
     initial: { scale: 1, opacity: 0.8 },
@@ -92,9 +92,14 @@ export default function AnimatedCircularProgress({
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
                 transform="rotate(-90 50 50)" // Start from top
-                variants={circleVariants}
+                animate={{
+                  strokeDashoffset: strokeDashoffset,
+                }}
+                transition={{
+                  duration: 1,
+                  ease: "easeInOut",
+                }}
                 initial="initial"
-                animate="animate"
                 className={cn(
                   count <= 5 && "animate-pulse",
                   "shadow-[0_0_10px_rgba(59,130,246,0.3)] dark:shadow-[0_0_10px_rgba(16,185,129,0.3)]"

@@ -39,7 +39,7 @@ const QuestionUpdatePage = async ({
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto overflow-y-auto">
+    <div className="p-6 max-w-2xl mx-auto bg-blue-50 overflow-y-auto">
       <Link
         href={`/${"en"}/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}`}
         className="flex items-center text-sm hover:opacity-75 transition mb-6"

@@ -1,8 +1,5 @@
 "use server";
-// import { auth } from "@/auth";
 import prisma from "@/lib/db";
-// import { isTeacher } from "@/lib/teacher";
-// import { redirect } from "next/navigation";
 
 export async function getCoursesPackages() {
   try {
@@ -16,6 +13,8 @@ export async function getCoursesPackages() {
           isPublished: true,
           createdAt: true,
           updatedAt: true,
+          examDurationMinutes: true,
+          ustazId:true,
         },
         orderBy: {
           createdAt: "desc",
@@ -30,5 +29,18 @@ export async function getCoursesPackages() {
   } catch (error) {
     console.error("Error fetching courses with progress:", error);
     return [];
+  }
+}
+export async function getCoursesPackageId(wdt_ID: number) {
+  try {
+    const youtubeSubjec = await prisma.wpos_wpdatatable_23.findFirst({
+      where: { wdt_ID },
+      select: { youtubeSubject: true },
+    });
+    console.log("courses package: ", youtubeSubjec?.youtubeSubject);
+    return youtubeSubjec?.youtubeSubject;
+  } catch (error) {
+    console.error("Error fetching courses with progress:", error);
+    return null;
   }
 }

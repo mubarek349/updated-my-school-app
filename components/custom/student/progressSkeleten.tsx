@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -7,7 +6,12 @@ import { useParams } from "next/navigation";
 import useAction from "@/hooks/useAction";
 import { getActivePackageProgress } from "@/actions/student/progress";
 import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { AlertCircle } from "lucide-react";
 
@@ -17,7 +21,10 @@ function ProgressSkeleton() {
     <motion.div
       className="w-[90%] mx-auto h-4 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"
       initial={{ opacity: 0.5 }}
-      animate={{ opacity: 1, transition: { repeat: Infinity, repeatType: "reverse", duration: 0.8 } }}
+      animate={{
+        opacity: 1,
+        transition: { repeat: Infinity, repeatType: "reverse", duration: 0.8 },
+      }}
     />
   );
 }
@@ -39,7 +46,6 @@ export default function ProgressPage() {
     [true, (response) => console.log(response)],
 
     wdt_ID
-
   );
 
   useEffect(() => {
@@ -62,13 +68,16 @@ export default function ProgressPage() {
   }, [progressData, isLoading]);
 
   // Animation variants for progress bar
-  const progressVariants = {
-    initial: { width: 0 },
-    animate: { width: `${progress}%`, transition: { duration: 1, ease: "easeOut" } },
-  };
+  // const progressVariants = {
+  //   initial: { width: 0 },
+  //   animate: {
+  //     width: `${progress}%`,
+  //     transition: { duration: 1, ease: "easeOut" },
+  //   },
+  // };
 
   return (
-    <div className="py-4 md:py-6 grid">
+    <div className="py-4 md:py-6 bg-blue-50 grid">
       <TooltipProvider>
         {/* Mobile Layout */}
         {isMobile && (
@@ -99,9 +108,9 @@ export default function ProgressPage() {
                     >
                       <motion.div
                         className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
-                        variants={progressVariants}
-                        initial="initial"
-                        animate="animate"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
                       />
                     </Progress>
                     <div className="text-center text-sm mt-2 max-md:hidden text-gray-600 dark:text-gray-300">
@@ -149,9 +158,9 @@ export default function ProgressPage() {
                     >
                       <motion.div
                         className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
-                        variants={progressVariants}
-                        initial="initial"
-                        animate="animate"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
                       />
                     </Progress>
                     <div className="text-center text-sm mt-2 font-medium text-gray-600 dark:text-gray-300">

@@ -6,7 +6,7 @@ export async function getPackageData(wdt_ID: number) {
   const student = await prisma.wpos_wpdatatable_23.findFirst({
     where: {
       wdt_ID: wdt_ID,
-      status: { in: ["active", "Not yet"] },
+      status: { in: ["Active", "Not yet"] },
     },
     select: {
       wdt_ID: true,
@@ -45,4 +45,31 @@ export async function getPackageData(wdt_ID: number) {
   }
 
   return student;
+}
+
+export async function getAvailablePacakges(
+  packageType: string,
+  subject: string,
+  kidpackage: boolean
+) {
+  const assignedPackages = await prisma.subjectPackage.findMany({
+    where: {
+      packageType: packageType,
+      subject: subject,
+      kidpackage: kidpackage,
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      package:{
+        select: {
+          id: true,
+          name: true,
+        },
+      }
+    },
+  });
+
+  // Return the unique pairs as objects
+  return assignedPackages;
 }

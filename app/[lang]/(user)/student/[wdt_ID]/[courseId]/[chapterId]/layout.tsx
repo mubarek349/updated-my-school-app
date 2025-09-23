@@ -23,8 +23,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     wdtIdNum
   );
 
-  const updatedCourseId = update?.chapter?.course?.id ?? courseId;
-  const updatedChapterId = update?.chapter?.id ?? chapterId;
+  const updatedCourseId = update ? update[0] : courseId;
+  const updatedChapterId = update ? update[1] : chapterId;
 
   const router = useRouter();
 
@@ -45,7 +45,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     courseId,
     chapterId,
     router,
+    isClicked,
   ]);
 
-  return <div className="overflow-hidden grid">{children}</div>;
+  return <div className="overflow-hidden grid  bg-blue-50">{children}</div>;
 }

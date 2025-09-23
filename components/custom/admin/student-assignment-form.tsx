@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Label } from "../../ui/label";
 
-function StudentAssignmentForm({setRefresh}:{setRefresh:(value:number)=>void}) {
+function StudentAssignmentForm({setRefresh}:{setRefresh:(value:string)=>void}) {
   const { coursesPackageId } = useParams<{ coursesPackageId: string }>();
   const [packagesWithSubject] = useAction(getDistinctPackagesWithSubjects, [
     true,
@@ -26,7 +26,7 @@ function StudentAssignmentForm({setRefresh}:{setRefresh:(value:number)=>void}) {
 
   useEffect(() => {
     if (res) {
-      setRefresh(Date.now())
+      setRefresh(new Date().toISOString());
       toast.success("Successfully assigned!");
     }
   }, [res,setRefresh]);

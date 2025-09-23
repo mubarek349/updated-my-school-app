@@ -4,10 +4,14 @@ import { Trash } from "lucide-react";
 import { Button } from "../../ui/button";
 import { ConfirmModal } from "../../modals/confirm-modal";
 import { useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
+import {
+  deleteChapter,
+  publishChapter,
+  unpublishChapter,
+} from "@/actions/admin/creatingChapter";
 
 interface ChapterActionsProps {
   disabled: boolean;
@@ -31,46 +35,52 @@ export const ChapterActions = ({
     try {
       setIsLoading(true);
       if (isPublished) {
-        await axios.patch(
-          `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}/unpublish`
-        );
-        toast.success("chapter unpublished");
-        router.refresh();
+        const result = await unpublishChapter(chapterId);
+
+        if (result.status === 200) {
+          toast.success("chapter unpublished");
+          router.refresh();
+        } else {
+          toast.error(result.error ?? "");
+        }
       } else {
-        await axios.patch(
-          `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}/publish`
-        );
-        toast.success("chapter published");
-        const end = Date.now() + 3 * 1000; // 3 seconds
-        const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
+        const result = await publishChapter(chapterId);
 
-        const frame = () => {
-          if (Date.now() > end) return;
+        if (result.status === 200) {
+          toast.success("chapter published");
+          const end = Date.now() + 3 * 1000; // 3 seconds
+          const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
 
-          confetti({
-            particleCount: 2,
-            angle: 60,
-            spread: 55,
-            startVelocity: 60,
-            origin: { x: 0, y: 0.5 },
-            colors: colors,
-          });
-          confetti({
-            particleCount: 2,
-            angle: 120,
-            spread: 55,
-            startVelocity: 60,
-            origin: { x: 1, y: 0.5 },
-            colors: colors,
-          });
+          const frame = () => {
+            if (Date.now() > end) return;
 
-          requestAnimationFrame(frame);
-        };
+            confetti({
+              particleCount: 2,
+              angle: 60,
+              spread: 55,
+              startVelocity: 60,
+              origin: { x: 0, y: 0.5 },
+              colors: colors,
+            });
+            confetti({
+              particleCount: 2,
+              angle: 120,
+              spread: 55,
+              startVelocity: 60,
+              origin: { x: 1, y: 0.5 },
+              colors: colors,
+            });
 
-        frame();
+            requestAnimationFrame(frame);
+          };
 
-        router.refresh();
-        router.refresh();
+          frame();
+
+          router.refresh();
+          router.refresh();
+        } else {
+          toast.error(result.error ?? "");
+        }
       }
     } catch {
       toast.error("something went wrong");
@@ -81,12 +91,16 @@ export const ChapterActions = ({
   const onDelete = async () => {
     try {
       setIsLoading(true);
-      await axios.delete(
-        `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}`
-      );
-      toast.success("chapter deleted");
-      router.refresh();
-      router.push(`/en/admin/coursesPackages/${coursesPackageId}/${courseId}`);
+      const result = await deleteChapter({ chapterId, coursesPackageId });
+      if (result.status === 200) {
+        toast.success("chapter deleted");
+        router.refresh();
+        router.push(
+          `/en/admin/coursesPackages/${coursesPackageId}/${courseId}`
+        );
+      } else {
+        toast.error(result.error ?? "cannot be deleted");
+      }
     } catch {
       toast.error("something went wrong");
     } finally {
@@ -100,6 +114,11 @@ export const ChapterActions = ({
         disabled={disabled || isLoading}
         variant="outline"
         size="sm"
+        className={
+          isPublished
+            ? "bg-red-200 hover:bg-red-300"
+            : "bg-blue-100 hover:bg-blue-300"
+        }
       >
         {isPublished ? "Unpublish" : "Publish"}
       </Button>

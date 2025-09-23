@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  
   const { wdt_ID } = useParams<{ wdt_ID: string }>();
   const [data, refresh] = useAction(
     getPackageData,
@@ -32,10 +32,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="md:grid md:grid-cols-[250px_1fr] h-dvh overflow-hidden">
-      <MainMenu data={data} className="hidden md:flex" />
+    <div className="md:grid md:grid-cols-[250px_1fr] h-auto overflow-hidden">
+      <MainMenu data={data} className="hidden md:flex bg-blue-50" />
       {isMobile && (
-        <div className="p-4 flex justify-between md:hidden sticky top-0 left-0  border-b border-border">
+        <div className="p-4 flex justify-between bg-blue-100 md:hidden sticky top-0 left-0  border-b border-border">
           <MenuTitle />
           {/* Hamburger button outside Drawer */}
           <button
@@ -64,7 +64,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       )}
       <MenuContext.Provider value={{ refresh }}>
-        <div className="h-dvh overflow-hidden grid ">{children}</div>
+        <div className="h-dvh overflow-hidden grid">{children}</div>
       </MenuContext.Provider>
     </div>
   );

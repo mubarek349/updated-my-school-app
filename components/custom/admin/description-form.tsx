@@ -1,5 +1,6 @@
 "use client";
 
+import { updateCoursePackageDescription } from "@/actions/admin/creatingCoursesPackage";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,7 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {  coursePackage } from "@prisma/client";
-import axios from "axios";
 import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -47,10 +47,14 @@ export const DescriptionForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/coursesPackages/${coursesPackageId}`, values);
-      toast.success("Courses Pacakge Description Updated");
-      toggleEdit();
-      router.refresh();
+      const result = await updateCoursePackageDescription(coursesPackageId, values.description);
+      if (result.status === 200) {
+        toast.success("Courses Pacakge Description Updated");
+        toggleEdit();
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "");
+      }
     } catch (error) {
       console.error("Update Error:", error);
       toast.error("Something went wrong.");
@@ -58,7 +62,7 @@ export const DescriptionForm = ({
   };
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="mt-6 border bg-blue-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         Courses Pacakge Description
         <Button onClick={toggleEdit} variant="ghost">

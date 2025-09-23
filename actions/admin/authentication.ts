@@ -1,77 +1,206 @@
 "use server";
 
-import { auth, CustomError } from "@/lib/auth";
-import { signIn, signOut } from "@/lib/auth";
-import { z } from "zod";
+import { signOut } from "@/auth";
+import { signIn } from "next-auth/react";
+import { auth } from "@/auth";
 import { loginSchema } from "@/lib/zodSchema";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
+import z from "zod";
 
-export async function authenticate(data: z.infer<typeof loginSchema>) {
+// Types for consistent return values
+type AuthResults = {
+  success: boolean;
+  message: string;
+  error?: string;
+};
+
+type UserData = {
+  success: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any;
+  message: string;
+};
+
+type AuthResult =
+  | { ok: true; message: string; redirectTo?: string }
+  | { ok: false; message: string; field?: "phoneno" | "passcode" | "form" };
+
+function normalizePhone(phone: string) {
+  // Example: strip spaces and non-digits; adapt to your locale rules.
+  return phone.replace(/[^\d+]/g, "");
+}
+
+export async function authenticate(
+  raw: z.infer<typeof loginSchema>
+): Promise<AuthResult> {
+  // Validate on the server as well (never trust client)
+  const parsed = loginSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message || "Invalid input.",
+      field:
+        (parsed.error.issues[0]?.path?.[0] as "phoneno" | "passcode") ?? "form",
+    };
+  }
+
+  const data = parsed.data;
+  const phoneno = normalizePhone(data.phoneno);
+
   try {
-    console.log("credentials >> ", data);
+    // In NextAuth v5, signIn throws on failure. We keep redirect disabled and handle client-side navigation.
     await signIn("credentials", {
-      phoneno: data.phoneno,
+      phoneno,
       passcode: data.passcode,
       redirect: false,
     });
-    // redirect("/en/admin/coursesPackages");
 
-    console.log("sign in successfully");
-    return { message: "Login successful" };
-  } catch (error) {
-    console.log("sign in failed", error);
-    if (error instanceof CustomError) {
-      return { message: error.message };
-    } else
-      return {
-        message: error,
-      };
+    // Optional: Hand back a canonical post-login path for the client to use.
+    return {
+      ok: true,
+      message: "Login successful",
+      redirectTo: "/en/admin/coursesPackages",
+    };
+  } catch (err) {
+    console.log("Authentication error:", err);
+    // Map common auth errors to clean, user-safe messages. Avoid returning raw error objects.
+    const message = deriveAuthMessage(err);
+    const field = deriveField(err);
+    return { ok: false, message, field };
   }
 }
 
-export async function logout() {
+function deriveAuthMessage(err: unknown): string {
+  const msg =
+    typeof err === "object" && err !== null
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        String((err as any).message ?? "")
+      : String(err ?? "");
+  // Common NextAuth credential error identifiers
+  if (msg.includes("CredentialsSignin"))
+    return "Invalid phone number or password.";
+  if (msg.toLowerCase().includes("accessdenied"))
+    return "You don’t have access to this resource.";
+  // Fallback
+  return "Unable to sign in. Please try again.";
+}
+
+function deriveField(err: unknown): "phoneno" | "passcode" | "form" {
+  const msg =
+    typeof err === "object" && err !== null
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        String((err as any).message ?? "")
+      : String(err ?? "");
+  if (msg.toLowerCase().includes("password")) return "passcode";
+  if (msg.toLowerCase().includes("phone")) return "phoneno";
+  return "form";
+}
+
+export async function logout(): Promise<AuthResults> {
   try {
     await signOut({ redirect: false });
-    redirect("/en/login");
-    return { message: "Logout successful", status: true };
+
+    return {
+      success: true,
+      message: "Logout successful",
+    };
   } catch (error) {
     console.error("Logout failed:", error);
-    return { message: "Logout failed", status: false };
+    return {
+      success: false,
+      message: "Logout failed",
+      error: "Unable to sign out properly",
+    };
   }
-}
-export async function checkAuthentication() {
-  const session = await signIn("credentials", { redirect: false });
-  if (!session || !session.user) {
-    redirect("/en/login");
-  }
-  return session;
 }
 
-export async function isAuthenticated() {
-  const session = await auth();
-  if (!session || !session.user || !session.user.id) {
+export async function checkAuthentication(): Promise<boolean> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return false;
+    }
+
+    // Verify user exists in database
+    const user = await prisma.admin.findUnique({
+      where: { id: session.user.id },
+    });
+
+    return !!user;
+  } catch (error) {
+    console.error("Authentication check failed:", error);
     return false;
   }
-  const user = await prisma.admin.findUnique({
-    where: { id: session.user.id },
-  });
-  if (!user) {
-    return false;
-  }
-  return true;
 }
 
-export async function loginData() {
-  const session = await auth();
-  if (!session || !session.user || !session.user.id) {
-    return "Unauthorized";
+export async function isAuthenticated(): Promise<boolean> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return false;
+    }
+
+    const user = await prisma.admin.findUnique({
+      where: { id: session.user.id },
+    });
+
+    return !!user;
+  } catch (error) {
+    console.error("Authentication verification failed:", error);
+    return false;
   }
-  const user = await prisma.admin.findUnique({
-    where: { id: session.user.id },
-  });
-  if (!user) {
-    return "User not found";
+}
+
+export async function getCurrentUser(): Promise<UserData> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: "Not authenticated",
+      };
+    }
+
+    const user = await prisma.admin.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        // Add other fields you want to return
+        // email: true,
+        // name: true,
+        // role: true,
+      },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found",
+      };
+    }
+
+    return {
+      success: true,
+      data: user,
+      message: "User data retrieved successfully",
+    };
+  } catch (error) {
+    console.error("Failed to get user data:", error);
+    return {
+      success: false,
+      message: "Failed to retrieve user data",
+    };
   }
-  return user;
+}
+
+export async function requireAuthentication(redirectTo = "/en/login") {
+  const isAuth = await checkAuthentication();
+
+  if (!isAuth) {
+    redirect(redirectTo);
+  }
 }

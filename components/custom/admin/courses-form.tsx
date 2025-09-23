@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { course, coursePackage } from "@prisma/client";
-import axios from "axios";
 import { Loader2, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,6 +19,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { CoursesList } from "./courses-list";
+import { createCourse, reorderCourses } from "@/actions/admin/creatingCourse";
 
 interface CoursesFormProps {
   initialData: coursePackage & { courses: course[] };
@@ -50,14 +50,16 @@ export const CoursesForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.post(
-        `/api/coursesPackages/${coursesPackageId}/courses`,
-        values
-      );
-      form.reset();
-      toast.success("Course Created");
-      toggleCreating();
-      router.refresh();
+      const result = await createCourse(coursesPackageId, values.title);
+
+      if (result.status === 200) {
+        form.reset();
+        toast.success(`Course "${result.data?.title}" created`);
+        toggleCreating();
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "");
+      }
     } catch (error) {
       console.error("Update Error:", error);
       toast.error("Something went wrong.");
@@ -67,14 +69,14 @@ export const CoursesForm = ({
   const onReorder = async (updateData: { id: string; position: number }[]) => {
     try {
       setIsUpdating(true);
-      await axios.put(
-        `/api/coursesPackages/${coursesPackageId}/courses/reorder`,
-        {
-          list: updateData,
-        }
-      );
-      toast.success("Courses reordered");
-      router.refresh();
+      const result = await reorderCourses(coursesPackageId, updateData);
+
+      if (result.status === 200) {
+        toast.success(result.message??"Courses reordered");
+        router.refresh();
+      } else {
+        toast.error(result.error??"");
+      }
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -86,13 +88,13 @@ export const CoursesForm = ({
     router.push(`/${lang}/admin/coursesPackages/${coursesPackageId}/${id}`);
   };
   return (
-    <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="relative bg-blue-50 mt-6 border rounded-md p-4">
       {isUpdating && (
         <div className="absolute w-full h-full bg-slate-500/200 top-0 right-0 rounded-m flex items-center justify-center">
           <Loader2 className="animate-spin h-6 w-6 text-sky-700" />
         </div>
       )}
-      <div className="font-medium flex items-center justify-between">
+      <div className="font-medium  flex items-center justify-between">
         Courses of the Package
         <Button onClick={toggleCreating} variant="ghost">
           {isCreating ? (

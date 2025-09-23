@@ -122,3 +122,20 @@
     @apply bg-background text-foreground;
   }
 }
+/* Force desktop layout during export */
+.force-desktop {
+  width: 842px !important; /* A4 landscape width */
+  height: 595px !important; /* A4 landscape height */
+  overflow: visible !important;
+  transform: none !important;
+  zoom: 1 !important;
+}
+
+/* Optional: Prevent mobile scaling during export */
+@media screen and (max-width: 768px) {
+  .certificate-container {
+    transform: none !important;
+    width: 842px !important;
+    height: 595px !important;
+  }
+}

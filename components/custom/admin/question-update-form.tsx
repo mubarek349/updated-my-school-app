@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { Plus, Trash2, CheckCircle, Circle } from "lucide-react";
-import axios from "axios";
+import { updateQuestion } from "@/actions/admin/creatingQuestion";
 
 interface QuestionUpdateFormProps {
   initialData: {
@@ -78,24 +78,18 @@ export default function QuestionUpdateForm({
 
   const onSubmit = async (values: FormValues) => {
     try {
-      await axios.put(
-        `/api/coursesPackages/${coursesPackageId}/courses/${courseId}/chapters/${chapterId}/questions/${questionId}`,
-        {
-          question: values.question,
-          options: values.options,
-          answer: values.answer,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      toast.success("Question updated successfully!");
-      router.refresh();
-      router.push(
-        `/en/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}`
-      );
+      const result = await updateQuestion(questionId, {
+        question: values.question,
+        options: values.options,
+        answer: values.answer,
+      });
+      if (result.status === 200) {
+        toast.success("Question updated successfully!");
+        router.refresh();
+        router.push(
+          `/en/admin/coursesPackages/${coursesPackageId}/${courseId}/${chapterId}`
+        );
+      } else toast.error(result.error ?? "");
     } catch {
       toast.error("Failed to update question.");
     }
@@ -132,6 +126,24 @@ export default function QuestionUpdateForm({
                   disabled={isSubmitting}
                   placeholder="e.g. 'What is the main concept of this chapter?'"
                   {...field}
+                  onPaste={(e) => {
+                    e.preventDefault(); // Prevent default paste behavior
+                    const pastedText = e.clipboardData.getData("text");
+                    const lines = pastedText
+                      .split(/\r?\n/)
+                      .filter((line) => line.trim() !== "");
+
+                    form.setValue("question", lines.shift() ?? "");
+
+                    lines.forEach((line, i) => {
+                      if (fields[i]) {
+                        form.setValue(`options.${i}`, line);
+                      } else {
+                        // Optionally add new fields if needed
+                        append(line);
+                      }
+                    });
+                  }}
                   className="resize-none min-h-[80px] border-2 border-slate-300 focus:border-sky-500"
                 />
               </FormControl>

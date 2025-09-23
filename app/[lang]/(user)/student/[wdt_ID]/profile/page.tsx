@@ -1,172 +1,158 @@
-import React from "react";
+"use client";
 
-const gradeData = {
-  activeCourse: {
-    course: "Quranic Studies",
-    grade: "A-",
-    remarks: "Pass",
-  },
-  lastLearnedCourses: [
-    {
-      course: "Fiqh of Worship",
-      grade: "B",
-      remarks: "-",
-    },
-    {
-      course: "Arabic Language Basics",
-      grade: "B+",
-      remarks: "Checking by teacher",
-    },
-    {
-      course: "Islamic History",
-      grade: "A",
-      remarks: "Excellent performance",
-    },
-    {
-      course: "Tafsir",
-      grade: "C+",
-      remarks: "Needs improvement",
-    },
-    {
-      course: "Hadith Studies",
-      grade: "A+",
-      remarks: "Outstanding",
-    },
-    {
-      course: "Aqidah",
-      grade: "B-",
-      remarks: "Satisfactory",
-    },
-    {
-      course: "Seerah",
-      grade: "C",
-      remarks: "Average",
-    },
-    {
-      course: "Advanced Arabic",
-      grade: "D+",
-      remarks: "Retake recommended",
-    },
-    {
-      course: "Islamic Ethics",
-      grade: "A",
-      remarks: "Great participation",
-    },
-    {
-      course: "Quran Recitation",
-      grade: "B+",
-      remarks: "Good progress",
-    },
-  ],
-};
+import { useParams } from "next/navigation";
+import useAction from "@/hooks/useAction";
+import getProfile from "@/actions/student/profile";
 
-const getGradeColor = (grade: string) => {
-  if (["A+", "A", "A-"].includes(grade))
-    return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-  if (["B+", "B", "B-"].includes(grade))
-    return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-  if (["C+", "C", "C-"].includes(grade))
-    return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-  if (["D+", "D", "D-"].includes(grade))
-    return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
-  return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-};
+import StudentHeader from "@/components/custom/student/profile/StudentHeader";
+import StatsCard from "@/components/custom/student/profile/StatsCard";
+import CourseCard from "@/components/custom/student/profile/CourseCard";
+import CourseSection from "@/components/custom/student/profile/CourseSection";
+
+import { BookOpen, CheckCircle, GraduationCap } from "lucide-react";
+import AttendanceSummary from "@/components/custom/student/profile/AttendanceSummary";
+import { cn } from "@/lib/utils";
 
 function Page() {
-  const { activeCourse, lastLearnedCourses } = gradeData;
+  const params = useParams();
+  const studentId = Number(params?.wdt_ID ?? 0);
+
+  const [data, , loading] = useAction(
+    getProfile,
+    [true, (response) => console.log(response)],
+    studentId
+  );
+
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-gray-500">Loading profile...</div>
+    );
+  }
+  console.log("Profile data:", data);
+
+  if (!data) {
+    return (
+      <div className="p-6 text-center text-red-500">
+        Failed to load profile.
+      </div>
+    );
+  }
+
+  const {
+    studentProfile,
+    completedPackageNames,
+    completedPackageIdss,
+    resultOfCompletedPackage,
+    inProgressPackages,
+    totalNumberOfCompletedPackage,
+    totalNumberOfThePackage,
+    averageGrade,
+    complationDates,
+    attendances,
+  } = data;
+
+  if (!studentProfile.name) {
+    return (
+      <div className="p-6 text-center text-red-500">
+        Failed to load profile.
+      </div>
+    );
+  }
+  const currentCourses = inProgressPackages.map((pkg) => ({
+    title: pkg.packageId.name,
+    instructor: pkg.oustazName,
+    chapters: `${pkg.noOfChapters} chapters`,
+    progress: pkg.percent,
+  }));
+
+  const completedCourses = completedPackageNames.map((pkg, idx) => ({
+    title: pkg.pName,
+    instructor: pkg.oustazName,
+    chapters: `${pkg.noOfChapters} chapters`,
+    completed: complationDates[idx],
+    result: `${resultOfCompletedPackage[idx].correct}/${resultOfCompletedPackage[idx].total} (${resultOfCompletedPackage[idx].score}%)`,
+    url: `/en/student/${studentId}/certificates/${completedPackageIdss[idx]}`,
+  }));
+  const colorMap = {
+    blue: "text-blue-600 bg-blue-100 border-blue-100",
+    green: "text-green-600 bg-green-100 border-green-100",
+  };
 
   return (
-    <div className="h-full w-full flex items-center justify-center py-8 px-2 overflow-auto">
-      <main className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg w-full max-w-2xl">
-        <div className="overflow-x-auto p-6">
-          {/* Active Package Table */}
-          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200">
-            Active Package
-          </h2>
-          <table className="w-full text-left rounded-lg overflow-hidden shadow border border-gray-200 dark:border-gray-700 mb-8">
-            <thead className="bg-gray-100 dark:bg-gray-700">
-              <tr>
-                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">
-                  Course
-                </th>
-                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-center">
-                  Grade
-                </th>
-                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">
-                  Remarks
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-t border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/30">
-                <td className="p-4 font-medium text-gray-800 dark:text-gray-200">
-                  {activeCourse.course}
-                </td>
-                <td className="p-4 text-center">
-                  <span
-                    className={`px-3 py-1 text-sm font-bold rounded-full ${getGradeColor(
-                      activeCourse.grade
-                    )}`}
-                  >
-                    {activeCourse.grade}
-                  </span>
-                </td>
-                <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
-                  {activeCourse.remarks}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    <div className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 lg:px-8 overflow-y-auto">
+      {/* Header */}
+      <StudentHeader
+        name={studentProfile.name}
+        phone={studentProfile.phoneno ?? ""}
+        id={studentProfile.wdt_ID}
+      />
 
-          {/* Last Learned Courses Table */}
-          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200">
-            Last Learned Courses
-          </h2>
-          <table className="w-full text-left rounded-lg overflow-hidden shadow border border-gray-200 dark:border-gray-700">
-            <thead className="bg-gray-100 dark:bg-gray-700">
-              <tr>
-                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">
-                  Course
-                </th>
-                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300 text-center">
-                  Grade
-                </th>
-                <th className="p-4 font-semibold text-gray-600 dark:text-gray-300">
-                  Remarks
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {lastLearnedCourses.map((course, idx) => (
-                <tr
-                  key={idx}
-                  className={`border-t border-gray-200 dark:border-gray-700 ${
-                    idx % 2 === 0
-                      ? "bg-gray-50 dark:bg-gray-900/30"
-                      : "bg-white dark:bg-gray-800"
-                  }`}
-                >
-                  <td className="p-4 font-medium text-gray-800 dark:text-gray-200">
-                    {course.course}
-                  </td>
-                  <td className="p-4 text-center">
-                    <span
-                      className={`px-3 py-1 text-sm font-bold rounded-full ${getGradeColor(
-                        course.grade
-                      )}`}
-                    >
-                      {course.grade}
-                    </span>
-                  </td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400 text-sm">
-                    {course.remarks}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </main>
+      {/* Stats */}
+      <div
+        className={cn(
+          "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 mb-8 lg:grid-cols-4",
+          attendances.present === 0 &&
+            attendances.absent === 0 &&
+            " grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-8"
+        )}
+      >
+        <StatsCard
+          label="Total Courses"
+          value={totalNumberOfThePackage}
+          icon={<BookOpen className="w-5 h-5 text-blue-600" />}
+        />
+        <StatsCard
+          label="Completed"
+          value={totalNumberOfCompletedPackage}
+          icon={<CheckCircle className="w-5 h-5 text-green-600" />}
+        />
+        <StatsCard
+          label="Average Grade in %"
+          value={`${averageGrade.toFixed(2)} %`}
+          icon={<GraduationCap className="w-5 h-5 text-yellow-500" />}
+        />
+        <AttendanceSummary
+          present={attendances.present}
+          absent={attendances.absent}
+        />
+      </div>
+
+      {/* Current Courses */}
+      {currentCourses.length > 0 && (
+        <CourseSection
+          title="Current Courses"
+          badge={`${
+            totalNumberOfThePackage - totalNumberOfCompletedPackage
+          } active`}
+          badgeColor={colorMap.blue}
+        >
+          {currentCourses.map((course, idx) => (
+            <CourseCard
+              key={idx}
+              {...course}
+              instructor={course.instructor.filter(Boolean).join(", ")} // removes nulls and joins
+            />
+          ))}
+        </CourseSection>
+      )}
+
+      {/* Completed Courses */}
+      {completedCourses.length > 0 && (
+        <CourseSection
+          title="Completed Courses"
+          badge={`${totalNumberOfCompletedPackage} completed`}
+          badgeColor="green"
+        >
+          {completedCourses.map((course, idx) => (
+            <CourseCard
+              key={idx}
+              {...course}
+              instructor={course.instructor.filter(Boolean).join(", ")}
+              isCompleted
+            />
+          ))}
+        </CourseSection>
+      )}
     </div>
   );
 }

@@ -54,7 +54,7 @@ export async function unlockTest(
   });
 
   if (!student?.activePackage?.courses?.length) {
-    return { completed: true, message: "No courses found" };
+    return { completed: true, message: "No courses " };
   }
 
   // Get completed chapter IDs
@@ -80,15 +80,6 @@ export async function unlockTest(
     .filter((p) => p.isCompleted === false)
     .map((p) => p.chapterId);
 
-  // check the params chapterid if a incompleteChapterIds.if not the bellow function is not display .it display a bad unlock message only help me
-  //   if (!incompleteChapterIds.includes(chapterId)) {
-  //     console.log("this is a big mistake of unlock");
-  //     return {
-  //       error: true,
-  //       message:
-  //         "You tried a bad unlock. You either tried to unlock a previous chapter or attempted to unlock without following the step-by-step order.",
-  //     };
-  //   }
 
   if (incompleteChapterIds.includes(chapterId)) {
     // Only run this block if chapterId is in incompleteChapterIds
@@ -132,8 +123,7 @@ export async function unlockTest(
             },
           }),
         ]);
-        console.log("fuad next courseid", course.id);
-        console.log("fuad next chapterid", chapter.id);
+        
 
         const result = {
           nextCourseId: course.id,
@@ -141,7 +131,6 @@ export async function unlockTest(
           status: "incomplete_chapter_found",
           message: "progress is created",
         };
-        console.log("UnlockTest result:", result);
         return result;
       }
     }

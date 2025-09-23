@@ -36,7 +36,7 @@ const MenuTitle: React.FC<MenuTitleProps> = ({
   logoAlt = "Darulkubra logo",
   logoSize = "md",
   onClick,
-  gradientEffect = true,
+  // gradientEffect = true,
 }) => {
   const { theme } = useTheme();
   const controls = useAnimation();
@@ -49,67 +49,67 @@ const MenuTitle: React.FC<MenuTitleProps> = ({
   };
 
   // Animation variants
-  const logoVariants = {
-    initial: {
-      scale: 1,
-      rotate: 0,
-      opacity: 1,
-      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))",
-    },
-    hover: {
-      scale: 1.1,
-      rotate: 5,
-      filter:
-        theme === "dark"
-          ? "drop-shadow(0 4px 12px rgba(255,255,255,0.15))"
-          : "drop-shadow(0 4px 12px rgba(0,0,0,0.15))",
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 10,
-      },
-    },
-    tap: {
-      scale: 0.95,
-      transition: { duration: 0.1 },
-    },
-  };
+  // const logoVariants = {
+  //   initial: {
+  //     scale: 1,
+  //     rotate: 0,
+  //     opacity: 1,
+  //     filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))",
+  //   },
+  //   hover: {
+  //     scale: 1.1,
+  //     rotate: 5,
+  //     filter:
+  //       theme === "dark"
+  //         ? "drop-shadow(0 4px 12px rgba(255,255,255,0.15))"
+  //         : "drop-shadow(0 4px 12px rgba(0,0,0,0.15))",
+  //     transition: {
+  //       type: "spring",
+  //       stiffness: 300,
+  //       damping: 10,
+  //     },
+  //   },
+  //   tap: {
+  //     scale: 0.95,
+  //     transition: { duration: 0.1 },
+  //   },
+  // };
 
-  const badgeVariants = {
-    initial: { scale: 1, y: 0 },
-    hover: {
-      scale: 1.1,
-      y: -2,
-      transition: { type: "spring", stiffness: 500 },
-    },
-  };
+  // const badgeVariants = {
+  //   initial: { scale: 1, y: 0 },
+  //   hover: {
+  //     scale: 1.1,
+  //     y: -2,
+  //     transition: { type: "spring", stiffness: 500 },
+  //   },
+  // };
 
-  const titleVariants = {
-    initial: {
-      y: 0,
-      opacity: 1,
-      background: "transparent",
-      color: theme === "dark" ? "#ffffff" : "#1e293b",
-    },
-    hover: {
-      y: -2,
-      ...(gradientEffect && {
-        background:
-          theme === "dark"
-            ? "linear-gradient(90deg, #ffffff 0%, #60a5fa 80%)"
-            : "linear-gradient(90deg, #1e293b 0%, #3b82f6 80%)",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-      }),
-      transition: { duration: 0.3, ease: "easeOut" },
-    },
-  };
+  // const titleVariants = {
+  //   initial: {
+  //     y: 0,
+  //     opacity: 1,
+  //     background: "transparent",
+  //     color: theme === "dark" ? "#ffffff" : "#1e293b",
+  //   },
+  //   hover: {
+  //     y: -2,
+  //     ...(gradientEffect && {
+  //       background:
+  //         theme === "dark"
+  //           ? "linear-gradient(90deg, #ffffff 0%, #60a5fa 80%)"
+  //           : "linear-gradient(90deg, #1e293b 0%, #3b82f6 80%)",
+  //       WebkitBackgroundClip: "text",
+  //       WebkitTextFillColor: "transparent",
+  //     }),
+  //     transition: { duration: 0.3, ease: "easeOut" },
+  //   },
+  // };
 
   return (
     <motion.div
       className={cn(
-        "flex items-center gap-4 ",
-        "transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-400",
+        "flex items-center gap-4",
+        "transition-all  duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-400",
         onClick ? "cursor-pointer" : "cursor-default",
         className
       )}
@@ -124,7 +124,7 @@ const MenuTitle: React.FC<MenuTitleProps> = ({
       {/* Logo without rounded corners or background */}
       <motion.div
         className={cn("relative", logoSizeClasses[logoSize])}
-        variants={logoVariants}
+        // variants={logoVariants}
         animate={controls}
       >
         <Image
@@ -136,7 +136,7 @@ const MenuTitle: React.FC<MenuTitleProps> = ({
           priority
         />
         {showBadge && (
-          <motion.div variants={badgeVariants}>
+          <motion.div >
             <Badge
               className={cn(
                 "absolute -top-2 -right-2 text-xs font-bold px-2 py-0.5 rounded-full",
@@ -160,7 +160,6 @@ const MenuTitle: React.FC<MenuTitleProps> = ({
             theme === "dark" ? "text-white" : "text-gray-900",
             "transition-all duration-300"
           )}
-          variants={titleVariants}
         >
           {title}
         </motion.h1>

@@ -23,7 +23,6 @@ const ChapterIdPage = async ({
   const { chapterId } = await params;
   const { coursesPackageId } = await params;
 
-  
   const chapter = await prisma.chapter.findUnique({
     where: {
       id: chapterId,
@@ -63,7 +62,7 @@ const ChapterIdPage = async ({
           label="This chapter is unpublished, It will not be visible in the course"
         />
       )}
-      <div className="p-6 overflow-auto">
+      <div className="p-6 overflow-auto bg-blue-50">
         <div className="flex items-center justify-between">
           <div className="w-full">
             <Link

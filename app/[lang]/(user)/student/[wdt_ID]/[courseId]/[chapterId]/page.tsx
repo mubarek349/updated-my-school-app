@@ -1,5 +1,5 @@
 "use client";
-import * as React from "react";
+import React, { useEffect } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,7 +8,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import useAction from "@/hooks/useAction";
 import { packageCompleted } from "@/actions/student/progress";
 import { getQuestionForActivePackageChapterUpdate } from "@/actions/student/test";
@@ -26,13 +26,18 @@ import {
 } from "@/components/ui/tooltip";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getCoursesPackageId } from "@/actions/admin/package";
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
 
 function Page() {
   const params = useParams();
   const wdt_ID = Number(params.wdt_ID);
-  const chapterId = String(params.chapterId);
   const courseId = String(params.courseId);
-
+  const chapterId = String(params.chapterId);
   const [data, refetch, isLoading] = useAction(
     getQuestionForActivePackageChapterUpdate,
     [true, (response) => console.log(response)],
@@ -48,17 +53,22 @@ function Page() {
   );
   const [error, setError] = React.useState<string | null>(null);
 
+  // FIX: Correctly access coursesPackageId from the 'data' object.
+  // Assuming 'data' will have a 'packageId' property when successfully fetched.
+
   // Confetti and toast on package complete
-  React.useEffect(() => {
+
+  useEffect(() => {
     async function checkPackage() {
       try {
-        const completed = await packageCompleted(wdt_ID);
-        if (completed) {
+        const packageIsCompleted = await packageCompleted(wdt_ID); // Renamed variable to avoid conflict
+        if (packageIsCompleted) {
           toast.success("🎉 Congratulations! You have completed the package!", {
             duration: 5000,
             style: { background: "#10B981", color: "#fff" },
           });
 
+          // FIX: Correct router.push path and ensure data.packageId is ava
           // Confetti side cannons
           const end = Date.now() + 2 * 1000;
           const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
@@ -89,18 +99,17 @@ function Page() {
         console.error(err);
       }
     }
-    checkPackage();
-  }, [wdt_ID]);
+
+    // Only run checkPackage if data is loaded and not an error/message state
+    if (!isLoading && !error && data && !("message" in data)) {
+      checkPackage();
+    }
+  }, [wdt_ID, isLoading, error, data]); // Added coursesPackageId and router to dependencies
 
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
   // Handle "package not started" state
@@ -148,18 +157,18 @@ function Page() {
 
   return (
     <motion.div
-      className="px-4 md:px-12  py-6 grid grid-rows-[auto_1fr] min-h-dvh"
-      style={{
-        background:
-          "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%)",
-        backgroundAttachment: "fixed",
-      }}
+    className="px-4 md:px-12 bg-blue-50 py-6 grid grid-rows-[auto_1fr] min-h-screen"
+    style={{
+      background:
+      "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%) cl",
+      backgroundAttachment: "fixed",
+    }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       <ProgressPage />
-      <div className="flex flex-col overflow-auto">
+      <div className="flex flex-col overflow-auto px-2 bg-blue-50">
         {/* Breadcrumb */}
         <TooltipProvider>
           <Breadcrumb className="py-4 md:py-6 mb-4">
@@ -169,7 +178,7 @@ function Page() {
                   <TooltipTrigger asChild>
                     <BreadcrumbLink
                       className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-                      // href={`/en/student/${wdt_ID}`}
+                      // href={`/en/student/${wdt_ID}`} // Uncomment and set href if navigation is desired
                     >
                       {data && "packageName" in data
                         ? data.packageName
@@ -185,7 +194,7 @@ function Page() {
                   <TooltipTrigger asChild>
                     <BreadcrumbLink
                       className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-                      // href={`/en/student/${wdt_ID}/${courseId}`}
+                      // href={`/en/student/${wdt_ID}/${courseId}`} // Uncomment and set href if navigation is desired
                     >
                       {data && "courseTitle" in data
                         ? data.courseTitle
@@ -238,39 +247,11 @@ function Page() {
               </Button>
             </motion.div>
           ) : data && "message" in data ? (
-            <motion.div
-              className="flex flex-col items-center justify-center min-h-[50vh] bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 rounded-xl"
-              variants={itemVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <svg
-                    className="w-12 h-12 text-green-600 dark:text-green-400 mb-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </TooltipTrigger>
-                <TooltipContent>{data.message}</TooltipContent>
-              </Tooltip>
-              <span className="text-xl font-bold text-green-700 dark:text-green-300 text-center">
-                {data.message}
-              </span>
-            </motion.div>
+            <Message message={data.message} wdt_ID={wdt_ID} />
           ) : (
             <>
               <iframe
-                className="w-full mx-auto aspect-video max-md:sticky top-0 z-50 rounded-lg shadow-lg"
+                className="w-full text-sm mx-auto aspect-video max-md:sticky top-0 z-50 rounded-lg shadow-lg"
                 src={
                   data && "chapter" in data && data.chapter?.videoUrl
                     ? `https://www.youtube.com/embed/${data.chapter.videoUrl}`
@@ -312,3 +293,52 @@ function Page() {
 }
 
 export default Page;
+
+function Message({ message, wdt_ID }: { message: string; wdt_ID: number }) {
+  const router = useRouter();
+  console.log("showed message in message");
+  useEffect(() => {
+    (async () => {
+      if (await packageCompleted(wdt_ID)) {
+        const coursesPackageId = await getCoursesPackageId(wdt_ID);
+        setTimeout(() => {
+          router.push(`/en/student/${wdt_ID}/finalexam/${coursesPackageId}`);
+        }, 5000);
+      }
+    })();
+  }, [router, wdt_ID]);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="flex flex-col items-center justify-center min-h-[50vh] bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 rounded-xl"
+        variants={itemVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <svg
+              className="w-12 h-12 text-green-600 dark:text-green-400 mb-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </TooltipTrigger>
+          <TooltipContent>{message}</TooltipContent>
+        </Tooltip>
+        <span className="text-xl font-bold text-green-700 dark:text-green-300 text-center">
+          {message}
+        </span>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
