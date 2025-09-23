@@ -26,12 +26,16 @@ model coursePackage {
   courses             course[]
   questions           question[]
   finalExamResult     finalExamResult[]
+  courseMaterials     String?               @db.Text
   examDurationMinutes Int?
   isPublished         Boolean               @default(false)
   students            wpos_wpdatatable_23[] @relation("PackageHistory")
   activeStudents      wpos_wpdatatable_23[] @relation("ActivePackage")
   subjectPackages     subjectPackage[] // <-- Add this line for the relation
   terbiaAttendance    tarbiaAttendance[]
+  feedback            feedback[]
+  qandAQuestion       qandAQuestion[]
+  announcement        announcement[]
   ustazId             Int?
   ustaz               ustaz?                @relation(fields: [ustazId], references: [wdt_ID])
   createdAt           DateTime              @default(now())
@@ -74,7 +78,7 @@ model chapter {
   title       String
   description String? @db.Text
   videoUrl    String? @db.Text
-  customVideo String?  @db.Text
+  customVideo String? @db.Text
   position    Int
   isPublished Boolean @default(false)
   // isFree      Boolean @default(false)
@@ -98,7 +102,7 @@ model question {
   chapterId       String?
   coursePackage   coursePackage?   @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId       String?
-  question        String  @db.Text
+  question        String           @db.Text
   questionOptions questionOption[]
   questionAnswer  questionAnswer[]
   studentQuiz     studentQuiz[]
@@ -185,12 +189,13 @@ model finalExamResult {
 }
 
 model admin {
-  id        String   @id @default(cuid())
-  name      String
-  phoneno   String   @unique
-  chat_id   String   @unique
-  passcode  String
-  createdAt DateTime @default(now())
+  id            String          @id @default(cuid())
+  name          String
+  phoneno       String          @unique
+  chat_id       String          @unique
+  passcode      String
+  createdAt     DateTime        @default(now())
+  qandAResponse qandAResponse[]
 }
 
 model wpos_wpdatatable_23 {
@@ -217,6 +222,8 @@ model wpos_wpdatatable_23 {
   chat_id          String?            @default("")
   u_control        String?            @db.VarChar(255)
   controller       controller?        @relation(fields: [u_control], references: [code])
+  feedback         feedback[]
+  qandAQuestion    qandAQuestion[]    @relation("QandAQuestions")
 }
 
 model ustaz {
@@ -266,4 +273,66 @@ model tarbiaAttendance {
   status         Boolean             @default(false)
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
+}
+
+model qandAQuestion {
+  id              String              @id @default(cuid())
+  student         wpos_wpdatatable_23 @relation("QandAQuestions", fields: [studentId], references: [wdt_ID], onDelete: Cascade)
+  studentId       Int
+  coursePackage   coursePackage       @relation(fields: [coursepackageId], references: [id], onDelete: Cascade)
+  coursepackageId String
+  question        String              @db.Text
+  timestamp       Int? // Video timestamp in seconds where question was asked
+  type            String              @default("course") // "course" for introduction video, "activity" for sub-activity video
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  responses       qandAResponse[]
+
+  @@index([coursepackageId])
+  @@index([studentId])
+}
+
+model qandAResponse {
+  id              String        @id @default(cuid())
+  videoQuestion   qandAQuestion @relation(fields: [videoQuestionId], references: [id], onDelete: Cascade)
+  videoQuestionId String
+  ustaz           responseUstaz @relation("QandAResponses", fields: [ustazId], references: [id], onDelete: Cascade)
+  ustazId         Int
+  response        String        @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  admin           admin?        @relation(fields: [adminId], references: [id])
+  adminId         String?
+
+  @@index([videoQuestionId])
+  @@index([ustazId])
+}
+
+model announcement {
+  id                     String        @id @default(uuid())
+  anouncementDescription String        @db.Text
+  attachLink             String?       @db.Text
+  coursesPackageId       String
+  createdAt              DateTime      @default(now())
+  coursePackage          coursePackage @relation(fields: [coursesPackageId], references: [id], onDelete: Cascade)
+}
+
+model feedback {
+  id              String              @id @default(uuid())
+  student         wpos_wpdatatable_23 @relation(fields: [studentId], references: [wdt_ID], onDelete: Cascade)
+  studentId       Int
+  coursePackage   coursePackage       @relation(fields: [coursePackageId], references: [id], onDelete: Cascade)
+  coursePackageId String
+  feedback        String              @db.Text
+  rating          Int
+  createdAt       DateTime            @default(now())
+}
+
+model responseUstaz {
+  id            Int             @id @default(autoincrement())
+  phoneno       String          @unique
+  passcode      String          @unique
+  ustazname     String?         @db.VarChar(255)
+  chat_id       String?         @default("")
+  qandAResponse qandAResponse[] @relation("QandAResponses")
 }
