@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
 import Link from "next/link";
-import { ArrowLeft, FileQuestion, LayoutDashboard, Video } from "lucide-react";
+import { ArrowLeft, FileQuestion, LayoutDashboard, Video, CheckCircle } from "lucide-react";
 import { IconBadge } from "@/components/icon-badge";
 import { ChapterTitleForm } from "@/components/custom/admin/chapter-title-form";
-import { ChapterVideoForm } from "@/components/custom/admin/chapter-video-form";
-
 import { Banner } from "@/components/custom/admin/banner";
 import { ChapterActions } from "@/components/custom/admin/chapter-action";
 import { ChapterQuestionForm } from "@/components/custom/admin/chapter-question-form";
-// import VideoUploadButton from "@/components/VideoUploadButton";
+import { ChapterVideoManager } from "@/components/custom/admin/chapter-video-manager";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const ChapterIdPage = async ({
   params,
@@ -45,7 +45,7 @@ const ChapterIdPage = async ({
   const requiredFields = [
     chapter.title,
     // chapter.description,
-    chapter.videoUrl,
+    chapter.videoUrl || chapter.customVideo, // Accept either videoUrl or customVideo
     chapter.questions,
   ];
 
@@ -55,6 +55,7 @@ const ChapterIdPage = async ({
   const completionText = `${completedFields}/${totalFields}`;
   const isComplete = requiredFields.every(Boolean);
   const lang = "en";
+
   return (
     <>
       {!chapter.isPublished && (
@@ -63,23 +64,33 @@ const ChapterIdPage = async ({
           label="This chapter is unpublished, It will not be visible in the course"
         />
       )}
-      <div className="p-6 overflow-auto bg-blue-50">
-        <div className="flex items-center justify-between">
-          <div className="w-full">
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
+        <div className="container mx-auto px-6 py-8">
+          <div className="mb-8">
             <Link
               href={`/${lang}/admin/coursesPackages/${coursesPackageId}/${courseId}`}
-              className="flex items-center text-sm hover:opacity-75 transition mb-6"
+              className="inline-flex items-center text-sm text-slate-600 hover:text-slate-900 transition-colors mb-6 group"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Chapters setup
+              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+              Back to Course Setup
             </Link>
-            <div className="flex items-center justify-between w-full">
-              <div className="flex flex-col gap-y-2">
-                <h1 className="text-2xl font-medium">Chapter Creation</h1>
-                <span className="text-sm text-slate-700">
-                  Complete all fields {completionText}
-                </span>
+            
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold text-slate-900">Chapter Management</h1>
+                <div className="flex items-center gap-3">
+                  <Badge variant={isComplete ? "default" : "secondary"} className="px-3 py-1">
+                    {isComplete ? (
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                    ) : null}
+                    {completionText} Complete
+                  </Badge>
+                  <span className="text-sm text-slate-600">
+                    {chapter.title || "Untitled Chapter"}
+                  </span>
+                </div>
               </div>
+              
               <ChapterActions
                 disabled={!isComplete}
                 courseId={chapterId}
@@ -89,50 +100,62 @@ const ChapterIdPage = async ({
               />
             </div>
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={LayoutDashboard} />
-                <h2 className="text-xl">Customize your chapter</h2>
-              </div>
-              <ChapterTitleForm
-                coursesPackageId={coursesPackageId}
-                initialData={chapter}
-                courseId={courseId}
-                chapterId={chapterId} // Pass chapterId to the form
-              />
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            {/* Chapter Details Section */}
+            <div className="space-y-6">
+              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <IconBadge icon={LayoutDashboard} variant="default" />
+                    <h2 className="text-xl font-semibold text-slate-800">Chapter Details</h2>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ChapterTitleForm
+                    coursesPackageId={coursesPackageId}
+                    initialData={chapter}
+                    courseId={courseId}
+                    chapterId={chapterId}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <IconBadge icon={FileQuestion} variant="default" />
+                    <h2 className="text-xl font-semibold text-slate-800">Assessment Questions</h2>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ChapterQuestionForm
+                    coursesPackageId={coursesPackageId}
+                    initialData={chapter}
+                    courseId={courseId}
+                    chapterId={chapterId}
+                  />
+                </CardContent>
+              </Card>
             </div>
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={Video} />
-                <h2 className="text-xl">Add a video</h2>
-              </div>
-              <ChapterVideoForm
-                coursesPackageId={coursesPackageId}
-                initialData={chapter}
-                courseId={courseId}
-                chapterId={chapterId} // Pass chapterId to the for
-              />
-              {/* <VideoUploadButton
-                coursesPackageId={coursesPackageId}
-                initialData={chapter}
-                courseId={courseId}
-                chapterId={chapterId} // Pass chapterId to the for
-              /> */}
-            </div>
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={FileQuestion} />
-                <h2 className="text-xl">Add Question</h2>
-              </div>
-              <ChapterQuestionForm
-                coursesPackageId={coursesPackageId}
-                initialData={chapter}
-                courseId={courseId}
-                chapterId={chapterId}
-              />
+
+            {/* Video Section */}
+            <div className="space-y-6">
+              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <IconBadge icon={Video} variant="default" />
+                    <h2 className="text-xl font-semibold text-slate-800">Chapter Video</h2>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ChapterVideoManager
+                    coursesPackageId={coursesPackageId}
+                    initialData={chapter}
+                    courseId={courseId}
+                    chapterId={chapterId}
+                  />
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

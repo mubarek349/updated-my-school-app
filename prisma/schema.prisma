@@ -26,6 +26,7 @@ model coursePackage {
   courses             course[]
   questions           question[]
   finalExamResult     finalExamResult[]
+  aiPdfData           String?               @db.Text
   courseMaterials     String?               @db.Text
   examDurationMinutes Int?
   isPublished         Boolean               @default(false)

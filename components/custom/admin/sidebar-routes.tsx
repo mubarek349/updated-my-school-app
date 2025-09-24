@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart, List, Layout } from "lucide-react";
+import { BarChart, List, Layout, Book, MessageSquare, MessageCircle } from "lucide-react";
 import { SidebarItem } from "./sidebar-item";
 import { usePathname } from "next/navigation";
 
@@ -14,6 +14,21 @@ const teacherRoutes = [
     icon: BarChart,
     label: "Analytics",
     href: "/en/admin/analytics",
+  },
+  {
+    icon: Book,
+    label: "CourseMaterials",
+    href: "/en/admin/courseMaterials",
+  },
+  {
+    icon: MessageCircle,
+    label: "Announcements",
+    href: "/en/admin/announcements",
+  },
+  {
+    icon: MessageSquare,
+    label: "Feedbacks",
+    href: "/en/admin/feedbacks",
   },
 ];
 

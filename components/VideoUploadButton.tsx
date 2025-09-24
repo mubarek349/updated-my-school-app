@@ -10,19 +10,25 @@ function getTimestampUUID(ext: string) {
 }
 
 interface VideoUploadButtonProps {
-  onVideoSelect: (file: File) => void;
-  onVideoRemove: () => void;
+  onVideoSelect?: (file: File) => void;
+  onVideoRemove?: () => void;
+  onUploadComplete?: (filename?: string) => void;
   selectedVideo?: File | null;
-  lang: string;
+  lang?: string;
   disabled?: boolean;
   showExternalProgress?: boolean;
+  coursesPackageId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialData: any;
+  courseId: string;
+  chapterId: string;
 }
-
 export default function VideoUploadButton({
-  onVideoSelect,
-  onVideoRemove,
+  onVideoSelect = () => {},
+  onVideoRemove = () => {},
+  onUploadComplete = () => {},
   selectedVideo,
-  lang,
+  lang = "en",
   disabled = false,
   showExternalProgress = false,
 }: VideoUploadButtonProps) {
@@ -43,33 +49,46 @@ export default function VideoUploadButton({
     const total = Math.ceil(file.size / chunkSize);
     setTotalChunks(total);
 
-    for (let i = 0; i < total; i++) {
-      const start = i * chunkSize;
-      const end = Math.min(file.size, start + chunkSize);
-      const chunk = file.slice(start, end);
+    try {
+      for (let i = 0; i < total; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(file.size, start + chunkSize);
+        const chunk = file.slice(start, end);
 
-      const formData = new FormData();
-      formData.append("chunk", chunk);
-      formData.append("filename", uuidName);
-      formData.append("chunkIndex", i.toString());
-      formData.append("totalChunks", total.toString());
+        const formData = new FormData();
+        formData.append("chunk", chunk);
+        formData.append("filename", uuidName);
+        formData.append("chunkIndex", i.toString());
+        formData.append("totalChunks", total.toString());
 
-      await fetch("/api/upload-video", {
-        method: "POST",
-        body: formData,
-      });
+        const response = await fetch("/api/upload-video", {
+          method: "POST",
+          body: formData,
+        });
 
-      setUploadProgress(Math.round(((i + 1) / total) * 100));
-      setCurrentChunk(i + 1);
+        if (!response.ok) {
+          throw new Error(`Upload failed for chunk ${i}`);
+        }
+
+        setUploadProgress(Math.round(((i + 1) / total) * 100));
+        setCurrentChunk(i + 1);
+      }
+
+      setIsUploading(false);
+      onUploadComplete(uuidName);
+      alert(lang === "en" ? "Upload complete!" : "ስቀል ተጠናቋል!");
+      setCurrentChunk(0);
+      setTotalChunks(0);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      setIsUploading(false);
+      alert(lang === "en" ? "Upload failed. Please try again." : "ስቀል አልተሳካም። እባክዎ እንደገና ይሞክሩ።");
     }
-
-    setIsUploading(false);
-    alert(lang === "en" ? "Upload complete!" : "ስቀል ተጠናቋል!");
-    setCurrentChunk(0);
-    setTotalChunks(0);
   };
 
   const handleFileSelect = async (file: File) => {
+    if (isUploading) return; // Prevent double upload
+    
     if (file.type.startsWith("video/")) {
       // Reset states for new upload
       setUploadProgress(0);
@@ -237,23 +256,12 @@ export default function VideoUploadButton({
                   : "የቪዲዮ ፋይልዎን እዚህ ይጎትቱ እና ይጣሉ"}
               </p>
             </div>
-            <div className="flex flex-col items-center space-y-3">
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <span className="px-2 py-1 bg-gray-100 rounded">
-                  {lang === "en" ? "MP4, AVI, MOV" : "MP4፣ AVI፣ MOV"}
-                </span>
-                <span>•</span>
-                <span>{lang === "en" ? "Max 100MB" : "ከ100MB በታች"}</span>
-              </div>
-              <Button
-                color="primary"
-                onClick={() =>
-                  !disabled && !isUploading && fileInputRef.current?.click()
-                }
-                disabled={disabled || isUploading}
-              >
-                {lang === "en" ? "Choose File" : "ፋይል ምረጥ"}
-              </Button>
+            <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+              <span className="px-2 py-1 bg-gray-100 rounded">
+                {lang === "en" ? "MP4, AVI, MOV" : "MP4፣ AVI፣ MOV"}
+              </span>
+              <span>•</span>
+              <span>{lang === "en" ? "Max 100MB" : "ከ100MB በታች"}</span>
             </div>
           </div>
         </div>

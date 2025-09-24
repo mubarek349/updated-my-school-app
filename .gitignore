@@ -47,4 +47,5 @@ next-env.d.ts
 *.rar
 
 #external files
-/fuad
+/uploads
+/docs

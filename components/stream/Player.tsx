@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 interface PlayerProps {
   src: string;
-  type?: "url" | "local";
+  type?: "url" | "local" | "direct";
   playlist?: VideoItem[];
   title?: string;
   onVideoPlay?: () => void;
@@ -45,6 +45,9 @@ PlayerProps) {
     videoSrc = `/api/remote-stream?url=${encodeURIComponent(src)}`;
   } else if (type === "local") {
     videoSrc = `/api/stream?file=${encodeURIComponent(src)}`;
+  } else if (type === "direct") {
+    // For direct type, use the src as-is (for our custom video API endpoints)
+    videoSrc = src;
   }
   // For blob URLs (uploaded files), use src directly
 
@@ -188,6 +191,14 @@ PlayerProps) {
             e.stopPropagation();
             setPlaying(false);
             onVideoPause?.();
+          }}
+          onError={(e) => {
+            console.error("Video error:", e);
+            console.error("Video src:", currentSrc);
+            console.error("Video type:", type);
+          }}
+          onLoadStart={() => {
+            console.log("Video load started:", currentSrc);
           }}
           onClick={(e) => {
             e.stopPropagation();
