@@ -28,6 +28,10 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCoursesPackageId } from "@/actions/admin/package";
 import CourseTopOverview from "@/components/courseTopOverview";
+import CourseAnnouncements from "@/components/CourseAnnouncements";
+import CourseFeedback from "@/components/CourseFeedback";
+import CourseMaterials from "@/components/CourseMaterials";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -36,6 +40,7 @@ const itemVariants = {
 
 function Page() {
   const params = useParams();
+  const lang = "en";
   const wdt_ID = Number(params?.wdt_ID ?? 0);
   const courseId = String(params?.courseId ?? "");
   const chapterId = String(params?.chapterId ?? "");
@@ -282,6 +287,36 @@ function Page() {
                     initial="hidden"
                     animate="visible"
                   >
+                    {/* Tabbed UI for Feedback, Materials, Announcements */}
+                    <div className="w-full max-w-2xl mx-auto mb-8">
+                      <Tabs defaultValue="feedback">
+                        <TabsList>
+                          <TabsTrigger value="feedback">Feedback</TabsTrigger>
+                          <TabsTrigger value="materials">Materials</TabsTrigger>
+                          <TabsTrigger value="announcements">
+                            Announcements
+                          </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="feedback">
+                          <CourseFeedback
+                            courseId={data.packageId}
+                            lang={lang}
+                          />
+                        </TabsContent>
+                        <TabsContent value="materials">
+                          <CourseMaterials
+                            courseId={data.packageId}
+                            lang={lang}
+                          />
+                        </TabsContent>
+                        <TabsContent value="announcements">
+                          <CourseAnnouncements
+                            courseId={data.packageId}
+                            lang={lang}
+                          />
+                        </TabsContent>
+                      </Tabs>
+                    </div>
                     <StudentQuestionForm
                       chapter={{
                         questions: data.chapter.questions,
