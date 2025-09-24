@@ -32,6 +32,8 @@ export async function getQuestionForActivePackageChapterUpdate(
                   title: true,
                   position: true,
                   videoUrl: true,
+                  customVideo: true,
+
                   // isPublished: true,
                 },
                 orderBy: { position: "asc" },
@@ -82,6 +84,7 @@ export async function getQuestionForActivePackageChapterUpdate(
       title: true,
       description: true,
       videoUrl: true,
+      customVideo: true,
       position: true,
       questions: {
         select: {

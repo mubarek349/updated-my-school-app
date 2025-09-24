@@ -27,6 +27,7 @@ import {
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCoursesPackageId } from "@/actions/admin/package";
+import CourseTopOverview from "@/components/courseTopOverview";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -35,9 +36,9 @@ const itemVariants = {
 
 function Page() {
   const params = useParams();
-  const wdt_ID = Number(params.wdt_ID);
-  const courseId = String(params.courseId);
-  const chapterId = String(params.chapterId);
+  const wdt_ID = Number(params?.wdt_ID ?? 0);
+  const courseId = String(params?.courseId ?? "");
+  const chapterId = String(params?.chapterId ?? "");
   const [data, refetch, isLoading] = useAction(
     getQuestionForActivePackageChapterUpdate,
     [true, (response) => console.log(response)],
@@ -157,12 +158,12 @@ function Page() {
 
   return (
     <motion.div
-    className="px-4 md:px-12 bg-blue-50 py-6 grid grid-rows-[auto_1fr] min-h-screen"
-    style={{
-      background:
-      "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%) cl",
-      backgroundAttachment: "fixed",
-    }}
+      className="px-4 md:px-12 bg-blue-50 py-6 grid grid-rows-[auto_1fr] min-h-screen"
+      style={{
+        background:
+          "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%) cl",
+        backgroundAttachment: "fixed",
+      }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -250,20 +251,27 @@ function Page() {
             <Message message={data.message} wdt_ID={wdt_ID} />
           ) : (
             <>
-              <iframe
-                className="w-full text-sm mx-auto aspect-video max-md:sticky top-0 z-50 rounded-lg shadow-lg"
-                src={
-                  data && "chapter" in data && data.chapter?.videoUrl
-                    ? `https://www.youtube.com/embed/${data.chapter.videoUrl}`
-                    : undefined
-                }
-                title="Darulkubra video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-                aria-label="Chapter video player"
-              />
+              {data && "chapter" in data && data.chapter?.videoUrl ? (
+                <iframe
+                  className="w-full text-sm mx-auto aspect-video max-md:sticky top-0 z-50 rounded-lg shadow-lg"
+                  src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
+                  title="Darulkubra video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                  aria-label="Chapter video player"
+                />
+              ) : (
+                <CourseTopOverview
+                  {...{
+                    title: "sampleCourse",
+                    by: `fuad`,
+                    thumbnail: "FUAD_thumbnail",
+                    video: data?.chapter?.customVideo || "",
+                  }}
+                />
+              )}
               {data &&
                 "chapter" in data &&
                 data.chapter &&

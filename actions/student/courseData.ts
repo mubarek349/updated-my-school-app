@@ -106,7 +106,7 @@ export async function addFeedback(
 ) {
   try {
     const session = await auth();
-    const userId = session?.user?.id;
+    const userId = Number(session?.user?.id);
     if (!userId) {
       return { success: false, error: "Unauthorized" };
     }
