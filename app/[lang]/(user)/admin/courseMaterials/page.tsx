@@ -1,28 +1,25 @@
-import prisma from "@/lib/db";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { IconBadge } from "@/components/icon-badge";
-import { Book, FileText, Package } from "lucide-react";
-import { CourseMaterialsManager } from "@/components/custom/admin/course-materials-manager";
+import { Book } from "lucide-react";
+import { CourseMaterialsSelector } from "@/components/custom/admin/course-materials-selector";
+import { getCoursePackages } from "@/actions/admin/course-packages";
 
 const CourseMaterialsPage = async () => {
-  const coursePackages = await prisma.coursePackage.findMany({
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      courseMaterials: true,
-      isPublished: true,
-      _count: {
-        select: {
-          courses: true,
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const result = await getCoursePackages();
+  
+  if (!result.success) {
+    return (
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-red-600">Failed to load course packages</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const coursePackages = result.data || [];
 
   return (
     <div className="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
@@ -37,47 +34,7 @@ const CourseMaterialsPage = async () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {coursePackages.map((coursePackage) => (
-            <Card key={coursePackage.id} className="shadow-sm border-0 bg-white/70 backdrop-blur-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-lg text-slate-800 line-clamp-2">
-                      {coursePackage.name}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={coursePackage.isPublished ? "default" : "secondary"}>
-                        {coursePackage.isPublished ? "Published" : "Draft"}
-                      </Badge>
-                      <div className="flex items-center gap-1 text-xs text-slate-500">
-                        <Package className="h-3 w-3" />
-                        {coursePackage._count.courses} courses
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
-                    <FileText className="h-4 w-4" />
-                    {coursePackage.courseMaterials ? 
-                      coursePackage.courseMaterials.split(',').filter(Boolean).length : 0} files
-                  </div>
-                </div>
-                {coursePackage.description && (
-                  <p className="text-sm text-slate-600 line-clamp-2 mt-2">
-                    {coursePackage.description}
-                  </p>
-                )}
-              </CardHeader>
-              <CardContent>
-                <CourseMaterialsManager
-                  packageId={coursePackage.id}
-                  packageName={coursePackage.name}
-                  initialMaterials={coursePackage.courseMaterials}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <CourseMaterialsSelector coursePackages={coursePackages} />
 
         {coursePackages.length === 0 && (
           <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
