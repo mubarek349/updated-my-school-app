@@ -271,9 +271,28 @@ export default function UstazManagement() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Enhanced Header with Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <>
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}</style>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-h-screen overflow-y-auto custom-scrollbar">
+          <div className="container mx-auto px-4 py-6 space-y-8 pb-20">
+          {/* Enhanced Header with Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="flex items-center p-6">
             <div className="flex items-center">
@@ -582,8 +601,14 @@ export default function UstazManagement() {
         </div>
       )}
 
-      {/* Ustazs List */}
-      <div className="grid gap-4">
+          {/* Ustazs List */}
+          <div className="relative">
+            <div className="grid gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar scroll-smooth">
+              {filteredAndSortedUstazs.length > 5 && (
+                <div className="absolute top-0 right-0 z-10 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-bl-md">
+                  Scroll for more
+                </div>
+              )}
         {filteredAndSortedUstazs.length === 0 ? (
           <Card className="shadow-sm">
             <CardContent className="flex items-center justify-center py-12">
@@ -712,7 +737,11 @@ export default function UstazManagement() {
             </Card>
           ))
         )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+    </>
   );
 }
