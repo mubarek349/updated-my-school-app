@@ -1,17 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Package } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FileText, Brain } from "lucide-react";
 import { CourseMaterialsManager } from "./course-materials-manager";
+import { AiPdfUploader } from "./ai-pdf-uploader";
 
 interface CoursePackage {
   id: string;
   name: string;
   description: string | null;
   courseMaterials: string | null;
+  aiPdfData: string | null;
   isPublished: boolean;
   _count: {
     courses: number;
@@ -22,24 +29,41 @@ interface CourseMaterialsSelectorProps {
   coursePackages: CoursePackage[];
 }
 
-export function CourseMaterialsSelector({ coursePackages }: CourseMaterialsSelectorProps) {
-  const [selectedPackage, setSelectedPackage] = useState<string>(
+export function CourseMaterialsSelector({
+  coursePackages,
+}: CourseMaterialsSelectorProps) {
+  const [selectedAiPdfPackage, setSelectedAiPdfPackage] = useState<string>(
+    coursePackages.length > 0 ? coursePackages[0].id : ""
+  );
+  const [selectedMaterialsPackage, setSelectedMaterialsPackage] = useState<string>(
     coursePackages.length > 0 ? coursePackages[0].id : ""
   );
 
-  const selectedPackageData = coursePackages.find(pkg => pkg.id === selectedPackage);
+  const [selectedAiPdfData, setSelectedAiPdfData] = useState<CoursePackage | undefined>();
+  const [selectedMaterialsData, setSelectedMaterialsData] = useState<CoursePackage | undefined>();
+
+  useEffect(() => {
+    const aiPdfData = coursePackages.find((pkg) => pkg.id === selectedAiPdfPackage);
+    setSelectedAiPdfData(aiPdfData);
+  }, [selectedAiPdfPackage, coursePackages]);
+
+  useEffect(() => {
+    const materialsData = coursePackages.find((pkg) => pkg.id === selectedMaterialsPackage);
+    setSelectedMaterialsData(materialsData);
+  }, [selectedMaterialsPackage, coursePackages]);
 
   return (
-    <>
-      {/* Package Selector */}
-      <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm mb-6">
+    <div className="space-y-6">
+      {/* AI PDF Data Section */}
+      <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
         <CardHeader>
-          <h2 className="text-lg font-semibold text-slate-800">Select Course Package</h2>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedPackage} onValueChange={setSelectedPackage}>
+          <div className="flex items-center gap-3 mb-4">
+            <Brain className="h-5 w-5 text-purple-600" />
+            <h2 className="text-lg font-semibold text-slate-800">AI PDF Data</h2>
+          </div>
+          <Select value={selectedAiPdfPackage} onValueChange={setSelectedAiPdfPackage}>
             <SelectTrigger className="w-full max-w-md">
-              <SelectValue placeholder="Choose a course package" />
+              <SelectValue placeholder="Choose course package for AI PDF" />
             </SelectTrigger>
             <SelectContent>
               {coursePackages.map((pkg) => (
@@ -49,48 +73,50 @@ export function CourseMaterialsSelector({ coursePackages }: CourseMaterialsSelec
               ))}
             </SelectContent>
           </Select>
+        </CardHeader>
+        <CardContent>
+          {selectedAiPdfData && (
+            <AiPdfUploader
+              key={selectedAiPdfData.id}
+              packageId={selectedAiPdfData.id}
+              packageName={selectedAiPdfData.name}
+              currentAiPdfData={selectedAiPdfData.aiPdfData}
+            />
+          )}
         </CardContent>
       </Card>
 
-      {/* Selected Package Details & Uploader */}
-      {selectedPackageData && (
-        <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-          <CardHeader className="pb-4">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <h3 className="font-semibold text-xl text-slate-800">
-                  {selectedPackageData.name}
-                </h3>
-                <div className="flex items-center gap-2">
-                  <Badge variant={selectedPackageData.isPublished ? "default" : "secondary"}>
-                    {selectedPackageData.isPublished ? "Published" : "Draft"}
-                  </Badge>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
-                    <Package className="h-3 w-3" />
-                    {selectedPackageData._count.courses} courses
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-slate-500">
-                <FileText className="h-4 w-4" />
-                {selectedPackageData.courseMaterials ? 
-                  selectedPackageData.courseMaterials.split(',').filter(Boolean).length : 0} files
-              </div>
-            </div>
-            {selectedPackageData.description && (
-              <p className="text-sm text-slate-600 mt-2">
-                {selectedPackageData.description}
-              </p>
-            )}
-          </CardHeader>
-          <CardContent>
+      {/* Course Materials Section */}
+      <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+        <CardHeader>
+          <div className="flex items-center gap-3 mb-4">
+            <FileText className="h-5 w-5 text-slate-600" />
+            <h2 className="text-lg font-semibold text-slate-800">Course Materials</h2>
+          </div>
+          <Select value={selectedMaterialsPackage} onValueChange={setSelectedMaterialsPackage}>
+            <SelectTrigger className="w-full max-w-md">
+              <SelectValue placeholder="Choose course package for materials" />
+            </SelectTrigger>
+            <SelectContent>
+              {coursePackages.map((pkg) => (
+                <SelectItem key={pkg.id} value={pkg.id}>
+                  {pkg.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardHeader>
+        <CardContent>
+          {selectedMaterialsData && (
             <CourseMaterialsManager
-              packageId={selectedPackageData.id}
-              initialMaterials={selectedPackageData.courseMaterials}
+              key={selectedMaterialsData.id}
+              packageId={selectedMaterialsData.id}
+              packageName={selectedMaterialsData.name}
+              initialMaterials={selectedMaterialsData.courseMaterials}
             />
-          </CardContent>
-        </Card>
-      )}
-    </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

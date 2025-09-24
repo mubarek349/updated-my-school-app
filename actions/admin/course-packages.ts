@@ -10,6 +10,7 @@ export async function getCoursePackages() {
         name: true,
         description: true,
         courseMaterials: true,
+        aiPdfData: true,
         isPublished: true,
         _count: {
           select: {

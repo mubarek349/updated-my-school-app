@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, FileText, Download, Trash2 } from "lucide-react";
+import { Upload, FileText, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -145,7 +145,7 @@ export function CourseMaterialsManager({
                     onClick={() => window.open(`/api/materials/${material}`, '_blank')}
                     className="h-8 w-8 p-0"
                   >
-                    <Download className="h-3 w-3" />
+                    <Eye className="h-3 w-3" />
                   </Button>
                   <Button
                     size="sm"
