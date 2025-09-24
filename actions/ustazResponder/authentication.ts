@@ -48,11 +48,41 @@ export async function authenticate(
   const phoneno = normalizePhone(data.phoneno);
 
   try {
-    // Use NextAuth signIn to create session with admin userType
+    // Check if ustaz exists and is permissioned
+    const ustaz = await prisma.responseUstaz.findFirst({
+      where: { phoneno },
+      select: { id: true, passcode: true, permissioned: true, ustazname: true },
+    });
+
+    if (!ustaz) {
+      return {
+        ok: false,
+        message: "Invalid phone number or password.",
+        field: "form",
+      };
+    }
+
+    if (!ustaz.permissioned) {
+      return {
+        ok: false,
+        message: "Your account has been suspended. Please contact admin.",
+        field: "form",
+      };
+    }
+
+    if (data.passcode !== ustaz.passcode) {
+      return {
+        ok: false,
+        message: "Invalid phone number or password.",
+        field: "form",
+      };
+    }
+
+    // Use NextAuth signIn to create session with ustaz type
     await signIn("credentials", {
       phoneno,
       passcode: data.passcode,
-      userType: "admin",
+      userType: "ustaz",
       redirect: false,
     });
   } catch (err) {
@@ -65,7 +95,7 @@ export async function authenticate(
   }
 
   // Redirect server-side after successful authentication
-  redirect("/en/admin/coursesPackages");
+  redirect("/en/ustaz");
 }
 
 export async function logout(): Promise<AuthResults> {
@@ -86,35 +116,7 @@ export async function logout(): Promise<AuthResults> {
   }
 }
 
-export async function checkAuthentication(): Promise<boolean> {
-  try {
-    const session = await auth();
-    console.log("Admin checkAuthentication session:", session);
-
-    if (!session?.user?.id) {
-      return false;
-    }
-
-    // Check if this is an admin session
-    if ((session.user as any).userType !== "admin") {
-      console.log("User is not admin, userType:", (session.user as any).userType);
-      return false;
-    }
-
-    // Verify user exists in database
-    const user = await prisma.admin.findUnique({
-      where: { id: session.user.id },
-    });
-
-    console.log("Admin user found:", !!user);
-    return !!user;
-  } catch (error) {
-    console.error("Authentication check failed:", error);
-    return false;
-  }
-}
-
-export async function isAuthenticated(): Promise<boolean> {
+export async function checkUstazAuthentication(): Promise<boolean> {
   try {
     const session = await auth();
 
@@ -122,20 +124,43 @@ export async function isAuthenticated(): Promise<boolean> {
       return false;
     }
 
-    const user = await prisma.admin.findUnique({
-      where: { id: session.user.id },
+    // Verify ustaz exists in database and is permissioned
+    const ustaz = await prisma.responseUstaz.findUnique({
+      where: { id: parseInt(session.user.id) },
+      select: { permissioned: true },
     });
 
-    return !!user;
+    return !!ustaz && (ustaz.permissioned ?? false);
   } catch (error) {
-    console.error("Authentication verification failed:", error);
+    console.error("Ustaz authentication check failed:", error);
     return false;
   }
 }
 
-export async function getCurrentUser(): Promise<UserData> {
+export async function isUstazAuthenticated(): Promise<boolean> {
   try {
     const session = await auth();
+
+    if (!session?.user?.id) {
+      return false;
+    }
+
+    const ustaz = await prisma.responseUstaz.findUnique({
+      where: { id: parseInt(session.user.id) },
+      select: { permissioned: true },
+    });
+
+    return !!ustaz && (ustaz.permissioned ?? false);
+  } catch (error) {
+    console.error("Ustaz authentication verification failed:", error);
+    return false;
+  }
+}
+
+export async function getCurrentUstaz(): Promise<UserData> {
+  try {
+    const session = await auth();
+    console.log("getCurrentUstaz session:", session);
 
     if (!session?.user?.id) {
       return {
@@ -144,40 +169,55 @@ export async function getCurrentUser(): Promise<UserData> {
       };
     }
 
-    const user = await prisma.admin.findUnique({
-      where: { id: session.user.id },
+    // Check if this is an ustaz session
+    if ((session.user as any).userType !== "ustaz") {
+      return {
+        success: false,
+        message: "Not authenticated as ustaz",
+      };
+    }
+
+    const ustaz = await prisma.responseUstaz.findUnique({
+      where: { id: parseInt(session.user.id) },
       select: {
         id: true,
-        // Add other fields you want to return
-        // email: true,
-        // name: true,
-        // role: true,
+        phoneno: true,
+        ustazname: true,
+        permissioned: true,
+        chat_id: true,
       },
     });
 
-    if (!user) {
+    if (!ustaz) {
       return {
         success: false,
-        message: "User not found",
+        message: "Ustaz not found",
+      };
+    }
+
+    if (!ustaz.permissioned) {
+      return {
+        success: false,
+        message: "Account suspended",
       };
     }
 
     return {
       success: true,
-      data: user,
-      message: "User data retrieved successfully",
+      data: ustaz,
+      message: "Ustaz data retrieved successfully",
     };
   } catch (error) {
-    console.error("Failed to get user data:", error);
+    console.error("Failed to get ustaz data:", error);
     return {
       success: false,
-      message: "Failed to retrieve user data",
+      message: "Failed to retrieve ustaz data",
     };
   }
 }
 
-export async function requireAuthentication(redirectTo = "/en/login") {
-  const isAuth = await checkAuthentication();
+export async function requireUstazAuthentication(redirectTo = "/en/ustaz/login") {
+  const isAuth = await checkUstazAuthentication();
 
   if (!isAuth) {
     redirect(redirectTo);

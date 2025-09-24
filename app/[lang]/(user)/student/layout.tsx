@@ -35,7 +35,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  const { wdt_ID } = useParams<{ wdt_ID: string }>();
+  const params = useParams<{ wdt_ID: string }>();
+  const wdt_ID = params?.wdt_ID;
   const [data, refresh] = useAction(
     getPackageData,
     [true, (response) => console.log(response)],

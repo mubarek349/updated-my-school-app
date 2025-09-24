@@ -16,7 +16,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     chapterId: string;
   };
   const wdtIdNum = Number(wdt_ID);
-  const isClicked = useSearchParams().get("isClicked");
+  const searchParams = useSearchParams();
+  const isClicked = searchParams?.get("isClicked");
   const [update] = useAction(
     updatePathProgressData,
     [true, () => {}],

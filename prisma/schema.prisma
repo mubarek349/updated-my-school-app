@@ -332,5 +332,6 @@ model responseUstaz {
   passcode      String          @unique
   ustazname     String?         @db.VarChar(255)
   chat_id       String?         @default("")
+  permissioned  Boolean?        @default(true)
   qandAResponse qandAResponse[] @relation("QandAResponses")
 }

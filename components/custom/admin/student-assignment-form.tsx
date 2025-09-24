@@ -13,7 +13,8 @@ import toast from "react-hot-toast";
 import { Label } from "../../ui/label";
 
 function StudentAssignmentForm({setRefresh}:{setRefresh:(value:string)=>void}) {
-  const { coursesPackageId } = useParams<{ coursesPackageId: string }>();
+  const params = useParams<{ coursesPackageId: string }>();
+  const coursesPackageId = params?.coursesPackageId;
   const [packagesWithSubject] = useAction(getDistinctPackagesWithSubjects, [
     true,
     () => {},
@@ -117,7 +118,7 @@ function StudentAssignmentForm({setRefresh}:{setRefresh:(value:string)=>void}) {
         disabled={loading}
         className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg hover:from-pink-500 hover:to-purple-500 transition-all duration-300 flex items-center justify-center"
         onClick={() => {
-          if (selectedSubject.length > 0) {
+          if (selectedSubject.length > 0 && coursesPackageId) {
             addPackage(
               coursesPackageId,
               isKid,
