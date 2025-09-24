@@ -287,16 +287,27 @@ function Page() {
                     initial="hidden"
                     animate="visible"
                   >
-                    {/* Tabbed UI for Feedback, Materials, Announcements */}
+                    {/* Tabbed UI for Quiz, Feedback, Materials, Announcements */}
                     <div className="w-full max-w-2xl mx-auto mb-8">
-                      <Tabs defaultValue="feedback">
+                      <Tabs defaultValue="quiz">
                         <TabsList>
+                          <TabsTrigger value="quiz">Quiz</TabsTrigger>
                           <TabsTrigger value="feedback">Feedback</TabsTrigger>
                           <TabsTrigger value="materials">Materials</TabsTrigger>
                           <TabsTrigger value="announcements">
                             Announcements
                           </TabsTrigger>
                         </TabsList>
+                        <TabsContent value="quiz">
+                          <StudentQuestionForm
+                            chapter={{
+                              questions: data.chapter.questions,
+                            }}
+                            wdt_ID={wdt_ID}
+                            courseId={courseId}
+                            chapterId={data.chapter.id}
+                          />
+                        </TabsContent>
                         <TabsContent value="feedback">
                           <CourseFeedback
                             courseId={data.packageId}
@@ -317,14 +328,6 @@ function Page() {
                         </TabsContent>
                       </Tabs>
                     </div>
-                    <StudentQuestionForm
-                      chapter={{
-                        questions: data.chapter.questions,
-                      }}
-                      wdt_ID={wdt_ID}
-                      courseId={courseId}
-                      chapterId={data.chapter.id}
-                    />
                   </motion.div>
                 )}
             </>
