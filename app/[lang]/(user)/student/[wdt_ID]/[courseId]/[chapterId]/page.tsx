@@ -24,13 +24,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCoursesPackageId } from "@/actions/admin/package";
 import CourseTopOverview from "@/components/courseTopOverview";
 import CourseAnnouncements from "@/components/CourseAnnouncements";
 import CourseFeedback from "@/components/CourseFeedback";
 import CourseMaterials from "@/components/CourseMaterials";
+import ChatComponent from "@/components/chatComponent";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const itemVariants = {
@@ -287,46 +288,73 @@ function Page() {
                     initial="hidden"
                     animate="visible"
                   >
-                    {/* Tabbed UI for Quiz, Feedback, Materials, Announcements */}
+                    {/* Tabbed UI for Quiz, Feedback, Materials, Announcements, AI Assistance with horizontal scroll and arrows */}
                     <div className="w-full max-w-2xl mx-auto mb-8">
-                      <Tabs defaultValue="quiz">
-                        <TabsList>
-                          <TabsTrigger value="quiz">Quiz</TabsTrigger>
-                          <TabsTrigger value="feedback">Feedback</TabsTrigger>
-                          <TabsTrigger value="materials">Materials</TabsTrigger>
-                          <TabsTrigger value="announcements">
-                            Announcements
-                          </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="quiz">
-                          <StudentQuestionForm
-                            chapter={{
-                              questions: data.chapter.questions,
-                            }}
-                            wdt_ID={wdt_ID}
-                            courseId={courseId}
-                            chapterId={data.chapter.id}
-                          />
-                        </TabsContent>
-                        <TabsContent value="feedback">
-                          <CourseFeedback
-                            courseId={data.packageId}
-                            lang={lang}
-                          />
-                        </TabsContent>
-                        <TabsContent value="materials">
-                          <CourseMaterials
-                            courseId={data.packageId}
-                            lang={lang}
-                          />
-                        </TabsContent>
-                        <TabsContent value="announcements">
-                          <CourseAnnouncements
-                            courseId={data.packageId}
-                            lang={lang}
-                          />
-                        </TabsContent>
-                      </Tabs>
+                      {/* Tab navigation with horizontal scroll and arrows */}
+                      <div className="relative flex items-center">
+                        <button
+                          type="button"
+                          className="p-2"
+                          aria-label="Scroll tabs left"
+                          onClick={() => {
+                            const el = document.getElementById("tab-scroll-container");
+                            if (el) el.scrollBy({ left: -120, behavior: "smooth" });
+                          }}
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <Tabs defaultValue="quiz" className="flex-1">
+                          <div
+                            id="tab-scroll-container"
+                            className="flex overflow-x-auto scrollbar-hide scroll-smooth flex-nowrap"
+                            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                          >
+                            <TabsList className="flex flex-nowrap gap-2 min-w-max">
+                              <TabsTrigger value="quiz">Quiz</TabsTrigger>
+                              <TabsTrigger value="feedback">Feedback</TabsTrigger>
+                              <TabsTrigger value="materials">Materials</TabsTrigger>
+                              <TabsTrigger value="announcements">Announcements</TabsTrigger>
+                              <TabsTrigger value="ai">AI Assistance</TabsTrigger>
+                            </TabsList>
+                          </div>
+                          {/* Prevent vertical scroll on tab content */}
+                          <div className="overflow-y-hidden">
+                            <TabsContent value="quiz">
+                              <StudentQuestionForm
+                                chapter={{
+                                  questions: data.chapter.questions,
+                                }}
+                                wdt_ID={wdt_ID}
+                                courseId={courseId}
+                                chapterId={data.chapter.id}
+                              />
+                            </TabsContent>
+                            <TabsContent value="feedback">
+                              <CourseFeedback courseId={data.packageId} lang={lang} />
+                            </TabsContent>
+                            <TabsContent value="materials">
+                              <CourseMaterials courseId={data.packageId} lang={lang} />
+                            </TabsContent>
+                            <TabsContent value="announcements">
+                              <CourseAnnouncements courseId={data.packageId} lang={lang} />
+                            </TabsContent>
+                            <TabsContent value="ai">
+                              <ChatComponent />
+                            </TabsContent>
+                          </div>
+                        </Tabs>
+                        <button
+                          type="button"
+                          className="p-2"
+                          aria-label="Scroll tabs right"
+                          onClick={() => {
+                            const el = document.getElementById("tab-scroll-container");
+                            if (el) el.scrollBy({ left: 120, behavior: "smooth" });
+                          }}
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 )}
