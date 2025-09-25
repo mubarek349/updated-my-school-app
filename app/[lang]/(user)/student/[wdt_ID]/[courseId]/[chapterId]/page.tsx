@@ -181,7 +181,7 @@ function Page() {
       animate="visible"
     >
       {/* <ProgressPage /> */}
-      <div className="flex flex-col overflow-auto px-2 bg-red-500">
+      <div className="flex flex-col flex-1 overflow-hidden px-2 bg-red-500">
         {/* Content */}
         <AnimatePresence>
           {isLoading ? (
@@ -219,16 +219,31 @@ function Page() {
           ) : (
             <>
               {data && "chapter" in data && data.chapter?.videoUrl ? (
-                <iframe
-                  className="w-full text-sm mx-auto aspect-video max-md:sticky top-0 z-50 rounded-lg shadow-lg"
-                  src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
-                  title="Darulkubra video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                  aria-label="Chapter video player"
-                />
+                <div
+                  className="w-full mx-auto max-w-3xl flex-shrink-0"
+                  style={{
+                    position: "relative",
+                    aspectRatio: "16/9",
+                    overflow: "hidden",
+                    maxHeight: "60vh",
+                  }}
+                >
+                  <iframe
+                    className="w-full h-full rounded-lg shadow-lg"
+                    src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
+                    title="Darulkubra video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                    aria-label="Chapter video player"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "block",
+                    }}
+                  />
+                </div>
               ) : (
                 <CourseTopOverview
                   {...{
@@ -241,14 +256,17 @@ function Page() {
                 data.chapter &&
                 Array.isArray(data.chapter.questions) && (
                   <motion.div
-                    className="mt-6"
+                    className="mt-6 flex-1 flex flex-col overflow-hidden"
                     variants={itemVariants}
                     initial="hidden"
                     animate="visible"
                   >
                     {/* Tabs with horizontal x-axis scroll only, now includes Q&A tab */}
-                    <div className="w-full max-w-2xl mx-auto mb-1">
-                      <Tabs defaultValue="quiz">
+                    <div className="w-full max-w-2xl mx-auto mb-1 flex-1 flex flex-col overflow-hidden">
+                      <Tabs
+                        defaultValue="quiz"
+                        className="flex-1 flex flex-col overflow-hidden"
+                      >
                         <div
                           className="overflow-x-auto scrollbar-hide scroll-smooth"
                           style={{
@@ -256,7 +274,7 @@ function Page() {
                             msOverflowStyle: "none",
                           }}
                         >
-                          <TabsList className="flex flex-nowrap gap-2  min-w-max">
+                          <TabsList className="flex flex-nowrap gap-2 min-w-max">
                             <TabsTrigger value="quiz">Quiz</TabsTrigger>
                             <TabsTrigger value="qna">Q&amp;A</TabsTrigger>
                             <TabsTrigger value="feedback">Feedback</TabsTrigger>
@@ -269,8 +287,8 @@ function Page() {
                             <TabsTrigger value="ai">AI Assistance</TabsTrigger>
                           </TabsList>
                         </div>
-                        <div className="overflow-y-hidden">
-                          <TabsContent value="quiz">
+                        <div className="flex-1 overflow-y-auto min-h-0">
+                          <TabsContent value="quiz" className="h-full">
                             <StudentQuestionForm
                               chapter={{
                                 questions: data.chapter.questions,
@@ -280,33 +298,33 @@ function Page() {
                               chapterId={data.chapter.id}
                             />
                           </TabsContent>
-                          <TabsContent value="qna">
+                          <TabsContent value="qna" className="h-full">
                             <TraditionalQA
                               packageId={data.packageId}
                               lang={lang}
                               studentId={wdt_ID}
                             />
                           </TabsContent>
-                          <TabsContent value="feedback">
+                          <TabsContent value="feedback" className="h-full">
                             <CourseFeedback
                               studentId={wdt_ID}
                               courseId={data.packageId}
                               lang={lang}
                             />
                           </TabsContent>
-                          <TabsContent value="materials">
+                          <TabsContent value="materials" className="h-full">
                             <CourseMaterials
                               courseId={data.packageId}
                               lang={lang}
                             />
                           </TabsContent>
-                          <TabsContent value="announcements">
+                          <TabsContent value="announcements" className="h-full">
                             <CourseAnnouncements
                               courseId={data.packageId}
                               lang={lang}
                             />
                           </TabsContent>
-                          <TabsContent value="ai">
+                          <TabsContent value="ai" className="h-full">
                             <ChatComponent />
                           </TabsContent>
                         </div>
