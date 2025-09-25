@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import prisma from "../lib/db";
-import { loginSchema } from "../lib/zodSchema";
+import prisma from "@/lib/db";
+import { loginSchema } from "@/lib/zodSchema";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
@@ -94,7 +95,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
       }
 
-      // Note: Permission checking for ustaz users is now handled in the 
+      // Note: Permission checking for ustaz users is now handled in the
       // getCurrentUstaz function to avoid Edge Runtime issues with Prisma
       return token;
     },
@@ -117,7 +118,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login",
   },
   events: {
-    async signOut(message) {
+    async signOut() {
       // Clean up any session-related data if needed
       console.log("User signed out");
     },

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/auth";
 // import { isTeacher } from "@/lib/teacher";
 import { BookOpen } from "lucide-react";
 import Image from "next/image";

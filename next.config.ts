@@ -2,27 +2,17 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // domains: ["darelkubra.com"],// Add your allowed image domains here
     remotePatterns: [
       {
         protocol: "https",
         hostname: "darelkubra.com",
+        pathname: "/**",
       },
     ],
   },
   serverActions: {
-    bodySizeLimit: "10000mb",
+    bodySizeLimit: "10mb",
   },
-  /* config options here */
 };
 
 export default nextConfig;
-/** @type {import('next').NextConfig} */
-
-module.exports = {
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "1000mb",
-    },
-  },
-};
