@@ -60,6 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             };
           } else {
             // Authenticate admin
+            console.log("Attempting admin auth with phone:", normalizedPhone);
             const admin = await prisma.admin.findFirst({
               where: { phoneno: normalizedPhone },
               select: {
@@ -69,6 +70,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 passcode: true,
               },
             });
+
+            console.log("Admin found:", !!admin);
+            if (admin) {
+              console.log("Passcode match:", admin.passcode === passcode);
+            }
 
             if (!admin || admin.passcode !== passcode) {
               return null;
