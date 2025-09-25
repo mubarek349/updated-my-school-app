@@ -170,7 +170,7 @@ function Page() {
 
   return (
     <motion.div
-      className="px-4 md:px-12 bg-blue-50 py-6 grid grid-rows-[auto_1fr] min-h-screen"
+      className="px-4 md:px-12 bg-blue-50 py-1 pb-6 grid grid-rows-[auto_1fr] min-h-screen"
       style={{
         background:
           "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%) cl",
@@ -181,52 +181,7 @@ function Page() {
       animate="visible"
     >
       {/* <ProgressPage /> */}
-      <div className="flex flex-col overflow-auto px-2 bg-blue-50">
-        {/* Breadcrumb */}
-        {/* <TooltipProvider>
-          <Breadcrumb className="py-4 md:py-6 mb-4">
-            <BreadcrumbList className="text-sm md:text-base">
-              <BreadcrumbItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <BreadcrumbLink
-                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-                      // href={`/en/student/${wdt_ID}`} // Uncomment and set href if navigation is desired
-                    >
-                      {data && "packageName" in data
-                        ? data.packageName
-                        : "Package"}
-                    </BreadcrumbLink>
-                  </TooltipTrigger>
-                  <TooltipContent>Back to Package</TooltipContent>
-                </Tooltip>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="text-gray-400 dark:text-gray-500" />
-              <BreadcrumbItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <BreadcrumbLink
-                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-                      // href={`/en/student/${wdt_ID}/${courseId}`} // Uncomment and set href if navigation is desired
-                    >
-                      {data && "courseTitle" in data
-                        ? data.courseTitle
-                        : "Course"}
-                    </BreadcrumbLink>
-                  </TooltipTrigger>
-                  <TooltipContent>Back to Course</TooltipContent>
-                </Tooltip>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="text-gray-400 dark:text-gray-500" />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="text-gray-800 dark:text-gray-100 font-medium">
-                  {data && "chapter" in data ? data.chapter?.title : "Chapter"}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </TooltipProvider> */}
-
+      <div className="flex flex-col overflow-auto px-2 bg-red-500">
         {/* Content */}
         <AnimatePresence>
           {isLoading ? (
@@ -292,7 +247,7 @@ function Page() {
                     animate="visible"
                   >
                     {/* Tabs with horizontal x-axis scroll only, now includes Q&A tab */}
-                    <div className="w-full max-w-2xl mx-auto mb-8">
+                    <div className="w-full max-w-2xl mx-auto mb-1">
                       <Tabs defaultValue="quiz">
                         <div
                           className="overflow-x-auto scrollbar-hide scroll-smooth"
@@ -301,7 +256,7 @@ function Page() {
                             msOverflowStyle: "none",
                           }}
                         >
-                          <TabsList className="flex flex-nowrap gap-2 min-w-max">
+                          <TabsList className="flex flex-nowrap gap-2  min-w-max">
                             <TabsTrigger value="quiz">Quiz</TabsTrigger>
                             <TabsTrigger value="qna">Q&amp;A</TabsTrigger>
                             <TabsTrigger value="feedback">Feedback</TabsTrigger>

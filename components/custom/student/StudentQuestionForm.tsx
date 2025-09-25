@@ -191,7 +191,6 @@ const StudentQuestionForm = ({
       console.error(e);
     }
   }
- 
 
   // Progress calculation
   const answeredQuestions =
@@ -223,25 +222,6 @@ const StudentQuestionForm = ({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="flex justify-between items-center ">
-        <h2 className="text-xl md:text-2xl font-bold text-sky-800 dark:text-sky-100">
-          Chapter Questions
-        </h2>
-        <div className="w-1/3">
-          <Progress
-            value={progress}
-            className={cn(
-              "h-2 rounded-full",
-              "bg-gray-400 dark:bg-gray-700",
-              "[&>div]:bg-gradient-to-r [&>div]:from-green-600 [&>div]:to-green-700"
-            )}
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
-            {answeredQuestions} / {totalQuestions} answered
-          </p>
-        </div>
-      </div>
-
       {chapter?.questions.length ? (
         <TooltipProvider>
           <div className="space-y-4 flex-1 max-md:overflow-y-auto md:max-h-dvh">
