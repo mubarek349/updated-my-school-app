@@ -12,6 +12,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import useAction from "@/hooks/useAction";
 
 type FormValues = z.infer<typeof loginSchema>;
 
@@ -29,6 +30,7 @@ function LoginPage() {
   });
 
   const [pending, setPending] = useState(false);
+  const [a, b, c] = useAction(authenticate, [, () => {}]);
 
   const onSubmit = async (values: FormValues) => {
     setPending(true);
@@ -53,13 +55,18 @@ function LoginPage() {
       toast.error(result?.message || "Authentication failed");
     } catch (error) {
       // Check if it's a Next.js redirect error (which is expected)
-      if (error && typeof error === 'object' && 'digest' in error && 
-          typeof error.digest === 'string' && error.digest.includes('NEXT_REDIRECT')) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "digest" in error &&
+        typeof error.digest === "string" &&
+        error.digest.includes("NEXT_REDIRECT")
+      ) {
         // This is a successful redirect, show success toast
-        toast.success('Login successful');
+        toast.success("Login successful");
         return;
       }
-      
+
       console.error("Authentication error:", error);
       setError("root", {
         type: "server",

@@ -25,11 +25,6 @@ type AuthResult =
   | { ok: true; message: string; redirectTo?: string }
   | { ok: false; message: string; field?: "phoneno" | "passcode" | "form" };
 
-function normalizePhone(phone: string) {
-  // Example: strip spaces and non-digits; adapt to your locale rules.
-  return phone.replace(/[^\d+]/g, "");
-}
-
 export async function authenticate(
   raw: z.infer<typeof loginSchema>
 ): Promise<AuthResult> {
@@ -44,45 +39,62 @@ export async function authenticate(
   }
 
   const data = parsed.data;
-  const phoneno = normalizePhone(data.phoneno);
 
   // Check responseUstaz first
   const ustaz = await prisma.responseUstaz.findFirst({
-    where: { phoneno },
+    where: { phoneno: data.phoneno },
     select: { id: true, passcode: true, permissioned: true },
   });
 
   if (ustaz && ustaz.passcode === data.passcode && ustaz.permissioned) {
     try {
       await signIn("credentials", {
-        phoneno,
+        phoneno: data.phoneno,
         passcode: data.passcode,
         userType: "ustaz",
         redirect: false,
       });
-      redirect("/en/ustaz");
+      return {
+        ok: true,
+        message: "Login successful",
+        redirectTo: "/en/ustaz",
+      };
     } catch (err) {
       console.log("Ustaz authentication error:", err);
+      return {
+        ok: false,
+        message: "Authentication failed. Please try again.",
+        field: "form",
+      };
     }
   }
 
   // Check admin if ustaz not found
   const admin = await prisma.admin.findFirst({
-    where: { phoneno },
+    where: { phoneno: data.phoneno },
     select: { id: true, passcode: true },
   });
 
   if (admin && admin.passcode === data.passcode) {
     try {
       await signIn("credentials", {
-        phoneno,
+        phoneno: data.phoneno,
         passcode: data.passcode,
         userType: "admin",
         redirect: false,
       });
-      redirect("/en/admin/coursesPackages");
+      return {
+        ok: true,
+        message: "Login successful",
+        redirectTo: "/en/admin/coursesPackages",
+      };
     } catch (err) {
       console.log("Admin authentication error:", err);
+      return {
+        ok: false,
+        message: "Authentication failed. Please try again.",
+        field: "form",
+      };
     }
   }
 

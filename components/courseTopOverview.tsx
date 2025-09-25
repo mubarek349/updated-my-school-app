@@ -17,7 +17,7 @@ export default function CourseTopOverview({
 }) {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang || "en";
-
+  console.log("CourseTopOverview video:", video);
   return (
     <div className="flex gap-y-4 max-md:flex-col-reverse flex-col">
       <div className="flex gap-4 flex-col">
