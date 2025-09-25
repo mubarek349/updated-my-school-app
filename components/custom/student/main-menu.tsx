@@ -1,15 +1,10 @@
 "use client";
 
 import React from "react";
-
 import MenuTitle from "./menu-title";
-
 import { LightDarkToggle } from "@/components/ui/light-dark-toggle";
-
 import { cn } from "@/lib/utils";
-
-import { CheckCircle, PlayCircle, Lock, Trophy, UserCircle } from "lucide-react"; // Added Trophy icon
-
+import { CheckCircle, PlayCircle, Lock, Trophy, UserCircle } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -20,10 +15,8 @@ import {
   getStudentProgressPerChapter,
   isCompletedAllChaptersInthePackage,
 } from "@/actions/student/progress";
-import { useParams, useRouter } from "next/navigation"; // Import useRouter
-
+import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-
 import {
   Tooltip,
   TooltipContent,
@@ -36,11 +29,9 @@ interface MainMenuProps {
   data:
     | {
         wdt_ID: number;
-
         name: string | null;
         status: string | null;
         subject: string | null;
-
         activePackage: {
           name: string;
           id: string;
@@ -64,15 +55,12 @@ interface MainMenuProps {
 
 export default function MainMenu({ data, className }: MainMenuProps) {
   const params = useParams();
-  const router = useRouter(); // Initialize useRouter
-
+  const router = useRouter();
   const wdt_ID = Number(params.wdt_ID);
 
-  const [chapterProgress, setChapterProgress] = React.useState<
-    Record<string, boolean | null>
-  >({});
+  const [chapterProgress, setChapterProgress] = React.useState<Record<string, boolean | null>>({});
   const [isLoading, setIsLoading] = React.useState(true);
-  const [allCoursesCompleted, setAllCoursesCompleted] = React.useState(false); // New state for overall completion
+  const [allCoursesCompleted, setAllCoursesCompleted] = React.useState(false);
 
   React.useEffect(() => {
     async function fetchAllProgress() {
@@ -82,32 +70,19 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       }
       setIsLoading(true);
       try {
-        const allChapters = data.activePackage.courses.flatMap(
-          (course) => course.chapters
-        );
+        const allChapters = data.activePackage.courses.flatMap((course) => course.chapters);
         const progressEntries = await Promise.all(
           allChapters.map(async (chapter) => {
-            const result = await getStudentProgressPerChapter(
-              chapter.id,
-              wdt_ID
-            );
-            return [chapter.id, result?.isCompleted ?? null] as [
-              string,
-              boolean | null
-            ];
+            const result = await getStudentProgressPerChapter(chapter.id, wdt_ID);
+            return [chapter.id, result?.isCompleted ?? null] as [string, boolean | null];
           })
         );
         setChapterProgress(Object.fromEntries(progressEntries));
-
-        // --- START MODIFICATION ---
-        // Calculate if ALL chapters in ALL courses are completed
-        const areAllChaptersTrulyCompleted =
-          await isCompletedAllChaptersInthePackage(
-            data.activePackage.id,
-            data.wdt_ID
-          );
+        const areAllChaptersTrulyCompleted = await isCompletedAllChaptersInthePackage(
+          data.activePackage.id,
+          data.wdt_ID
+        );
         setAllCoursesCompleted(areAllChaptersTrulyCompleted);
-        // --- END MODIFICATION ---
       } catch (error) {
         console.error("Error fetching progress:", error);
       } finally {
@@ -115,80 +90,57 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       }
     }
     fetchAllProgress();
-  }, [data, wdt_ID]); // Add chapterProgress to dependency array
+  }, [data, wdt_ID]);
 
-  // Calculate course completion percentage
   const getCourseProgress = (chapters: { id: string }[]) => {
     const totalChapters = chapters.length;
-    const completedChapters = chapters.filter(
-      (chapter) => chapterProgress[chapter.id] === true
-    ).length;
-    return totalChapters > 0
-      ? Math.round((completedChapters / totalChapters) * 100)
-      : 0;
+    const completedChapters = chapters.filter((chapter) => chapterProgress[chapter.id] === true).length;
+    return totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
   };
 
-  // Animation variants
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
-  // Handler for the final exam button click
   const handleFinalExamClick = () => {
-    // Navigate to the final exam page
     if (allCoursesCompleted) {
-      // Only navigate if truly unlocked
-      router.push(
-        `/en/student/${data?.wdt_ID}/finalexam/${data?.activePackage?.id}`
-      ); // Adjust this path as needed
+      router.push(`/en/student/${data?.wdt_ID}/finalexam/${data?.activePackage?.id}`);
     }
   };
 
   return (
     <nav
       className={cn(
-        "overflow-y-hidden py-6 px-4 md:px-8 flex flex-col gap-6",
-        "bg-gradient-to-b from-sky-50 to-sky-100 dark:from-sky-900 dark:to-sky-950",
-        "shadow-xl transition-all duration-300",
+        "overflow-y-hidden py-4 px-2 flex flex-col gap-4 bg-gradient-to-b from-sky-50 to-sky-100 dark:from-sky-900 dark:to-sky-950 shadow transition-all duration-300",
         className
       )}
       aria-label="Main navigation"
     >
-      <header className="border-b border-sky-200 dark:border-sky-800 pb-4">
+      <header className="border-b border-sky-200 dark:border-sky-800 pb-2 mb-2">
         <MenuTitle
-          title={data?.name || "Student Name"}
-          subtitle={data?.subject || "Subject"}
+          title={data?.name || "Student"}
+          subtitle={data?.subject || ""}
           showBadge={!!data?.activePackage}
           badgeText={data?.status || ""}
           badgeVariant="premium"
-          className="hover:scale-[1.02] transition-transform duration-200"
+          className="text-base"
         />
       </header>
 
-      <div className="w-60- flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto">
         {isLoading ? (
-          <motion.div
-            className="flex justify-center items-center py-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
+          <div className="flex justify-center items-center py-8">
             <Loading />
-          </motion.div>
+          </div>
         ) : !data || !data.activePackage ? (
-          <motion.div
-            className="text-center py-12 text-gray-500 dark:text-gray-400"
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-          >
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
             No active package found.
-          </motion.div>
+          </div>
         ) : (
           <>
             <motion.h3
-              className="text-xl md:text-2xl font-bold text-sky-800 dark:text-sky-100 mb-6 tracking-tight"
+              className="text-base font-semibold text-sky-800 dark:text-sky-100 mb-3"
               variants={itemVariants}
               initial="hidden"
               animate="visible"
@@ -196,7 +148,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
               {data.activePackage.name}
             </motion.h3>
             <TooltipProvider>
-              <Accordion type="single" collapsible className="space-y-3 w-60">
+              <Accordion type="single" collapsible className="space-y-2 w-full">
                 <AnimatePresence>
                   {data.activePackage.courses.map((course) => (
                     <motion.div
@@ -209,43 +161,31 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                       <AccordionItem
                         value={`course-${course.id}`}
                         className={cn(
-                          "border border-sky-200 dark:border-sky-800 rounded-lg",
-                          "bg-white/80 dark:bg-sky-900/80 backdrop-blur-sm",
-                          "shadow-sm hover:shadow-lg transition-all duration-300"
+                          "border border-sky-200 dark:border-sky-800 rounded-lg bg-white/80 dark:bg-sky-900/80 shadow-sm"
                         )}
                       >
                         <AccordionTrigger
                           className={cn(
-                            "px-4 py-3 text-base md:text-lg font-semibold",
-                            "text-sky-800 dark:text-sky-200",
-                            "hover:bg-sky-100/50 dark:hover:bg-sky-800/50",
-                            "rounded-t-lg transition-colors duration-200"
+                            "px-3 py-2 text-sm font-semibold text-sky-800 dark:text-sky-200 hover:bg-sky-100/50 dark:hover:bg-sky-800/50 rounded-t-lg"
                           )}
                         >
-                          <div className="flex items-center gap-3">
-                            <span className="text-sky-600 dark:text-sky-400 font-bold">
-                              {course.order}.
-                            </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sky-600 dark:text-sky-400 font-bold">{course.order}.</span>
                             <span className="truncate">{course.title}</span>
                             <span className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400">
-                              {getCourseProgress(course.chapters)}% Complete
+                              {getCourseProgress(course.chapters)}%
                             </span>
                           </div>
                         </AccordionTrigger>
-                        <AccordionContent className="px-4 py-3 space-y-3 rounded-b-lg">
+                        <AccordionContent className="px-3 py-2 space-y-2 rounded-b-lg">
                           {course.chapters.map((chapter) => {
                             const isCompleted = chapterProgress?.[chapter.id];
-
-                        const chapterLink = `/en/student/${wdt_ID}/${course.id}/${chapter.id}`;
-
+                            const chapterLink = `/en/student/${wdt_ID}/${course.id}/${chapter.id}`;
                             return (
                               <motion.div
                                 key={chapter.id}
                                 className={cn(
-                                  "flex items-center p-3 rounded-md",
-                                  "transition-all duration-200",
-                                  "hover:bg-sky-100/50 dark:hover:bg-sky-800/50",
-                                  "group border border-sky-200 dark:border-sky-700"
+                                  "flex items-center p-2 rounded-md transition-all duration-200 hover:bg-sky-100/50 dark:hover:bg-sky-800/50 group border border-sky-200 dark:border-sky-700"
                                 )}
                                 variants={itemVariants}
                               >
@@ -262,15 +202,15 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                       )}
                                     >
                                       {isCompleted === true ? (
-                                        <CheckCircle className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
+                                        <CheckCircle className="w-4 h-4 mr-2" />
                                       ) : isCompleted === false ? (
-                                        <PlayCircle className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
+                                        <PlayCircle className="w-4 h-4 mr-2" />
                                       ) : (
-                                        <Lock className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" />
+                                        <Lock className="w-4 h-4 mr-2" />
                                       )}
                                     </span>
                                   </TooltipTrigger>
-                                  <TooltipContent>
+                                  <TooltipContent side="right">
                                     {isCompleted === true
                                       ? "Completed"
                                       : isCompleted === false
@@ -281,28 +221,23 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                 <button
                                   disabled={!isCompleted}
                                   className={cn(
-                                    "text-left text-sm md:text-base font-medium ml-2",
-                                    "transition-colors duration-200 truncate",
+                                    "text-left text-xs font-medium ml-1 truncate",
                                     isCompleted
                                       ? "text-sky-600 dark:text-sky-400 hover:underline"
                                       : "text-slate-400 dark:text-slate-500 cursor-not-allowed"
                                   )}
                                   onClick={() => {
                                     if (isCompleted) {
-                                      router.push(
-                                        `${chapterLink}?isClicked=true`
-                                      );
+                                      router.push(`${chapterLink}?isClicked=true`);
                                     }
                                   }}
                                   tabIndex={isCompleted ? 0 : -1}
                                   aria-disabled={!isCompleted}
                                   type="button"
-                                  aria-label={`Go to ${chapter.title} ${
-                                    isCompleted ? "" : "(Locked)"
-                                  }`}
+                                  aria-label={`Go to ${chapter.title} ${isCompleted ? "" : "(Locked)"}`}
                                 >
-                                  <span className="text-sm text-sky-600 dark:text-sky-400">
-                                    Lesson {chapter.position} : {chapter.title}
+                                  <span>
+                                    Lesson {chapter.position}: {chapter.title}
                                   </span>
                                 </button>
                               </motion.div>
@@ -323,40 +258,29 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                     <AccordionItem
                       value="final-exam"
                       className={cn(
-                        "border border-blue-300 dark:border-blue-700 rounded-lg",
-                        "bg-blue-50/80 dark:bg-blue-900/80 backdrop-blur-sm",
-                        "shadow-lg hover:shadow-xl transition-all duration-300"
+                        "border border-blue-300 dark:border-blue-700 rounded-lg bg-blue-50/80 dark:bg-blue-900/80 shadow"
                       )}
                     >
                       <AccordionTrigger
-                        onClick={handleFinalExamClick} // Trigger navigation directly on click
+                        onClick={handleFinalExamClick}
                         className={cn(
-                          "px-4 py-3 text-base md:text-lg font-semibold",
-                          "text-blue-800 dark:text-blue-200",
-                          "hover:bg-blue-100/50 dark:hover:bg-blue-800/50",
-                          "rounded-lg transition-colors duration-200", // Rounded all corners
-                          !allCoursesCompleted &&
-                            "cursor-not-allowed opacity-50" // Disable if not all courses completed
+                          "px-3 py-2 text-sm font-semibold text-blue-800 dark:text-blue-200 hover:bg-blue-100/50 dark:hover:bg-blue-800/50 rounded-lg",
+                          !allCoursesCompleted && "cursor-not-allowed opacity-50"
                         )}
-                        disabled={!allCoursesCompleted} // Disable the trigger if not all courses completed
+                        disabled={!allCoursesCompleted}
                       >
-                        <div className="flex items-center gap-3">
-                          <Trophy className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        <div className="flex items-center gap-2">
+                          <Trophy className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                           <span className="truncate">Final Exam</span>
                           {!allCoursesCompleted && (
-                            <span className="ml-auto text-xss font-medium text-gray-500 dark:text-gray-400">
+                            <span className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400">
                               (Complete all to unlock)
                             </span>
                           )}
                         </div>
                       </AccordionTrigger>
-                      {/* You can optionally add AccordionContent here if there's any info to show before clicking */}
-                      {/* <AccordionContent className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                        Click to begin your final assessment!
-                      </AccordionContent> */}
                     </AccordionItem>
                   </motion.div>
-                  {/* End Final Exam Accordion Item */}
                 </AnimatePresence>
               </Accordion>
             </TooltipProvider>
@@ -364,28 +288,20 @@ export default function MainMenu({ data, className }: MainMenuProps) {
         )}
       </div>
 
-      <footer className="flex items-center justify-between gap-3 pt-2 border-t border-sky-200 dark:border-sky-800">
+      <footer className="flex items-center justify-between gap-2 pt-2 border-t border-sky-200 dark:border-sky-800 mt-2">
         <button
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg font-medium"
-          )}
+          className="flex items-center gap-1 px-2 py-1 rounded-lg font-medium"
           onClick={() => {
             router.push(`/en/student/${wdt_ID}/profile`);
           }}
           type="button"
           aria-label="Go to Student Dashboard"
         >
-          <UserCircle className="w-8 h-8 text-sky-600 dark:text-sky-400" />
+          <UserCircle className="w-6 h-6 text-sky-600 dark:text-sky-400" />
         </button>
-        <LightDarkToggle
-          className={cn(
-            "ml-auto p-2 rounded-full",
-            "bg-sky-200 dark:bg-sky-800",
-            "hover:bg-sky-300 dark:hover:bg-sky-700",
-            "transition-colors duration-200 shadow-sm"
-          )}
-        />
+        <LightDarkToggle className="ml-auto p-1 rounded-full bg-sky-200 dark:bg-sky-800 hover:bg-sky-300 dark:hover:bg-sky-700 transition-colors duration-200 shadow-sm" />
       </footer>
     </nav>
   );
 }
+                              
