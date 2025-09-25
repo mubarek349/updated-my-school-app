@@ -12,14 +12,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         phoneno: { label: "Phone Number", type: "text" },
         passcode: { label: "Passcode", type: "password" },
-        userType: { label: "User Type", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.phoneno || !credentials?.passcode) {
           return null;
         }
-
-        const userType = credentials.userType as string;
 
         try {
           // Validate credentials format
@@ -33,60 +30,56 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const { phoneno, passcode } = parsed.data;
-          const normalizedPhone = phoneno.replace(/[^\d+]/g, "");
 
-          if (userType === "ustaz") {
-            // Authenticate ustaz
-            const ustaz = await prisma.responseUstaz.findFirst({
-              where: { phoneno: normalizedPhone },
-              select: {
-                id: true,
-                phoneno: true,
-                ustazname: true,
-                passcode: true,
-                permissioned: true,
-              },
-            });
+          // FIRST: Check in admin table
+          const admin = await prisma.admin.findFirst({
+            where: { phoneno },
+            select: {
+              id: true,
+              phoneno: true,
+              name: true,
+              passcode: true,
+            },
+          });
 
-            if (!ustaz || ustaz.passcode !== passcode || !ustaz.permissioned) {
-              return null;
-            }
-
-            return {
-              id: ustaz.id.toString(),
-              name: ustaz.ustazname,
-              email: ustaz.phoneno, // Using phone as email for session
-              userType: "ustaz",
-            };
-          } else {
-            // Authenticate admin
-            console.log("Attempting admin auth with phone:", normalizedPhone);
-            const admin = await prisma.admin.findFirst({
-              where: { phoneno: normalizedPhone },
-              select: {
-                id: true,
-                phoneno: true,
-                name: true,
-                passcode: true,
-              },
-            });
-
-            console.log("Admin found:", !!admin);
-            if (admin) {
-              console.log("Passcode match:", admin.passcode === passcode);
-            }
-
-            if (!admin || admin.passcode !== passcode) {
-              return null;
-            }
-
+          if (admin && admin.passcode === passcode) {
+            console.log("Admin authentication successful");
             return {
               id: admin.id.toString(),
               name: admin.name,
-              email: admin.phoneno, // Using phone as email for session
+              email: admin.phoneno,
               userType: "admin",
             };
           }
+
+          // SECOND: If not admin, check in ustaz table
+          const ustaz = await prisma.responseUstaz.findFirst({
+            where: {
+              phoneno: phoneno,
+              permissioned: true, // Only allow permissioned ustaz
+            },
+            select: {
+              id: true,
+              phoneno: true,
+              ustazname: true,
+              passcode: true,
+              permissioned: true,
+            },
+          });
+
+          if (ustaz && ustaz.passcode === passcode) {
+            console.log("Ustaz authentication successful");
+            return {
+              id: ustaz.id.toString(),
+              name: ustaz.ustazname,
+              email: ustaz.phoneno,
+              userType: "ustaz",
+            };
+          }
+
+          // If neither admin nor ustaz found with valid credentials
+          console.log("Authentication failed: No valid user found");
+          return null;
         } catch (error) {
           console.error("Authentication error:", error);
           return null;
@@ -100,9 +93,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.userType = (user as any).userType;
         token.id = user.id;
       }
-
-      // Note: Permission checking for ustaz users is now handled in the
-      // getCurrentUstaz function to avoid Edge Runtime issues with Prisma
       return token;
     },
     async session({ session, token }) {
@@ -113,7 +103,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Handle redirects based on user type
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
@@ -125,7 +114,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async signOut() {
-      // Clean up any session-related data if needed
       console.log("User signed out");
     },
   },
