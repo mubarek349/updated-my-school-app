@@ -46,7 +46,7 @@ export default function UstazDashboard() {
       } else {
         toast.error(ustazResult.message);
         if (ustazResult.message === "Account suspended" || ustazResult.message === "Not authenticated") {
-          router.push("/en/ustaz/login");
+          router.push("/en/login");
           return;
         }
       }
@@ -103,7 +103,7 @@ export default function UstazDashboard() {
     try {
       await logout();
       toast.success("Logged out successfully");
-      router.push("/en/ustaz/login");
+      router.push("/en/login");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Failed to logout");

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import { signOut, signIn } from "@/auth";
@@ -16,7 +17,6 @@ type AuthResults = {
 
 type UserData = {
   success: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
   message: string;
 };
@@ -33,7 +33,6 @@ function normalizePhone(phone: string) {
 export async function authenticate(
   raw: z.infer<typeof loginSchema>
 ): Promise<AuthResult> {
-  // Validate on the server as well (never trust client)
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
     return {
@@ -47,25 +46,51 @@ export async function authenticate(
   const data = parsed.data;
   const phoneno = normalizePhone(data.phoneno);
 
-  try {
-    // Use NextAuth signIn to create session with admin userType
-    await signIn("credentials", {
-      phoneno,
-      passcode: data.passcode,
-      userType: "admin",
-      redirect: false,
-    });
-  } catch (err) {
-    console.log("Authentication error:", err);
-    return {
-      ok: false,
-      message: "Invalid phone number or password.",
-      field: "form",
-    };
+  // Check responseUstaz first
+  const ustaz = await prisma.responseUstaz.findFirst({
+    where: { phoneno },
+    select: { id: true, passcode: true, permissioned: true },
+  });
+
+  if (ustaz && ustaz.passcode === data.passcode && ustaz.permissioned) {
+    try {
+      await signIn("credentials", {
+        phoneno,
+        passcode: data.passcode,
+        userType: "ustaz",
+        redirect: false,
+      });
+      redirect("/en/ustaz");
+    } catch (err) {
+      console.log("Ustaz authentication error:", err);
+    }
   }
 
-  // Redirect server-side after successful authentication
-  redirect("/en/admin/coursesPackages");
+  // Check admin if ustaz not found
+  const admin = await prisma.admin.findFirst({
+    where: { phoneno },
+    select: { id: true, passcode: true },
+  });
+
+  if (admin && admin.passcode === data.passcode) {
+    try {
+      await signIn("credentials", {
+        phoneno,
+        passcode: data.passcode,
+        userType: "admin",
+        redirect: false,
+      });
+      redirect("/en/admin/coursesPackages");
+    } catch (err) {
+      console.log("Admin authentication error:", err);
+    }
+  }
+
+  return {
+    ok: false,
+    message: "Invalid phone number or password.",
+    field: "form",
+  };
 }
 
 export async function logout(): Promise<AuthResults> {
@@ -97,7 +122,10 @@ export async function checkAuthentication(): Promise<boolean> {
 
     // Check if this is an admin session
     if ((session.user as any).userType !== "admin") {
-      console.log("User is not admin, userType:", (session.user as any).userType);
+      console.log(
+        "User is not admin, userType:",
+        (session.user as any).userType
+      );
       return false;
     }
 
