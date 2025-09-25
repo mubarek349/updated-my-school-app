@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import prisma from "../lib/db";
-import { loginSchema } from "../lib/zodSchema";
+import prisma from "./lib/db";
+import { loginSchema } from "./lib/zodSchema";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },

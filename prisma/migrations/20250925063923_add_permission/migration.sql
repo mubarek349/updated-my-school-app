@@ -3,6 +3,7 @@ CREATE TABLE `coursePackage` (
     `id` VARCHAR(191) NOT NULL,
     `name` TEXT NOT NULL,
     `description` TEXT NULL,
+    `aiPdfData` TEXT NULL,
     `courseMaterials` TEXT NULL,
     `examDurationMinutes` INTEGER NULL,
     `isPublished` BOOLEAN NOT NULL DEFAULT false,
@@ -257,7 +258,6 @@ CREATE TABLE `qandAResponse` (
     `response` TEXT NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
-    `adminId` VARCHAR(191) NULL,
 
     INDEX `qandAResponse_videoQuestionId_idx`(`videoQuestionId`),
     INDEX `qandAResponse_ustazId_idx`(`ustazId`),
@@ -294,6 +294,7 @@ CREATE TABLE `responseUstaz` (
     `passcode` VARCHAR(191) NOT NULL,
     `ustazname` VARCHAR(255) NULL,
     `chat_id` VARCHAR(191) NULL DEFAULT '',
+    `permissioned` BOOLEAN NULL DEFAULT true,
 
     UNIQUE INDEX `responseUstaz_phoneno_key`(`phoneno`),
     UNIQUE INDEX `responseUstaz_passcode_key`(`passcode`),
@@ -386,9 +387,6 @@ ALTER TABLE `qandAResponse` ADD CONSTRAINT `qandAResponse_videoQuestionId_fkey` 
 
 -- AddForeignKey
 ALTER TABLE `qandAResponse` ADD CONSTRAINT `qandAResponse_ustazId_fkey` FOREIGN KEY (`ustazId`) REFERENCES `responseUstaz`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `qandAResponse` ADD CONSTRAINT `qandAResponse_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `admin`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `announcement` ADD CONSTRAINT `announcement_coursesPackageId_fkey` FOREIGN KEY (`coursesPackageId`) REFERENCES `coursePackage`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
