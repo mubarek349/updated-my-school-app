@@ -217,7 +217,7 @@ export async function getCurrentUstaz(): Promise<UserData> {
   }
 }
 
-export async function requireUstazAuthentication(redirectTo = "/en/ustaz/login") {
+export async function requireUstazAuthentication(redirectTo = "/en/login") {
   const isAuth = await checkUstazAuthentication();
 
   if (!isAuth) {

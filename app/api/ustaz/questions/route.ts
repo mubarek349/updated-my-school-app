@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getCurrentUstaz } from "@/actions/ustazResponder/authentication";
 import prisma from "@/lib/db";
@@ -6,12 +7,9 @@ export async function GET() {
   try {
     // Check if ustaz is authenticated
     const ustazResult = await getCurrentUstaz();
-    
+
     if (!ustazResult.success) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     // Fetch all Q&A questions with related data
@@ -48,7 +46,9 @@ export async function GET() {
       question: question.question,
       studentName: question.student?.name || "Unknown Student",
       courseName: question.coursePackage?.name || "Unknown Course",
-      chapterName: `${question.type} - ${question.timestamp ? `${question.timestamp}s` : 'General'}`,
+      chapterName: `${question.type} - ${
+        question.timestamp ? `${question.timestamp}s` : "General"
+      }`,
       createdAt: question.createdAt.toISOString(),
       hasResponse: question.responses.length > 0,
       responses: question.responses.map((response: any) => ({
