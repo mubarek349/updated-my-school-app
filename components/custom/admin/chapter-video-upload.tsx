@@ -146,6 +146,7 @@ export function ChapterVideoUpload({
       return URL.createObjectURL(selectedVideo);
     } else {
       const videoUrl = initialData.customVideo;
+      if (!videoUrl) return null;
       const filename = videoUrl.replace(/^\/?(api\/videos\/)?/, "");
       return `/api/videos/${filename}`;
     }
