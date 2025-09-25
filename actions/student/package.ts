@@ -13,7 +13,7 @@ export async function getPackageData(wdt_ID: number) {
       name: true,
       status: true,
       subject: true,
-      activePackage: { 
+      activePackage: {
         select: {
           id: true,
           name: true,
@@ -61,12 +61,12 @@ export async function getAvailablePacakges(
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
-      package:{
+      package: {
         select: {
           id: true,
           name: true,
         },
-      }
+      },
     },
   });
 

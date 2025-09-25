@@ -37,6 +37,7 @@ import CourseAnnouncements from "@/components/CourseAnnouncements";
 import CourseFeedback from "@/components/CourseFeedback";
 import CourseMaterials from "@/components/CourseMaterials";
 import ChatComponent from "@/components/chatComponent";
+import TraditionalQA from "@/components/traditionalQA";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const itemVariants = {
@@ -293,7 +294,7 @@ function Page() {
                     initial="hidden"
                     animate="visible"
                   >
-                    {/* Tabs with horizontal x-axis scroll only */}
+                    {/* Tabs with horizontal x-axis scroll only, now includes Q&A tab */}
                     <div className="w-full max-w-2xl mx-auto mb-8">
                       <Tabs defaultValue="quiz">
                         <div
@@ -305,6 +306,7 @@ function Page() {
                         >
                           <TabsList className="flex flex-nowrap gap-2 min-w-max">
                             <TabsTrigger value="quiz">Quiz</TabsTrigger>
+                            <TabsTrigger value="qna">Q&amp;A</TabsTrigger>
                             <TabsTrigger value="feedback">Feedback</TabsTrigger>
                             <TabsTrigger value="materials">
                               Materials
@@ -315,7 +317,6 @@ function Page() {
                             <TabsTrigger value="ai">AI Assistance</TabsTrigger>
                           </TabsList>
                         </div>
-                        {/* Prevent vertical scroll on tab content */}
                         <div className="overflow-y-hidden">
                           <TabsContent value="quiz">
                             <StudentQuestionForm
@@ -327,8 +328,16 @@ function Page() {
                               chapterId={data.chapter.id}
                             />
                           </TabsContent>
+                          <TabsContent value="qna">
+                            <TraditionalQA
+                              packageId={data.packageId}
+                              lang={lang}
+                              studentId={wdt_ID}
+                            />
+                          </TabsContent>
                           <TabsContent value="feedback">
                             <CourseFeedback
+                              studentId={wdt_ID}
                               courseId={data.packageId}
                               lang={lang}
                             />

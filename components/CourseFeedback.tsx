@@ -22,34 +22,38 @@ interface Feedback {
 }
 
 export default function CourseFeedback({
+  studentId,
   courseId,
   lang,
 }: {
+  studentId: number;
   courseId: string;
   lang: string;
 }) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [feedbacks, , feedbacksLoading] = useAction(
+  const [feedbacks, refreshFeedback, feedbacksLoading] = useAction(
     getFeedback,
     [true, () => {}],
     courseId
   );
-
 
   const [averageRating, , ratingLoading] = useAction(
     getAverageRating,
     [true, () => {}],
     courseId
   );
-  
+
   const [, action, submitting] = useAction(addFeedback, [, () => {}]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating > 0 && comment.trim()) {
-       action( courseId, comment, rating );
+      await action(courseId, studentId, comment, rating);
+      refreshFeedback(); // Refresh feedback list after submit
+      setRating(0);
+      setComment("");
     }
   };
 
@@ -173,40 +177,38 @@ export default function CourseFeedback({
         </form>
       </div>
 
-      {/* Feedback List */}
+      {/* Feedback List - Displayed below the form */}
       {feedbacks && feedbacks.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-4">
+          <h3 className="text-lg font-semibold mb-2">
             {lang === "en" ? "Student Feedback" : "Student Feedback"}
           </h3>
-
-          <div className="space-y-4">
+          <div className="space-y-2">
             {feedbacks.map((feedback: any) => (
               <div
                 key={feedback.id}
-                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm"
+                className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 shadow-sm"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                      <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                      <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">
-                          {/* Show user name if available, else fallback */}
+                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">
                           {feedback.user
                             ? `${feedback.user.firstName} ${feedback.user.fatherName}`
                             : lang === "en"
                             ? "Anonymous"
                             : "Anonymous"}
                         </h4>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-0.5">
                           {renderStars(feedback.rating)}
-                          <div className="flex items-center gap-1 text-sm text-gray-500">
-                            <Calendar className="w-4 h-4" />
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Calendar className="w-3 h-3" />
                             <span>
                               {new Date(feedback.createdAt).toLocaleDateString(
                                 lang === "en" ? "en-US" : "am-ET",
@@ -221,7 +223,7 @@ export default function CourseFeedback({
                         </div>
                       </div>
                     </div>
-                    <p className="mt-3 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    <p className="mt-2 text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
                       {feedback.feedback}
                     </p>
                   </div>

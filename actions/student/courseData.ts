@@ -6,61 +6,64 @@ import { number } from "zod";
 
 // Define the CourseMaterial type
 interface CourseMaterial {
-    name: string;
-    url: string;
-    type: string;
+  name: string;
+  url: string;
+  type: string;
 }
 
 export async function getCourseMaterials(coursePackageId: string) {
-    try {
-        const course = await prisma.coursePackage.findUnique({
-            where: { id: coursePackageId },
-            select: { courseMaterials: true },
-        });
+  try {
+    const course = await prisma.coursePackage.findUnique({
+      where: { id: coursePackageId },
+      select: { courseMaterials: true },
+    });
 
-        const raw = course?.courseMaterials ?? [];
+    const raw = course?.courseMaterials ?? [];
 
-        // If courseMaterials is a single comma-separated string, split it
-        const items: string[] = Array.isArray(raw)
-            ? raw
-            : typeof raw === "string"
-                ? raw.split(",").map((s) => s.trim()).filter(Boolean)
-                : [];
+    // If courseMaterials is a single comma-separated string, split it
+    const items: string[] = Array.isArray(raw)
+      ? raw
+      : typeof raw === "string"
+      ? raw
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
 
-        const parsed: CourseMaterial[] = items.map((item) => {
-            try {
-                const obj = JSON.parse(item as unknown as string);
-                if (obj && typeof obj === "object" && (obj as any).url) {
-                    const url = (obj as any).url as string;
-                    const name = (obj as any).name ?? url.split("/").pop() ?? "material";
-                    const type = ((obj as any).type ?? url.split(".").pop() ?? "file")
-                        .toString()
-                        .toLowerCase();
-                    return { name, url, type };
-                }
-                // If parsed but not as expected, fall back to treating it as a URL string
-                const url = String(item);
-                return {
-                    name: url.split("/").pop() ?? "material",
-                    url,
-                    type: url.split(".").pop() ?? "file",
-                };
-            } catch {
-                // Backward compatibility: previously stored plain URLs in the array or comma-separated
-                const url = String(item);
-                return {
-                    name: url.split("/").pop() ?? "material",
-                    url,
-                    type: url.split(".").pop() ?? "file",
-                };
-            }
-        });
+    const parsed: CourseMaterial[] = items.map((item) => {
+      try {
+        const obj = JSON.parse(item as unknown as string);
+        if (obj && typeof obj === "object" && (obj as any).url) {
+          const url = (obj as any).url as string;
+          const name = (obj as any).name ?? url.split("/").pop() ?? "material";
+          const type = ((obj as any).type ?? url.split(".").pop() ?? "file")
+            .toString()
+            .toLowerCase();
+          return { name, url, type };
+        }
+        // If parsed but not as expected, fall back to treating it as a URL string
+        const url = String(item);
+        return {
+          name: url.split("/").pop() ?? "material",
+          url,
+          type: url.split(".").pop() ?? "file",
+        };
+      } catch {
+        // Backward compatibility: previously stored plain URLs in the array or comma-separated
+        const url = String(item);
+        return {
+          name: url.split("/").pop() ?? "material",
+          url,
+          type: url.split(".").pop() ?? "file",
+        };
+      }
+    });
 
-        return parsed;
-    } catch (error) {
-        console.error("Error fetching course materials:", error);
-        return [];
-    }
+    return parsed;
+  } catch (error) {
+    console.error("Error fetching course materials:", error);
+    return [];
+  }
 }
 
 // ---------------- Announcements ----------------
@@ -101,26 +104,28 @@ export async function getAnnouncements(courseId: string) {
 // ---------------- Feedback ----------------
 export async function addFeedback(
   coursePackageId: string,
+  studentId: number,
   feedback: string,
   rating: number
 ) {
   try {
-    const session = await auth();
-    const userId = Number(session?.user?.id);
-    if (!userId) {
-      return { success: false, error: "Unauthorized" };
-    }
+    // const session = await auth();
+    // const userId = Number(session?.user?.id);
+    // if (!userId) {
+    //   return { success: false, error: "Unauthorized" };
+    // }
     if (!coursePackageId || !feedback?.trim() || !rating) {
       return { success: false, error: "Invalid payload" };
     }
     await prisma.feedback.create({
       data: {
         coursePackageId,
-        studentId: userId,
+        studentId,
         feedback: feedback.trim(),
         rating: Number(Math.max(1, Math.min(5, Math.round(Number(rating))))),
       },
     });
+    console.log("Feedback added successfully");
     return { success: true };
   } catch (error) {
     console.error("Error adding feedback:", error);
