@@ -47,3 +47,7 @@ next-env.d.ts
 
 # rar files
 *.rar
+
+#external files
+/uploads
+/docs

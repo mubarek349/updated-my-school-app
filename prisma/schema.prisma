@@ -26,6 +26,7 @@ model coursePackage {
   courses             course[]
   questions           question[]
   finalExamResult     finalExamResult[]
+  aiPdfData           String?               @db.Text
   courseMaterials     String?               @db.Text
   examDurationMinutes Int?
   isPublished         Boolean               @default(false)
@@ -189,13 +190,12 @@ model finalExamResult {
 }
 
 model admin {
-  id            String          @id @default(cuid())
-  name          String
-  phoneno       String          @unique
-  chat_id       String          @unique
-  passcode      String
-  createdAt     DateTime        @default(now())
-  qandAResponse qandAResponse[]
+  id        String   @id @default(cuid())
+  name      String
+  phoneno   String   @unique
+  chat_id   String   @unique
+  passcode  String
+  createdAt DateTime @default(now())
 }
 
 model wpos_wpdatatable_23 {
@@ -301,8 +301,6 @@ model qandAResponse {
   response        String        @db.Text
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  admin           admin?        @relation(fields: [adminId], references: [id])
-  adminId         String?
 
   @@index([videoQuestionId])
   @@index([ustazId])
@@ -334,5 +332,6 @@ model responseUstaz {
   passcode      String          @unique
   ustazname     String?         @db.VarChar(255)
   chat_id       String?         @default("")
+  permissioned  Boolean?        @default(true)
   qandAResponse qandAResponse[] @relation("QandAResponses")
 }

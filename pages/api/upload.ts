@@ -4,8 +4,8 @@ import fs from "fs";
 import path from "path";
 import formidable from "formidable";
 
-const UPLOAD_DIR = path.join(process.cwd(), "fuad");
-const COURSE_DIR = path.join(UPLOAD_DIR, "course");
+const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+const COURSE_DIR = path.join(UPLOAD_DIR, "videos");
 
 export const config = {
   api: {
@@ -15,10 +15,10 @@ export const config = {
 };
 function parseForm(req: NextApiRequest): Promise<{ fields: any; files: any }> {
   return new Promise((resolve, reject) => {
-    const form = formidable({ 
+    const form = formidable({
       multiples: false,
       maxTotalFileSize: 2000 * 1024 * 1024, // 2GB total limit
-      maxFileSize: 2000 * 1024 * 1024 // 2GB per file limit
+      maxFileSize: 2000 * 1024 * 1024, // 2GB per file limit
     });
     form.parse(req, (err: any, fields: any, files: any) => {
       if (err) reject(err);

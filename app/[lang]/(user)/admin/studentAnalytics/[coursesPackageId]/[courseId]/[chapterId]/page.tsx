@@ -12,9 +12,10 @@ import { updateStartingProgress } from "@/actions/student/progress";
 import toast from "react-hot-toast";
 
 function Page() {
-  const { chapterId } = useParams();
-  const { coursesPackageId } = useParams();
-  const { courseId } = useParams();
+  const params = useParams();
+  const chapterId = params?.chapterId as string;
+  const coursesPackageId = params?.coursesPackageId as string;
+  const courseId = params?.courseId as string;
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);

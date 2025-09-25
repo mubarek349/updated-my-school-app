@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const UPLOAD_DIR = path.join(process.cwd(), "fuad");
-const COURSE_DIR = path.join(UPLOAD_DIR, "course");
+const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+const COURSE_DIR = path.join(UPLOAD_DIR, "videos");
 
 function getTimestampUUID(ext: string) {
   return `${Date.now()}-${Math.floor(Math.random() * 100000)}.${ext}`;

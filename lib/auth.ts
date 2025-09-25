@@ -1,87 +1,125 @@
-import NextAuth, { NextAuthConfig } from "next-auth";
-import { DefaultJWT } from "next-auth/jwt";
+import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import prisma from "./db";
-import { loginSchema } from "./zodSchema";
+import prisma from "../lib/db";
+import { loginSchema } from "../lib/zodSchema";
 
-// EXTEND NEXT-AUTH USER
-declare module "next-auth" {
-  interface User {
-    id?: string;
-    // role: Role;
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT extends DefaultJWT {
-    id: string;
-    // role: Role;
-  }
-}
-
-// ✅ FIXED CUSTOM ERROR CLASS
-export class CustomError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "CustomError";
-  }
-}
-
-const authConfig = {
-  trustHost: true,
-  pages: {
-    signIn: "/en/login",
-    // signOut: "/signout",
-  },
-  callbacks: {
-    authorized: async ({ auth, request: { nextUrl } }) => {
-      if (auth) {
-        if (nextUrl.pathname.startsWith("/en/login")) {
-          return Response.redirect(
-            new URL("/en/admin/coursesPackages", nextUrl)
-          );
-        } else return true;
-      } else if (nextUrl.pathname.startsWith("/en/admin")) {
-        return false;
-      } else return true;
-    },
-    jwt: async ({ token, user }) => {
-      return { ...token, ...user };
-    },
-    session: async ({ session, token }) => {
-      return { ...session, user: { ...session.user, ...token } };
-    },
-  },
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  session: { strategy: "jwt" },
   providers: [
     Credentials({
+      name: "credentials",
+      credentials: {
+        phoneno: { label: "Phone Number", type: "text" },
+        passcode: { label: "Passcode", type: "password" },
+        userType: { label: "User Type", type: "text" },
+      },
       async authorize(credentials) {
-        try {
-          console.log("Authorizing user:", credentials);
-          const { data, success } = await loginSchema.safeParseAsync(
-            credentials
-          );
-          if (!success) throw new CustomError("Invalid credentials");
-          console.log("Parsed login data:", data);
+        if (!credentials?.phoneno || !credentials?.passcode) {
+          return null;
+        }
 
-          const user = await prisma.admin.findFirst({
-            where: { phoneno: data.phoneno },
-            select: { id: true, passcode: true },
+        const userType = credentials.userType as string;
+
+        try {
+          // Validate credentials format
+          const parsed = loginSchema.safeParse({
+            phoneno: credentials.phoneno,
+            passcode: credentials.passcode,
           });
 
-          if (!user) throw new CustomError("Invalid Phone Number");
-          if (!user.passcode) throw new CustomError("Password Not Set");
-          if (data.passcode !== user.passcode)
-            throw new CustomError("Invalid Password");
+          if (!parsed.success) {
+            return null;
+          }
 
-          return { id: user.id };
+          const { phoneno, passcode } = parsed.data;
+          const normalizedPhone = phoneno.replace(/[^\d+]/g, "");
+
+          if (userType === "ustaz") {
+            // Authenticate ustaz
+            const ustaz = await prisma.responseUstaz.findFirst({
+              where: { phoneno: normalizedPhone },
+              select: {
+                id: true,
+                phoneno: true,
+                ustazname: true,
+                passcode: true,
+                permissioned: true,
+              },
+            });
+
+            if (!ustaz || ustaz.passcode !== passcode || !ustaz.permissioned) {
+              return null;
+            }
+
+            return {
+              id: ustaz.id.toString(),
+              name: ustaz.ustazname,
+              email: ustaz.phoneno, // Using phone as email for session
+              userType: "ustaz",
+            };
+          } else {
+            // Authenticate admin
+            const admin = await prisma.admin.findFirst({
+              where: { phoneno: normalizedPhone },
+              select: {
+                id: true,
+                phoneno: true,
+                name: true,
+                passcode: true,
+              },
+            });
+
+            if (!admin || admin.passcode !== passcode) {
+              return null;
+            }
+
+            return {
+              id: admin.id.toString(),
+              name: admin.name,
+              email: admin.phoneno, // Using phone as email for session
+              userType: "admin",
+            };
+          }
         } catch (error) {
-          console.error("Error authorizing user:", error);
-          throw new CustomError("Authorization failed");
+          console.error("Authentication error:", error);
+          return null;
         }
       },
     }),
   ],
-} satisfies NextAuthConfig;
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.userType = (user as any).userType;
+        token.id = user.id;
+      }
 
-// EXPORT AUTH UTILS
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+      // Note: Permission checking for ustaz users is now handled in the 
+      // getCurrentUstaz function to avoid Edge Runtime issues with Prisma
+      return token;
+    },
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.id as string;
+        (session.user as any).userType = token.userType;
+      }
+      return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle redirects based on user type
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+  events: {
+    async signOut(message) {
+      // Clean up any session-related data if needed
+      console.log("User signed out");
+    },
+  },
+});

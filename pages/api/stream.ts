@@ -14,7 +14,7 @@ export default async function handler(
   }
 
   const safeFile = path.basename(file);
-  const videoPath = path.resolve("./fuad/course", safeFile);
+  const videoPath = path.resolve("./uploads/videos", safeFile);
 
   if (!fs.existsSync(videoPath)) {
     res.status(404).send("File not found");
