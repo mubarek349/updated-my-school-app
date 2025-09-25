@@ -170,6 +170,7 @@ export async function getCurrentUstaz(): Promise<UserData> {
     }
 
     // Check if this is an ustaz session
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((session.user as any).userType !== "ustaz") {
       return {
         success: false,
