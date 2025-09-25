@@ -3,6 +3,7 @@
 
 import prisma from "@/lib/db";
 
+
 // Define the CourseMaterial type
 interface CourseMaterial {
   name: string;
