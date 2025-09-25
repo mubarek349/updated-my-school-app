@@ -9,11 +9,11 @@ export default async function middleware(request: NextRequest) {
   const userType = (session?.user as any)?.userType;
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/en/login", "/"];
+  const publicRoutes = ["/en/login", "/en/student"];
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
-  
+
   // Skip middleware for dashboard routes (they handle their own redirects)
   if (pathname.includes("/(dashboard)") || pathname.endsWith("/dashboard")) {
     return NextResponse.next();
