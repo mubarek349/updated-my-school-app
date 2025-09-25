@@ -180,10 +180,10 @@ function Page() {
       initial="hidden"
       animate="visible"
     >
-      <ProgressPage />
+      {/* <ProgressPage /> */}
       <div className="flex flex-col overflow-auto px-2 bg-blue-50">
         {/* Breadcrumb */}
-        <TooltipProvider>
+        {/* <TooltipProvider>
           <Breadcrumb className="py-4 md:py-6 mb-4">
             <BreadcrumbList className="text-sm md:text-base">
               <BreadcrumbItem>
@@ -225,7 +225,7 @@ function Page() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-        </TooltipProvider>
+        </TooltipProvider> */}
 
         {/* Content */}
         <AnimatePresence>
@@ -277,9 +277,6 @@ function Page() {
               ) : (
                 <CourseTopOverview
                   {...{
-                    title: "sampleCourse",
-                    by: `fuad`,
-                    thumbnail: "FUAD_thumbnail",
                     video: data?.chapter?.customVideo || "",
                   }}
                 />
