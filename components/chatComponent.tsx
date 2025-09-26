@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 
-export default function ChatComponent() {
+export default function ChatComponent({ packageId }: { packageId: string }) {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>(
     []
   );
@@ -22,7 +22,7 @@ export default function ChatComponent() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: newMessages, packageId }),
       });
 
       const data = await res.json();

@@ -37,6 +37,8 @@ import CourseAnnouncements from "@/components/CourseAnnouncements";
 import CourseFeedback from "@/components/CourseFeedback";
 import CourseMaterials from "@/components/CourseMaterials";
 import ChatComponent from "@/components/chatComponent";
+import { getPackageData } from "@/actions/student/package";
+import MainMenu from "@/components/custom/student/bestMenu";
 import TraditionalQA from "@/components/traditionalQA";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -51,6 +53,11 @@ function Page() {
   const wdt_ID = Number(params?.wdt_ID ?? 0);
   const courseId = String(params?.courseId ?? "");
   const chapterId = String(params?.chapterId ?? "");
+  const [packageData, refresh] = useAction(
+    getPackageData,
+    [true, (response) => console.log(response)],
+    Number(wdt_ID)
+  );
   const [data, refetch, isLoading] = useAction(
     getQuestionForActivePackageChapterUpdate,
     [true, (response) => console.log(response)],
@@ -181,7 +188,7 @@ function Page() {
       animate="visible"
     >
       {/* <ProgressPage /> */}
-      <div className="flex flex-col flex-1 overflow-hidden px-2 bg-red-500">
+      <div className="flex flex-col flex-1 overflow-hidden px-2 ">
         {/* Content */}
         <AnimatePresence>
           {isLoading ? (
@@ -276,6 +283,9 @@ function Page() {
                         >
                           <TabsList className="flex flex-nowrap gap-2 min-w-max">
                             <TabsTrigger value="quiz">Quiz</TabsTrigger>
+                            <TabsTrigger value="mainmenu">
+                              Main Menu
+                            </TabsTrigger>
                             <TabsTrigger value="qna">Q&amp;A</TabsTrigger>
                             <TabsTrigger value="feedback">Feedback</TabsTrigger>
                             <TabsTrigger value="materials">
@@ -297,6 +307,9 @@ function Page() {
                               courseId={courseId}
                               chapterId={data.chapter.id}
                             />
+                          </TabsContent>
+                          <TabsContent value="mainmenu" className="h-full">
+                            <MainMenu data={packageData} />
                           </TabsContent>
                           <TabsContent value="qna" className="h-full">
                             <TraditionalQA
@@ -325,7 +338,7 @@ function Page() {
                             />
                           </TabsContent>
                           <TabsContent value="ai" className="h-full">
-                            <ChatComponent />
+                            <ChatComponent packageId={data.packageId} />
                           </TabsContent>
                         </div>
                       </Tabs>
