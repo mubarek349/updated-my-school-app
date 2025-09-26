@@ -187,7 +187,7 @@ function Page() {
 
   return (
     <motion.div
-      className="px-4 md:px-12 bg-blue-50 py-1 pb-6 grid grid-rows-[auto_1fr] min-h-screen"
+      className="px-4 md:px-12 bg-blue-50 py-1 pb-6 grid grid-rows-[auto_1fr] min-h-screen overflow-hidden"
       style={{
         background:
           "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%) cl",
@@ -237,11 +237,11 @@ function Page() {
             <>
               {data && "chapter" in data && data.chapter?.videoUrl ? (
                 <div
-                  className="w-full mx-auto max-w-3xl flex-shrink-0"
+                  className="w-full mx-auto max-w-3xl flex-shrink-0 overflow-auto"
                   style={{
                     position: "relative",
                     aspectRatio: "16/9",
-                    overflow: "hidden",
+                    overflow: "hidden md:overflow-auto",
                     maxHeight: "60vh",
                   }}
                 >
@@ -285,7 +285,7 @@ function Page() {
                         className="flex-1 flex flex-col overflow-hidden"
                       >
                         <div
-                          className="overflow-x-auto scrollbar-hide scroll-smooth"
+                          className="overflow-x-auto max-w-full scrollbar-hide scroll-smooth"
                           style={{
                             scrollbarWidth: "none",
                             msOverflowStyle: "none",
@@ -307,7 +307,7 @@ function Page() {
                             <TabsTrigger value="ai">AI Assistance</TabsTrigger>
                           </TabsList>
                         </div>
-                        <div className="flex-1 overflow-y-auto min-h-0">
+                        <div className="flex-1 min-h-0">
                           <TabsContent value="mainmenu" className="h-full">
                             <MainMenu data={packageData} />
                           </TabsContent>

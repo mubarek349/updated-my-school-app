@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   const params = useParams<{ wdt_ID: string }>();
   const wdt_ID = params?.wdt_ID;
   const [data, refresh] = useAction(
@@ -32,13 +32,5 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     Number(wdt_ID)
   );
 
-  return (
-    <div className="md:grid md:grid-cols-[250px_1fr] h-auto overflow-hidden">
-      <MainMenu data={data} className="hidden md:flex bg-blue-50" />
-      
-      <MenuContext.Provider value={{ refresh }}>
-        <div className="h-dvh overflow-hidden grid">{children}</div>
-      </MenuContext.Provider>
-    </div>
-  );
+  return <div className="grid overflow-hidden ">{children}</div>;
 }
