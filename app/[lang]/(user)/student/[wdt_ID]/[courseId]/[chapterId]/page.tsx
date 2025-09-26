@@ -37,6 +37,8 @@ import CourseAnnouncements from "@/components/CourseAnnouncements";
 import CourseFeedback from "@/components/CourseFeedback";
 import CourseMaterials from "@/components/CourseMaterials";
 import ChatComponent from "@/components/chatComponent";
+import { getPackageData } from "@/actions/student/package";
+import MainMenu from "@/components/custom/student/bestMenu";
 import TraditionalQA from "@/components/traditionalQA";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -47,10 +49,16 @@ const itemVariants = {
 
 function Page() {
   const params = useParams();
+  const router = useRouter();
   const lang = "en";
   const wdt_ID = Number(params?.wdt_ID ?? 0);
   const courseId = String(params?.courseId ?? "");
   const chapterId = String(params?.chapterId ?? "");
+  const [packageData, refresh] = useAction(
+    getPackageData,
+    [true, (response) => console.log(response)],
+    Number(wdt_ID)
+  );
   const [data, refetch, isLoading] = useAction(
     getQuestionForActivePackageChapterUpdate,
     [true, (response) => console.log(response)],
@@ -125,6 +133,15 @@ function Page() {
     visible: { opacity: 1, transition: { duration: 0.5 } },
   };
 
+  // Determine default tab based on URL query
+  let defaultTab = "mainmenu";
+  if (typeof window !== "undefined") {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("isClicked") === "true") {
+      defaultTab = "quiz";
+    }
+  }
+
   // Handle "package not started" state
   if (progressData === true) {
     return (
@@ -170,7 +187,7 @@ function Page() {
 
   return (
     <motion.div
-      className="px-4 md:px-12 bg-blue-50 py-6 grid grid-rows-[auto_1fr] min-h-screen"
+      className="px-4 md:px-12 bg-blue-50 py-1 pb-6 grid grid-rows-[auto_1fr] min-h-screen overflow-hidden"
       style={{
         background:
           "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%) cl",
@@ -181,52 +198,7 @@ function Page() {
       animate="visible"
     >
       {/* <ProgressPage /> */}
-      <div className="flex flex-col overflow-auto px-2 bg-blue-50">
-        {/* Breadcrumb */}
-        {/* <TooltipProvider>
-          <Breadcrumb className="py-4 md:py-6 mb-4">
-            <BreadcrumbList className="text-sm md:text-base">
-              <BreadcrumbItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <BreadcrumbLink
-                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-                      // href={`/en/student/${wdt_ID}`} // Uncomment and set href if navigation is desired
-                    >
-                      {data && "packageName" in data
-                        ? data.packageName
-                        : "Package"}
-                    </BreadcrumbLink>
-                  </TooltipTrigger>
-                  <TooltipContent>Back to Package</TooltipContent>
-                </Tooltip>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="text-gray-400 dark:text-gray-500" />
-              <BreadcrumbItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <BreadcrumbLink
-                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-                      // href={`/en/student/${wdt_ID}/${courseId}`} // Uncomment and set href if navigation is desired
-                    >
-                      {data && "courseTitle" in data
-                        ? data.courseTitle
-                        : "Course"}
-                    </BreadcrumbLink>
-                  </TooltipTrigger>
-                  <TooltipContent>Back to Course</TooltipContent>
-                </Tooltip>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="text-gray-400 dark:text-gray-500" />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="text-gray-800 dark:text-gray-100 font-medium">
-                  {data && "chapter" in data ? data.chapter?.title : "Chapter"}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </TooltipProvider> */}
-
+      <div className="flex flex-col flex-1 overflow-hidden px-2 ">
         {/* Content */}
         <AnimatePresence>
           {isLoading ? (
@@ -264,16 +236,31 @@ function Page() {
           ) : (
             <>
               {data && "chapter" in data && data.chapter?.videoUrl ? (
-                <iframe
-                  className="w-full text-sm mx-auto aspect-video max-md:sticky top-0 z-50 rounded-lg shadow-lg"
-                  src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
-                  title="Darulkubra video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                  aria-label="Chapter video player"
-                />
+                <div
+                  className="w-full mx-auto max-w-3xl flex-shrink-0 overflow-auto"
+                  style={{
+                    position: "relative",
+                    aspectRatio: "16/9",
+                    overflow: "hidden md:overflow-auto",
+                    maxHeight: "60vh",
+                  }}
+                >
+                  <iframe
+                    className="w-full h-full rounded-lg shadow-lg"
+                    src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
+                    title="Darulkubra video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                    aria-label="Chapter video player"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "block",
+                    }}
+                  />
+                </div>
               ) : (
                 <CourseTopOverview
                   {...{
@@ -286,22 +273,28 @@ function Page() {
                 data.chapter &&
                 Array.isArray(data.chapter.questions) && (
                   <motion.div
-                    className="mt-6"
+                    className="mt-6 flex-1 flex flex-col overflow-hidden"
                     variants={itemVariants}
                     initial="hidden"
                     animate="visible"
                   >
                     {/* Tabs with horizontal x-axis scroll only, now includes Q&A tab */}
-                    <div className="w-full max-w-2xl mx-auto mb-8">
-                      <Tabs defaultValue="quiz">
+                    <div className="w-full max-w-2xl mx-auto mb-1 flex-1 flex flex-col overflow-hidden">
+                      <Tabs
+                        defaultValue={defaultTab}
+                        className="flex-1 flex flex-col overflow-hidden"
+                      >
                         <div
-                          className="overflow-x-auto scrollbar-hide scroll-smooth"
+                          className="overflow-x-auto max-w-full scrollbar-hide scroll-smooth"
                           style={{
                             scrollbarWidth: "none",
                             msOverflowStyle: "none",
                           }}
                         >
                           <TabsList className="flex flex-nowrap gap-2 min-w-max">
+                            <TabsTrigger value="mainmenu">
+                              Main Menu
+                            </TabsTrigger>
                             <TabsTrigger value="quiz">Quiz</TabsTrigger>
                             <TabsTrigger value="qna">Q&amp;A</TabsTrigger>
                             <TabsTrigger value="feedback">Feedback</TabsTrigger>
@@ -314,8 +307,11 @@ function Page() {
                             <TabsTrigger value="ai">AI Assistance</TabsTrigger>
                           </TabsList>
                         </div>
-                        <div className="overflow-y-hidden">
-                          <TabsContent value="quiz">
+                        <div className="flex-1 min-h-0">
+                          <TabsContent value="mainmenu" className="h-full">
+                            <MainMenu data={packageData} />
+                          </TabsContent>
+                          <TabsContent value="quiz" className="h-full">
                             <StudentQuestionForm
                               chapter={{
                                 questions: data.chapter.questions,
@@ -325,34 +321,34 @@ function Page() {
                               chapterId={data.chapter.id}
                             />
                           </TabsContent>
-                          <TabsContent value="qna">
+                          <TabsContent value="qna" className="h-full">
                             <TraditionalQA
                               packageId={data.packageId}
                               lang={lang}
                               studentId={wdt_ID}
                             />
                           </TabsContent>
-                          <TabsContent value="feedback">
+                          <TabsContent value="feedback" className="h-full">
                             <CourseFeedback
                               studentId={wdt_ID}
                               courseId={data.packageId}
                               lang={lang}
                             />
                           </TabsContent>
-                          <TabsContent value="materials">
+                          <TabsContent value="materials" className="h-full">
                             <CourseMaterials
                               courseId={data.packageId}
                               lang={lang}
                             />
                           </TabsContent>
-                          <TabsContent value="announcements">
+                          <TabsContent value="announcements" className="h-full">
                             <CourseAnnouncements
                               courseId={data.packageId}
                               lang={lang}
                             />
                           </TabsContent>
-                          <TabsContent value="ai">
-                            <ChatComponent />
+                          <TabsContent value="ai" className="h-full">
+                            <ChatComponent packageId={data.packageId} />
                           </TabsContent>
                         </div>
                       </Tabs>

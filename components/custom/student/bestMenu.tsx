@@ -1,10 +1,14 @@
 "use client";
 
 import React from "react";
-import MenuTitle from "./menu-title";
-import { LightDarkToggle } from "@/components/ui/light-dark-toggle";
 import { cn } from "@/lib/utils";
-import { CheckCircle, PlayCircle, Lock, Trophy, UserCircle } from "lucide-react";
+import {
+  CheckCircle,
+  PlayCircle,
+  Lock,
+  Trophy,
+  UserCircle,
+} from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -56,9 +60,11 @@ interface MainMenuProps {
 export default function MainMenu({ data, className }: MainMenuProps) {
   const params = useParams();
   const router = useRouter();
-  const wdt_ID = Number(params.wdt_ID);
+  const wdt_ID = Number(params?.wdt_ID ?? 0);
 
-  const [chapterProgress, setChapterProgress] = React.useState<Record<string, boolean | null>>({});
+  const [chapterProgress, setChapterProgress] = React.useState<
+    Record<string, boolean | null>
+  >({});
   const [isLoading, setIsLoading] = React.useState(true);
   const [allCoursesCompleted, setAllCoursesCompleted] = React.useState(false);
 
@@ -70,18 +76,27 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       }
       setIsLoading(true);
       try {
-        const allChapters = data.activePackage.courses.flatMap((course) => course.chapters);
+        const allChapters = data.activePackage.courses.flatMap(
+          (course) => course.chapters
+        );
         const progressEntries = await Promise.all(
           allChapters.map(async (chapter) => {
-            const result = await getStudentProgressPerChapter(chapter.id, wdt_ID);
-            return [chapter.id, result?.isCompleted ?? null] as [string, boolean | null];
+            const result = await getStudentProgressPerChapter(
+              chapter.id,
+              wdt_ID
+            );
+            return [chapter.id, result?.isCompleted ?? null] as [
+              string,
+              boolean | null
+            ];
           })
         );
         setChapterProgress(Object.fromEntries(progressEntries));
-        const areAllChaptersTrulyCompleted = await isCompletedAllChaptersInthePackage(
-          data.activePackage.id,
-          data.wdt_ID
-        );
+        const areAllChaptersTrulyCompleted =
+          await isCompletedAllChaptersInthePackage(
+            data.activePackage.id,
+            data.wdt_ID
+          );
         setAllCoursesCompleted(areAllChaptersTrulyCompleted);
       } catch (error) {
         console.error("Error fetching progress:", error);
@@ -94,8 +109,12 @@ export default function MainMenu({ data, className }: MainMenuProps) {
 
   const getCourseProgress = (chapters: { id: string }[]) => {
     const totalChapters = chapters.length;
-    const completedChapters = chapters.filter((chapter) => chapterProgress[chapter.id] === true).length;
-    return totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+    const completedChapters = chapters.filter(
+      (chapter) => chapterProgress[chapter.id] === true
+    ).length;
+    return totalChapters > 0
+      ? Math.round((completedChapters / totalChapters) * 100)
+      : 0;
   };
 
   const itemVariants = {
@@ -105,7 +124,9 @@ export default function MainMenu({ data, className }: MainMenuProps) {
 
   const handleFinalExamClick = () => {
     if (allCoursesCompleted) {
-      router.push(`/en/student/${data?.wdt_ID}/finalexam/${data?.activePackage?.id}`);
+      router.push(
+        `/en/student/${data?.wdt_ID}/finalexam/${data?.activePackage?.id}`
+      );
     }
   };
 
@@ -117,17 +138,6 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       )}
       aria-label="Main navigation"
     >
-      <header className="border-b border-sky-200 dark:border-sky-800 pb-2 mb-2">
-        <MenuTitle
-          title={data?.name || "Student"}
-          subtitle={data?.subject || ""}
-          showBadge={!!data?.activePackage}
-          badgeText={data?.status || ""}
-          badgeVariant="premium"
-          className="text-base"
-        />
-      </header>
-
       <div className="flex-1 overflow-auto">
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
@@ -170,7 +180,9 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                           )}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-sky-600 dark:text-sky-400 font-bold">{course.order}.</span>
+                            <span className="text-sky-600 dark:text-sky-400 font-bold">
+                              {course.order}.
+                            </span>
                             <span className="truncate">{course.title}</span>
                             <span className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400">
                               {getCourseProgress(course.chapters)}%
@@ -228,13 +240,17 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                   )}
                                   onClick={() => {
                                     if (isCompleted) {
-                                      router.push(`${chapterLink}?isClicked=true`);
+                                      router.push(
+                                        `${chapterLink}?isClicked=true`
+                                      );
                                     }
                                   }}
                                   tabIndex={isCompleted ? 0 : -1}
                                   aria-disabled={!isCompleted}
                                   type="button"
-                                  aria-label={`Go to ${chapter.title} ${isCompleted ? "" : "(Locked)"}`}
+                                  aria-label={`Go to ${chapter.title} ${
+                                    isCompleted ? "" : "(Locked)"
+                                  }`}
                                 >
                                   <span>
                                     Lesson {chapter.position}: {chapter.title}
@@ -265,7 +281,8 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                         onClick={handleFinalExamClick}
                         className={cn(
                           "px-3 py-2 text-sm font-semibold text-blue-800 dark:text-blue-200 hover:bg-blue-100/50 dark:hover:bg-blue-800/50 rounded-lg",
-                          !allCoursesCompleted && "cursor-not-allowed opacity-50"
+                          !allCoursesCompleted &&
+                            "cursor-not-allowed opacity-50"
                         )}
                         disabled={!allCoursesCompleted}
                       >
@@ -288,7 +305,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
         )}
       </div>
 
-      <footer className="flex items-center justify-between gap-2 pt-2 border-t border-sky-200 dark:border-sky-800 mt-2">
+      {/* <footer className="flex items-center justify-between gap-2 pt-2 border-t border-sky-200 dark:border-sky-800 mt-2">
         <button
           className="flex items-center gap-1 px-2 py-1 rounded-lg font-medium"
           onClick={() => {
@@ -300,8 +317,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
           <UserCircle className="w-6 h-6 text-sky-600 dark:text-sky-400" />
         </button>
         <LightDarkToggle className="ml-auto p-1 rounded-full bg-sky-200 dark:bg-sky-800 hover:bg-sky-300 dark:hover:bg-sky-700 transition-colors duration-200 shadow-sm" />
-      </footer>
+      </footer> */}
     </nav>
   );
 }
-                              

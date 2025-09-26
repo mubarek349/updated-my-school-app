@@ -9,8 +9,8 @@ import React from "react";
 function Page() {
   // Renamed from 'page' to 'Page' for React component naming convention
   const params = useParams();
-  const wdt_ID = Number(params.wdt_ID);
-  const coursesPackageId = String(params.coursesPackageId);
+  const wdt_ID = Number(params?.wdt_ID);
+  const coursesPackageId = String(params?.coursesPackageId);
 
   // Assuming getQuestionForActivePackageFinalExam returns an object like { coursesPackage: { questions: [...] } }
   const [data, refetch, isLoading] = useAction(
