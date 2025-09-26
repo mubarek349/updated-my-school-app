@@ -58,13 +58,9 @@ export default function UstazDashboard() {
         setUstazData(ustazResult.data);
       } else {
         toast.error(ustazResult.message);
-        if (
-          ustazResult.message === "Account suspended" ||
-          ustazResult.message === "Not authenticated"
-        ) {
-          router.push("/en/login");
-          return;
-        }
+        await logout();
+        router.refresh();
+        return;
       }
 
       if (questionsResponse.ok) {
@@ -120,6 +116,7 @@ export default function UstazDashboard() {
       await logout();
       toast.success("Logged out successfully");
       router.push("/en/login");
+      router.refresh();
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Failed to logout");
@@ -128,6 +125,7 @@ export default function UstazDashboard() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading) {

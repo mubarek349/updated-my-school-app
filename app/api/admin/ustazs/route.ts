@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { auth } from "@/auth";
@@ -7,18 +8,24 @@ export async function GET() {
   try {
     const session = await auth();
     console.log("Admin ustazs API session:", session);
-    
+
     if (!session?.user) {
       console.log("No session or user found");
       return NextResponse.json({ error: "No session found" }, { status: 401 });
     }
 
     if ((session.user as any).userType !== "admin") {
-      console.log("User is not admin, userType:", (session.user as any).userType);
-      return NextResponse.json({ 
-        error: "Admin access required", 
-        currentUserType: (session.user as any).userType 
-      }, { status: 401 });
+      console.log(
+        "User is not admin, userType:",
+        (session.user as any).userType
+      );
+      return NextResponse.json(
+        {
+          error: "Admin access required",
+          currentUserType: (session.user as any).userType,
+        },
+        { status: 401 }
+      );
     }
 
     const ustazs = await prisma.responseUstaz.findMany({
@@ -53,7 +60,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    
+
     if (!session?.user || (session.user as any).userType !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

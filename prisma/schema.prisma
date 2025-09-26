@@ -296,7 +296,7 @@ model qandAResponse {
   id              String        @id @default(cuid())
   videoQuestion   qandAQuestion @relation(fields: [videoQuestionId], references: [id], onDelete: Cascade)
   videoQuestionId String
-  ustaz           responseUstaz @relation("QandAResponses", fields: [ustazId], references: [id], onDelete: Cascade)
+  ustaz           responseUstaz @relation("QandAResponses", fields: [ustazId], references: [id])
   ustazId         Int
   response        String        @db.Text
   createdAt       DateTime      @default(now())

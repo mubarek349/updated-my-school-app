@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth"; // NextAuth v5's auth() helper
+import { auth } from "@/auth"; // NextAuth v5's auth() helper
 import { getStudentAnalyticsperPackageForEachController } from "@/actions/controller/controller";
 
 export async function GET(req: NextRequest) {
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       currentPage,
       itemsPerPage,
       progressFilter,
-      (session.user.id) // Ensure ID is a number
+      session.user.id // Ensure ID is a number
     );
     return NextResponse.json(data);
   } catch (error) {
