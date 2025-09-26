@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   const params = useParams<{ wdt_ID: string }>();
   const wdt_ID = params?.wdt_ID;
   const [data, refresh] = useAction(
@@ -35,7 +35,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="md:grid md:grid-cols-[250px_1fr] h-auto overflow-hidden">
       <MainMenu data={data} className="hidden md:flex bg-blue-50" />
-      
+      {isMobile && (
+        <div className="p-4 flex justify-between bg-blue-100 md:hidden sticky top-0 left-0  border-b border-border">
+          <MenuTitle />
+          {/* Hamburger button outside Drawer */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 rounded-md hover:bg-sky-100"
+            aria-label="Open menu"
+          >
+            <MenuIcon />
+          </button>
+          <Drawer
+            direction="right"
+            open={mobileMenuOpen}
+            onOpenChange={(open) => setMobileMenuOpen(open)}
+          >
+            <DrawerContent>
+              <MainMenu data={data} className="w-64 h-dvh" />
+              {/* Close button inside Drawer */}
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-4 px-4 py-2 bg-sky-200 rounded w-69"
+              >
+                Close
+              </button>
+            </DrawerContent>
+          </Drawer>
+        </div>
+      )}
       <MenuContext.Provider value={{ refresh }}>
         <div className="h-dvh overflow-hidden grid">{children}</div>
       </MenuContext.Provider>
