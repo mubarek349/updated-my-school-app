@@ -12,8 +12,8 @@ import jsPDF from "jspdf";
 
 export default function CertificatePage() {
   const params = useParams();
-  const wdt_ID = Number(params.wdt_ID);
-  const coursesPackageId = String(params.coursesPackageId);
+  const wdt_ID = Number(params?.wdt_ID);
+  const coursesPackageId = String(params?.coursesPackageId);
 
   const [data] = useAction(
     getCertificateData,

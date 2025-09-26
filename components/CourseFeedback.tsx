@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState } from "react";
-import { Star, User, Calendar, MessageCircle } from "lucide-react";
+import { Star, User, Calendar } from "lucide-react";
 import {
   addFeedback,
   getFeedback,
@@ -9,17 +10,6 @@ import {
 } from "@/actions/student/courseData";
 // import useData from "@/hooks/useData";
 import useAction from "@/hooks/useAction";
-
-interface Feedback {
-  id: string;
-  feedback: string;
-  rating: number;
-  createdAt: Date;
-  user: {
-    firstName: string;
-    fatherName: string;
-  };
-}
 
 export default function CourseFeedback({
   studentId,

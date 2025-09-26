@@ -29,7 +29,7 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
       if (data.reply) {
         setMessages((prev) => [...prev, data.reply]);
       }
-    } catch (error) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         { role: "system", content: "Error sending message." },

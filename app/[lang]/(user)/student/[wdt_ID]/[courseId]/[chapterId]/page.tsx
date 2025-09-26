@@ -1,35 +1,21 @@
 "use client";
 import React, { useEffect } from "react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+
 import { useParams, useRouter } from "next/navigation";
 import useAction from "@/hooks/useAction";
 import { packageCompleted } from "@/actions/student/progress";
 import { getQuestionForActivePackageChapterUpdate } from "@/actions/student/test";
 import { noProgress } from "@/actions/student/progress";
 import StudentQuestionForm from "@/components/custom/student/StudentQuestionForm";
-import ProgressPage from "@/components/custom/student/progressSkeleten";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  AlertCircle,
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCoursesPackageId } from "@/actions/admin/package";
 import CourseTopOverview from "@/components/courseTopOverview";
@@ -49,12 +35,11 @@ const itemVariants = {
 
 function Page() {
   const params = useParams();
-  const router = useRouter();
   const lang = "en";
   const wdt_ID = Number(params?.wdt_ID ?? 0);
   const courseId = String(params?.courseId ?? "");
   const chapterId = String(params?.chapterId ?? "");
-  const [packageData, refresh] = useAction(
+  const [packageData] = useAction(
     getPackageData,
     [true, (response) => console.log(response)],
     Number(wdt_ID)

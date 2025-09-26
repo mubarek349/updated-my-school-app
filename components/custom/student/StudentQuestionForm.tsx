@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import useAction from "@/hooks/useAction";
 import { correctAnswer, submitAnswers } from "@/actions/student/question";
 import { getstudentId } from "@/actions/student/dashboard";
@@ -9,7 +8,7 @@ import { updatePathProgressData } from "@/actions/student/progress";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useMainMenu } from "@/app/[lang]/(user)/student/layout";
+// import { useMainMenu } from "@/app/[lang]/(user)/student/layout";
 import AnimatedCircularProgress from "./animatedcountdownprogress";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -118,7 +117,8 @@ const StudentQuestionForm = ({
       refresh();
     },
   ]);
-  const { refresh } = useMainMenu();
+  // const { refresh } = useMainMenu();
+  const refresh = () => {}; // Placeholder function
 
   // Timer for retry after incorrect answers
   useEffect(() => {
@@ -192,13 +192,6 @@ const StudentQuestionForm = ({
     }
   }
 
-  // Progress calculation
-  const answeredQuestions =
-    chapter?.questions.filter(
-      (q) => selectedAnswers[q.id] && selectedAnswers[q.id].length > 0
-    ).length || 0;
-  const totalQuestions = chapter?.questions.length || 1;
-  const progress = (answeredQuestions / totalQuestions) * 100;
   const allAnswered =
     chapter?.questions.every(
       (q) => selectedAnswers[q.id] && selectedAnswers[q.id].length > 0

@@ -7,7 +7,6 @@ import {
   PlayCircle,
   Lock,
   Trophy,
-  UserCircle,
 } from "lucide-react";
 import {
   Accordion,

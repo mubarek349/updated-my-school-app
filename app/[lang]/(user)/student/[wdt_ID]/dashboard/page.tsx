@@ -23,9 +23,9 @@ import { useParams } from "next/navigation";
 
 function CourseData() {
   const params = useParams();
-  const wdt_ID = Number(params.wdt_ID);
+  const wdt_ID = Number(params?.wdt_ID);
   const completecoursepersent = 66;
-  const [data,  isLoading] = useAction(
+  const [data, isLoading] = useAction(
     getPackageData,
     [true, (response) => console.log(response)],
     wdt_ID

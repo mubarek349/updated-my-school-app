@@ -1,14 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect } from "react";
-import {
-  MessageCircle,
-  Send,
-  Clock,
-  Reply,
-  Trash2,
-  Plus,
-  User,
-} from "lucide-react";
+import { MessageCircle, Send, Clock, Reply, Plus, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   submitVideoQuestion,
@@ -28,29 +21,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-
-interface VideoQuestionDB {
-  id: string;
-  question: string;
-  timestamp?: number | null;
-  createdAt: Date;
-  student: {
-    id: string;
-    firstName: string;
-    fatherName: string;
-    lastName: string;
-  };
-  responses: {
-    id: string;
-    response: string;
-    createdAt: Date;
-    instructor: {
-      firstName: string;
-      fatherName: string;
-      lastName: string;
-    };
-  }[];
-}
 
 interface VideoQuestion {
   id: string;
@@ -145,7 +115,6 @@ export default function TraditionalQA({
     setSubmitting(true);
     try {
       // Accept both string and number for studentId
-      const sid = typeof studentId === "number" ? studentId : String(studentId);
       const result = await submitVideoQuestion(
         studentId,
         packageId,
