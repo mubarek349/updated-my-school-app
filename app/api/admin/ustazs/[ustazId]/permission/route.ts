@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { auth } from "@/auth";
@@ -5,16 +6,16 @@ import { auth } from "@/auth";
 // PATCH - Toggle ustaz permission
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { ustazId: string } }
+  { params }: { params: Promise<{ ustazId: string }> }
 ) {
   try {
     const session = await auth();
-    
     if (!session?.user || (session.user as any).userType !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ustazId = parseInt(params.ustazId);
+    const resolvedParams = await params;
+    const ustazId = parseInt(resolvedParams.ustazId);
     if (isNaN(ustazId)) {
       return NextResponse.json({ error: "Invalid ustaz ID" }, { status: 400 });
     }

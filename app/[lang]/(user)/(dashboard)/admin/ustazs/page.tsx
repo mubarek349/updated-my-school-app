@@ -3,7 +3,7 @@ import UstazManagement from "@/components/custom/admin/ustaz-management";
 
 export default async function UstazsPage() {
   await requireAuthentication();
-
+  console.log("mubarek");
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="h-screen flex flex-col">
@@ -12,7 +12,9 @@ export default async function UstazsPage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Ustaz Management</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                  Ustaz Management
+                </h1>
                 <p className="text-sm sm:text-base text-slate-600 mt-1">
                   Manage ustazs who can respond to student questions
                 </p>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -55,6 +56,7 @@ export default function UstazManagement() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingUstaz, setEditingUstaz] = useState<Ustaz | null>(null);
   const [deletingUstaz, setDeletingUstaz] = useState<Ustaz | null>(null);
+  const [permissionUstaz, setPermissionUstaz] = useState<Ustaz | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -215,6 +217,7 @@ export default function UstazManagement() {
 
       if (response.ok) {
         toast.success("Ustaz deleted successfully");
+        setDeletingUstaz(null);
         fetchUstazs();
       } else {
         toast.error("Failed to delete ustaz");
@@ -679,7 +682,7 @@ export default function UstazManagement() {
                       <Switch
                         id={`permission-${ustaz.id}`}
                         checked={ustaz.permissioned}
-                        onCheckedChange={() => togglePermission(ustaz.id.toString(), ustaz.permissioned)}
+                        onCheckedChange={() => setPermissionUstaz(ustaz)}
                       />
                     </div>
                     
@@ -694,43 +697,15 @@ export default function UstazManagement() {
                     </Button>
                     
                     {/* Delete Button */}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={(ustaz._count?.qandAResponse || 0) > 0}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Ustaz</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete <strong>{ustaz.ustazname}</strong>? 
-                            This action cannot be undone.
-                            {(ustaz._count?.qandAResponse || 0) > 0 && (
-                              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
-                                <AlertTriangle className="h-4 w-4 inline mr-1" />
-                                This ustaz has {ustaz._count?.qandAResponse} responses and cannot be deleted.
-                              </div>
-                            )}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteUstaz(ustaz)}
-                            className="bg-red-600 hover:bg-red-700"
-                            disabled={(ustaz._count?.qandAResponse || 0) > 0}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                     <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeletingUstaz(ustaz)}
+                      disabled={(ustaz._count?.qandAResponse || 0) > 0}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -742,6 +717,58 @@ export default function UstazManagement() {
         </div>
       </div>
     </div>
+
+      {/* Permission Toggle Confirmation Dialog */}
+      <AlertDialog open={!!permissionUstaz} onOpenChange={() => setPermissionUstaz(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Permission Change</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {permissionUstaz?.permissioned ? 'suspend' : 'activate'} {permissionUstaz?.ustazname}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (permissionUstaz) {
+                togglePermission(permissionUstaz.id.toString(), permissionUstaz.permissioned);
+                setPermissionUstaz(null);
+              }
+            }}>
+              {permissionUstaz?.permissioned ? 'Suspend' : 'Activate'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingUstaz} onOpenChange={() => setDeletingUstaz(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Ustaz</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{deletingUstaz?.ustazname}</strong>? 
+              This action cannot be undone.
+              {(deletingUstaz?._count?.qandAResponse || 0) > 0 && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
+                  <AlertTriangle className="h-4 w-4 inline mr-1" />
+                  This ustaz has {deletingUstaz?._count?.qandAResponse} responses and cannot be deleted.
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingUstaz && deleteUstaz(deletingUstaz)}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={(deletingUstaz?._count?.qandAResponse || 0) > 0}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
