@@ -127,6 +127,8 @@ function Page() {
     }
   }
 
+  // return <div className="">there is no content available</div>;
+
   // Handle "package not started" state
   if (progressData === true) {
     return (
@@ -304,6 +306,7 @@ function Page() {
                               wdt_ID={wdt_ID}
                               courseId={courseId}
                               chapterId={data.chapter.id}
+                              // first={"first" in data ? data.first : true}
                             />
                           </TabsContent>
                           <TabsContent value="qna" className="h-full">
