@@ -49,6 +49,7 @@ const itemVariants = {
 
 function Page() {
   const params = useParams();
+  const router = useRouter();
   const lang = "en";
   const wdt_ID = Number(params?.wdt_ID ?? 0);
   const courseId = String(params?.courseId ?? "");
@@ -131,6 +132,15 @@ function Page() {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5 } },
   };
+
+  // Determine default tab based on URL query
+  let defaultTab = "mainmenu";
+  if (typeof window !== "undefined") {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("isClicked") === "true") {
+      defaultTab = "quiz";
+    }
+  }
 
   // Handle "package not started" state
   if (progressData === true) {
@@ -271,7 +281,7 @@ function Page() {
                     {/* Tabs with horizontal x-axis scroll only, now includes Q&A tab */}
                     <div className="w-full max-w-2xl mx-auto mb-1 flex-1 flex flex-col overflow-hidden">
                       <Tabs
-                        defaultValue="quiz"
+                        defaultValue={defaultTab}
                         className="flex-1 flex flex-col overflow-hidden"
                       >
                         <div
