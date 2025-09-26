@@ -282,10 +282,10 @@ function Page() {
                           }}
                         >
                           <TabsList className="flex flex-nowrap gap-2 min-w-max">
-                            <TabsTrigger value="quiz">Quiz</TabsTrigger>
                             <TabsTrigger value="mainmenu">
                               Main Menu
                             </TabsTrigger>
+                            <TabsTrigger value="quiz">Quiz</TabsTrigger>
                             <TabsTrigger value="qna">Q&amp;A</TabsTrigger>
                             <TabsTrigger value="feedback">Feedback</TabsTrigger>
                             <TabsTrigger value="materials">
@@ -298,6 +298,9 @@ function Page() {
                           </TabsList>
                         </div>
                         <div className="flex-1 overflow-y-auto min-h-0">
+                          <TabsContent value="mainmenu" className="h-full">
+                            <MainMenu data={packageData} />
+                          </TabsContent>
                           <TabsContent value="quiz" className="h-full">
                             <StudentQuestionForm
                               chapter={{
@@ -307,9 +310,6 @@ function Page() {
                               courseId={courseId}
                               chapterId={data.chapter.id}
                             />
-                          </TabsContent>
-                          <TabsContent value="mainmenu" className="h-full">
-                            <MainMenu data={packageData} />
                           </TabsContent>
                           <TabsContent value="qna" className="h-full">
                             <TraditionalQA
