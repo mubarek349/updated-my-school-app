@@ -31,6 +31,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     [true, (response) => console.log(response)],
     Number(wdt_ID)
   );
-
-  return <div className="grid overflow-hidden ">{children}</div>;
+  return;
+  <MenuContext.Provider value={{ refresh }}>
+    <div className="grid overflow-hidden ">{children}</div>;
+  </MenuContext.Provider>;
 }
