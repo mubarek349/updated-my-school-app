@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { IconBadge } from "@/components/icon-badge";
 import { MessageSquare, Star, User, Calendar, Package } from "lucide-react";
 import { FeedbackFilters } from "@/components/custom/admin/feedback-filters";
+import { FeedbackChart } from "@/components/custom/admin/feedback-chart";
 
 const FeedbacksPage = async ({
   searchParams,
@@ -157,6 +158,8 @@ const FeedbacksPage = async ({
                   </CardContent>
                 </Card>
               </div>
+              
+
             </div>
           </div>
         </div>
@@ -165,6 +168,10 @@ const FeedbacksPage = async ({
         <div className="flex-1 overflow-hidden">
           <div className="h-full overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
+              {/* Chart Section */}
+              <div className="mb-8">
+                <FeedbackChart feedbacks={feedbacks} />
+              </div>
               {feedbacks.length > 0 ? (
                 <div className="space-y-4">
                   {feedbacks.map((feedback) => (

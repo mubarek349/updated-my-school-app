@@ -23,6 +23,7 @@ export default function CourseFeedback({
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   const [feedbacks, refreshFeedback, feedbacksLoading] = useAction(
     getFeedback,
     [true, () => {}],
@@ -41,9 +42,20 @@ export default function CourseFeedback({
     e.preventDefault();
     if (rating > 0 && comment.trim()) {
       await action(courseId, studentId, comment, rating);
-      refreshFeedback(); // Refresh feedback list after submit
+      refreshFeedback();
       setRating(0);
       setComment("");
+      setIsEditing(false);
+    }
+  };
+  
+  const userFeedback = feedbacks?.find((f: any) => f.studentId === studentId);
+  
+  const handleEdit = () => {
+    if (userFeedback) {
+      setRating(userFeedback.rating);
+      setComment(userFeedback.feedback);
+      setIsEditing(true);
     }
   };
 
@@ -148,22 +160,35 @@ export default function CourseFeedback({
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={submitting || rating === 0 || !comment.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={submitting || rating === 0 || !comment.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
             {submitting ? (
               <span className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 {lang === "en" ? "Submitting..." : "በመስቀል ላይ..."}
               </span>
+            ) : userFeedback && !isEditing ? (
+              lang === "en" ? "Update Feedback" : "ግብረመልስ አዘምን"
             ) : lang === "en" ? (
               "Submit Feedback"
             ) : (
               "ግብረመልስ ይስቀሉ"
             )}
-          </button>
+            </button>
+            {userFeedback && !isEditing && (
+              <button
+                type="button"
+                onClick={handleEdit}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                {lang === "en" ? "Edit" : "አርም"}
+              </button>
+            )}
+          </div>
         </form>
       </div>
 

@@ -5,15 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 import {
   MessageCircle,
   CheckCircle,
   Clock,
   Edit,
   Trash2,
-  Send,
-  Plus,
   User,
 } from "lucide-react";
 import {
@@ -21,7 +19,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -56,7 +53,9 @@ export default function StudentQuestionManager() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
-  const [deletingQuestion, setDeletingQuestion] = useState<Question | null>(null);
+  const [deletingQuestion, setDeletingQuestion] = useState<Question | null>(
+    null
+  );
   const [editText, setEditText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -85,11 +84,14 @@ export default function StudentQuestionManager() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/student/questions/${editingQuestion.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: editText.trim() }),
-      });
+      const response = await fetch(
+        `/api/student/questions/${editingQuestion.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: editText.trim() }),
+        }
+      );
 
       if (response.ok) {
         toast.success("Question updated successfully!");
@@ -112,9 +114,12 @@ export default function StudentQuestionManager() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/student/questions/${deletingQuestion.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/student/questions/${deletingQuestion.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         toast.success("Question deleted successfully!");
@@ -155,8 +160,8 @@ export default function StudentQuestionManager() {
     );
   }
 
-  const answeredQuestions = questions.filter(q => q.hasResponse);
-  const pendingQuestions = questions.filter(q => !q.hasResponse);
+  const answeredQuestions = questions.filter((q) => q.hasResponse);
+  const pendingQuestions = questions.filter((q) => !q.hasResponse);
 
   return (
     <div className="space-y-6">
@@ -164,7 +169,9 @@ export default function StudentQuestionManager() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Questions
+            </CardTitle>
             <MessageCircle className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -178,7 +185,9 @@ export default function StudentQuestionManager() {
             <Clock className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{pendingQuestions.length}</div>
+            <div className="text-2xl font-bold text-orange-600">
+              {pendingQuestions.length}
+            </div>
           </CardContent>
         </Card>
 
@@ -188,7 +197,9 @@ export default function StudentQuestionManager() {
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{answeredQuestions.length}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {answeredQuestions.length}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -209,15 +220,22 @@ export default function StudentQuestionManager() {
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">{question.question}</p>
+                      <p className="font-medium text-gray-900">
+                        {question.question}
+                      </p>
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                         <span>Course: {question.courseName}</span>
                         <span>Type: {question.type}</span>
-                        <span>Asked: {new Date(question.createdAt).toLocaleDateString()}</span>
+                        <span>
+                          Asked:{" "}
+                          {new Date(question.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={question.hasResponse ? "default" : "secondary"}>
+                      <Badge
+                        variant={question.hasResponse ? "default" : "secondary"}
+                      >
                         {question.hasResponse ? "Answered" : "Pending"}
                       </Badge>
                       <Button
@@ -241,12 +259,19 @@ export default function StudentQuestionManager() {
                   {question.responses.length > 0 && (
                     <div className="space-y-2">
                       {question.responses.map((response) => (
-                        <div key={response.id} className="bg-green-50 p-3 rounded-lg">
+                        <div
+                          key={response.id}
+                          className="bg-green-50 p-3 rounded-lg"
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             <User className="h-4 w-4 text-green-600" />
-                            <span className="font-medium text-green-800">{response.ustazName}</span>
+                            <span className="font-medium text-green-800">
+                              {response.ustazName}
+                            </span>
                             <span className="text-xs text-green-600">
-                              {new Date(response.createdAt).toLocaleDateString()}
+                              {new Date(
+                                response.createdAt
+                              ).toLocaleDateString()}
                             </span>
                           </div>
                           <p className="text-green-700">{response.response}</p>
@@ -262,7 +287,10 @@ export default function StudentQuestionManager() {
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingQuestion} onOpenChange={() => setEditingQuestion(null)}>
+      <Dialog
+        open={!!editingQuestion}
+        onOpenChange={() => setEditingQuestion(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Question</DialogTitle>
@@ -287,12 +315,16 @@ export default function StudentQuestionManager() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingQuestion} onOpenChange={() => setDeletingQuestion(null)}>
+      <AlertDialog
+        open={!!deletingQuestion}
+        onOpenChange={() => setDeletingQuestion(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Question</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this question? This action cannot be undone.
+              Are you sure you want to delete this question? This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
