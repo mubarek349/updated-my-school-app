@@ -183,7 +183,7 @@ function Page() {
       animate="visible"
     >
       {/* <ProgressPage /> */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col h-screen overflow-hidden">
         {/* Content */}
         <AnimatePresence>
           {isLoading ? (
@@ -220,121 +220,135 @@ function Page() {
             <Message message={data.message} wdt_ID={wdt_ID} />
           ) : (
             <>
-              {data && "chapter" in data && data.chapter?.videoUrl ? (
-                <div
-                  className="w-full flex-shrink-0 bg-black"
-                  style={{
-                    aspectRatio: "16/9",
-                  }}
-                >
-                  <iframe
-                    className="w-full h-full"
-                    src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
-                    title="Darulkubra video player"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                    aria-label="Chapter video player"
+              {/* Sticky Video Player */}
+              <div className="sticky top-0 z-50 bg-white shadow-lg border-b border-gray-200">
+                {data && "chapter" in data && data.chapter?.videoUrl ? (
+                  <div
+                    className="w-full flex-shrink-0 bg-black"
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      display: "block",
+                      aspectRatio: "16/9",
+                      maxHeight: "60vh",
                     }}
-                  />
-                </div>
-              ) : data?.chapter?.customVideo ? (
-                <CourseTopOverview
-                  {...{
-                    video: data?.chapter?.customVideo,
-                  }}
-                />
-              ) : (
-                <div
-                  className="w-full flex-shrink-0 bg-black"
-                  style={{ aspectRatio: "16/9" }}
-                >
-                  <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                    <span className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-                      No video available
-                    </span>
+                  >
+                    <iframe
+                      className="w-full h-full"
+                      src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
+                      title="Darulkubra video player"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                      aria-label="Chapter video player"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "block",
+                      }}
+                    />
                   </div>
-                </div>
-              )}
+                ) : data?.chapter?.customVideo ? (
+                  <div className="w-full flex-shrink-0 bg-black" style={{ maxHeight: "60vh" }}>
+                    <CourseTopOverview
+                      {...{
+                        video: data?.chapter?.customVideo,
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="w-full flex-shrink-0 bg-black"
+                    style={{ aspectRatio: "16/9", maxHeight: "60vh" }}
+                  >
+                    <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                      <span className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                        No video available
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Sticky Tabs and Content */}
               {data &&
                 "chapter" in data &&
                 data.chapter &&
                 Array.isArray(data.chapter.questions) && (
                   <motion.div
-                    className="flex-1 flex flex-col overflow-hidden bg-white "
+                    className="flex-1 flex flex-col overflow-hidden bg-white"
                     variants={itemVariants}
                     initial="hidden"
                     animate="visible"
                   >
-                    {/* Tabs with horizontal x-axis scroll only, now includes Q&A tab */}
-                    <div className="w-full px-1 py-2 flex-1 flex flex-col  overflow-hidden">
+                    {/* Sticky Tabs and Content */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
                       <Tabs
                         defaultValue={defaultTab}
-                        className="flex-1 flex flex-col overflow-hidden "
+                        className="h-full flex flex-col"
                       >
-                        <div
-                          className="overflow-x-auto max-w-full scrollbar-hide scroll-smooth rounded-xl border"
-                          style={{
-                            scrollbarWidth: "none",
-                            msOverflowStyle: "none",
-                          }}
-                        >
-                          <TabsList className="flex flex-nowrap gap-1 min-w-max bg-white">
-                            <TabsTrigger
-                              value="mainmenu"
-                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                        {/* Sticky Tabs */}
+                        <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+                          <div className="w-full px-1 py-2">
+                            <div
+                              className="overflow-x-auto max-w-full scrollbar-hide scroll-smooth rounded-xl border"
+                              style={{
+                                scrollbarWidth: "none",
+                                msOverflowStyle: "none",
+                              }}
                             >
-                              Main Menu
-                            </TabsTrigger>
-                            <TabsTrigger
-                              value="quiz"
-                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
-                            >
-                              Quiz
-                            </TabsTrigger>
-                            <TabsTrigger
-                              value="qna"
-                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
-                            >
-                              Q&A
-                            </TabsTrigger>
-                            <TabsTrigger
-                              value="feedback"
-                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
-                            >
-                              Feedback
-                            </TabsTrigger>
-                            <TabsTrigger
-                              value="materials"
-                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
-                            >
-                              Materials
-                            </TabsTrigger>
-                            <TabsTrigger
-                              value="announcements"
-                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
-                            >
-                              Announcements
-                            </TabsTrigger>
-                            <TabsTrigger
-                              value="ai"
-                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
-                            >
-                              AI Assistance
-                            </TabsTrigger>
-                          </TabsList>
+                              <TabsList className="flex flex-nowrap gap-1 min-w-max bg-white">
+                                <TabsTrigger
+                                  value="mainmenu"
+                                  className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                                >
+                                  Main Menu
+                                </TabsTrigger>
+                                <TabsTrigger
+                                  value="quiz"
+                                  className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                                >
+                                  Quiz
+                                </TabsTrigger>
+                                <TabsTrigger
+                                  value="qna"
+                                  className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                                >
+                                  Q&A
+                                </TabsTrigger>
+                                <TabsTrigger
+                                  value="feedback"
+                                  className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                                >
+                                  Feedback
+                                </TabsTrigger>
+                                <TabsTrigger
+                                  value="materials"
+                                  className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                                >
+                                  Materials
+                                </TabsTrigger>
+                                <TabsTrigger
+                                  value="announcements"
+                                  className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                                >
+                                  Announcements
+                                </TabsTrigger>
+                                <TabsTrigger
+                                  value="ai"
+                                  className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                                >
+                                  AI Assistance
+                                </TabsTrigger>
+                              </TabsList>
+                            </div>
+                          </div>
                         </div>
-                        <div className="border-b border-gray-200 mt-2"></div>
-                        <div className="flex-1 min-h-0">
-                          <TabsContent value="mainmenu" className="h-full">
+
+                        {/* Scrollable Content Area */}
+                        <div className="flex-1 overflow-hidden">
+                          <TabsContent value="mainmenu" className="h-full overflow-y-auto">
                             <MainMenu data={packageData} />
                           </TabsContent>
-                          <TabsContent value="quiz" className="h-full">
+                          <TabsContent value="quiz" className="h-full overflow-y-auto">
                             <StudentQuestionForm
                               chapter={{
                                 questions: data.chapter.questions,
@@ -345,33 +359,33 @@ function Page() {
                               // first={"first" in data ? data.first : true}
                             />
                           </TabsContent>
-                          <TabsContent value="qna" className="h-full">
+                          <TabsContent value="qna" className="h-full overflow-y-auto">
                             <TraditionalQA
                               packageId={data.packageId}
                               lang={lang}
                               studentId={wdt_ID}
                             />
                           </TabsContent>
-                          <TabsContent value="feedback" className="h-full">
+                          <TabsContent value="feedback" className="h-full overflow-y-auto">
                             <CourseFeedback
                               studentId={wdt_ID}
                               courseId={data.packageId}
                               lang={lang}
                             />
                           </TabsContent>
-                          <TabsContent value="materials" className="h-full">
+                          <TabsContent value="materials" className="h-full overflow-y-auto">
                             <CourseMaterials
                               courseId={data.packageId}
                               lang={lang}
                             />
                           </TabsContent>
-                          <TabsContent value="announcements" className="h-full">
+                          <TabsContent value="announcements" className="h-full overflow-y-auto">
                             <CourseAnnouncements
                               courseId={data.packageId}
                               lang={lang}
                             />
                           </TabsContent>
-                          <TabsContent value="ai" className="h-full">
+                          <TabsContent value="ai" className="h-full overflow-y-auto">
                             <ChatComponent packageId={data.packageId} />
                           </TabsContent>
                         </div>

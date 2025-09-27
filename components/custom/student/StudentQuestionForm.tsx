@@ -217,12 +217,12 @@ const StudentQuestionForm = ({
     >
       {chapter?.questions.length ? (
         <TooltipProvider>
-          <div className="space-y-4 flex-1 max-md:overflow-y-auto md:max-h-dvh">
+          <div className="space-y-1 flex-1 max-md:overflow-y-auto md:max-h-dvh">
             <AnimatePresence>
               {chapter.questions.map((question, index) => (
                 <motion.div
                   key={question.id}
-                  className="p-4 bg-white dark:bg-sky-900/80 shadow-sm hover:shadow-md transition-all duration-300"
+                  className="p-4 md:p-2 bg-white dark:bg-sky-900/80 hover:shadow-md transition-all duration-300"
                   variants={cardVariants}
                   initial="hidden"
                   animate="visible"
