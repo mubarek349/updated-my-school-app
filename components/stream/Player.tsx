@@ -88,8 +88,6 @@ PlayerProps) {
     };
   }, [currentSrc]);
 
-
-
   useEffect(() => {
     const video = videoRef.current;
     if (video) video.playbackRate = speed;
@@ -177,7 +175,7 @@ PlayerProps) {
           width="100%"
           height="auto"
           style={{
-            borderRadius: 8,
+            // borderRadius: 8,
             width: "100%",
             // maxWidth: 640,
             display: "block",

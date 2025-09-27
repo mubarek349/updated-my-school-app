@@ -133,7 +133,7 @@ function Page() {
   if (progressData === true) {
     return (
       <motion.div
-        className="flex flex-col items-center justify-center min-h-[60vh] bg-gradient-to-b from-sky-100 to-sky-200 dark:from-sky-900 dark:to-sky-950"
+        className="flex flex-col items-center justify-center min-h-[60vh] bg-gradient-to-b from-sky-100 to-sky-100 dark:from-sky-900 dark:to-sky-950"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -174,24 +174,22 @@ function Page() {
 
   return (
     <motion.div
-      className="px-4 md:px-12 bg-blue-50 py-1 pb-6 grid grid-rows-[auto_1fr] min-h-screen overflow-hidden"
+      className="bg-white min-h-screen overflow-hidden"
       style={{
-        background:
-          "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%) cl",
-        backgroundAttachment: "fixed",
+        background: "#f8f9fa",
       }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* <ProgressPage /> */}
-      <div className="flex flex-col flex-1 overflow-hidden px-2 ">
+      <div className="flex flex-col flex-1 overflow-hidden">
         {/* Content */}
         <AnimatePresence>
           {isLoading ? (
             //to show loading skeleton
             <motion.div
-              className="flex items-center justify-center min-h-[50vh] bg-gradient-to-r from-gray-100 to-gray-200 dark:from-yellow-900 dark:to-yellow-800 rounded-xl"
+              className="flex items-center justify-center min-h-[50vh] bg-gradient-to-r from-gray-100 to-gray-100 dark:from-yellow-900 dark:to-yellow-800 rounded-xl"
               variants={itemVariants}
               initial="hidden"
               animate="visible"
@@ -224,16 +222,13 @@ function Page() {
             <>
               {data && "chapter" in data && data.chapter?.videoUrl ? (
                 <div
-                  className="w-full mx-auto max-w-3xl flex-shrink-0 overflow-auto"
+                  className="w-full flex-shrink-0 bg-black"
                   style={{
-                    position: "relative",
                     aspectRatio: "16/9",
-                    overflow: "hidden md:overflow-auto",
-                    maxHeight: "60vh",
                   }}
                 >
                   <iframe
-                    className="w-full h-full rounded-lg shadow-lg"
+                    className="w-full h-full"
                     src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
                     title="Darulkubra video player"
                     frameBorder="0"
@@ -248,52 +243,93 @@ function Page() {
                     }}
                   />
                 </div>
-              ) : (
+              ) : data?.chapter?.customVideo ? (
                 <CourseTopOverview
                   {...{
-                    video: data?.chapter?.customVideo || "",
+                    video: data?.chapter?.customVideo,
                   }}
                 />
+              ) : (
+                <div
+                  className="w-full flex-shrink-0 bg-black"
+                  style={{ aspectRatio: "16/9" }}
+                >
+                  <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                    <span className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                      No video available
+                    </span>
+                  </div>
+                </div>
               )}
               {data &&
                 "chapter" in data &&
                 data.chapter &&
                 Array.isArray(data.chapter.questions) && (
                   <motion.div
-                    className="mt-6 flex-1 flex flex-col overflow-hidden"
+                    className="flex-1 flex flex-col overflow-hidden bg-white "
                     variants={itemVariants}
                     initial="hidden"
                     animate="visible"
                   >
                     {/* Tabs with horizontal x-axis scroll only, now includes Q&A tab */}
-                    <div className="w-full max-w-2xl mx-auto mb-1 flex-1 flex flex-col overflow-hidden">
+                    <div className="w-full px-1 py-2 flex-1 flex flex-col  overflow-hidden">
                       <Tabs
                         defaultValue={defaultTab}
-                        className="flex-1 flex flex-col overflow-hidden"
+                        className="flex-1 flex flex-col overflow-hidden "
                       >
                         <div
-                          className="overflow-x-auto max-w-full scrollbar-hide scroll-smooth"
+                          className="overflow-x-auto max-w-full scrollbar-hide scroll-smooth rounded-xl border"
                           style={{
                             scrollbarWidth: "none",
                             msOverflowStyle: "none",
                           }}
                         >
-                          <TabsList className="flex flex-nowrap gap-2 min-w-max">
-                            <TabsTrigger value="mainmenu">
+                          <TabsList className="flex flex-nowrap gap-1 min-w-max bg-white">
+                            <TabsTrigger
+                              value="mainmenu"
+                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                            >
                               Main Menu
                             </TabsTrigger>
-                            <TabsTrigger value="quiz">Quiz</TabsTrigger>
-                            <TabsTrigger value="qna">Q&amp;A</TabsTrigger>
-                            <TabsTrigger value="feedback">Feedback</TabsTrigger>
-                            <TabsTrigger value="materials">
+                            <TabsTrigger
+                              value="quiz"
+                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                            >
+                              Quiz
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="qna"
+                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                            >
+                              Q&A
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="feedback"
+                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                            >
+                              Feedback
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="materials"
+                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                            >
                               Materials
                             </TabsTrigger>
-                            <TabsTrigger value="announcements">
+                            <TabsTrigger
+                              value="announcements"
+                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                            >
                               Announcements
                             </TabsTrigger>
-                            <TabsTrigger value="ai">AI Assistance</TabsTrigger>
+                            <TabsTrigger
+                              value="ai"
+                              className="text-sm px-3 py-2 rounded-md data-[state=active]:bg-gray-200"
+                            >
+                              AI Assistance
+                            </TabsTrigger>
                           </TabsList>
                         </div>
+                        <div className="border-b border-gray-100"></div>
                         <div className="flex-1 min-h-0">
                           <TabsContent value="mainmenu" className="h-full">
                             <MainMenu data={packageData} />
@@ -370,7 +406,7 @@ function Message({ message, wdt_ID }: { message: string; wdt_ID: number }) {
   return (
     <AnimatePresence>
       <motion.div
-        className="flex flex-col items-center justify-center min-h-[50vh] bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 rounded-xl"
+        className="flex flex-col items-center justify-center min-h-[50vh] bg-gradient-to-r from-green-100 to-green-100 dark:from-green-900 dark:to-green-800 rounded-xl"
         variants={itemVariants}
         initial="hidden"
         animate="visible"
