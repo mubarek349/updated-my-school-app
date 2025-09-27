@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   MessageCircle,
   CheckCircle,
@@ -29,6 +30,8 @@ interface Question {
   chapterName: string;
   createdAt: string;
   hasResponse: boolean;
+  response?: string;
+  responseId?: number;
 }
 
 interface UstazData {
@@ -45,6 +48,8 @@ export default function UstazDashboard() {
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
   const fetchData = async () => {
@@ -85,8 +90,13 @@ export default function UstazDashboard() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/ustaz/respond", {
-        method: "POST",
+      const url = isEditing
+        ? `/api/ustaz/responses/${selectedQuestion.responseId}`
+        : "/api/ustaz/respond";
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           questionId: selectedQuestion.id,
@@ -95,9 +105,14 @@ export default function UstazDashboard() {
       });
 
       if (res.ok) {
-        toast.success("Response submitted successfully!");
+        toast.success(
+          isEditing
+            ? "Response updated successfully!"
+            : "Response submitted successfully!"
+        );
         setResponse("");
         setSelectedQuestion(null);
+        setIsEditing(false);
         fetchData();
       } else {
         const error = await res.json();
@@ -109,6 +124,39 @@ export default function UstazDashboard() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditResponse = (question: Question) => {
+    setSelectedQuestion(question);
+    setResponse(question.response || "");
+    setIsEditing(true);
+  };
+
+  const handleDeleteResponse = async (responseId: number) => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/ustaz/responses/${responseId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("Response deleted successfully!");
+        fetchData();
+      } else {
+        toast.error("Failed to delete response");
+      }
+    } catch (error) {
+      console.error("Error deleting response:", error);
+      toast.error("Failed to delete response");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleSelectQuestion = (question: Question) => {
+    setSelectedQuestion(question);
+    setResponse("");
+    setIsEditing(false);
   };
 
   const handleLogout = async () => {
@@ -243,111 +291,148 @@ export default function UstazDashboard() {
                       unansweredQuestions.map((question) => (
                         <div
                           key={question.id}
-                          className={`p-3 sm:p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm ${
+                          onClick={() => handleSelectQuestion(question)}
+                          className={`p-3 sm:p-4 border rounded-lg cursor-pointer transition-all ${
                             selectedQuestion?.id === question.id
-                              ? "bg-blue-50 border-blue-200"
-                              : "hover:bg-slate-50"
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                           }`}
-                          onClick={() => setSelectedQuestion(question)}
                         >
-                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
-                            <Badge variant="outline" className="w-fit text-xs">
-                              {question.courseName}
-                            </Badge>
-                            <span className="text-xs text-slate-500">
-                              {new Date(
-                                question.createdAt
-                              ).toLocaleDateString()}
-                            </span>
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between">
+                              <h4 className="font-medium text-slate-900 text-sm">
+                                {question.question}
+                              </h4>
+                              <Badge variant="outline" className="text-xs">
+                                Pending
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-slate-500 space-y-1">
+                              <p>Student: {question.studentName}</p>
+                              <p>Course: {question.courseName}</p>
+                              <p>
+                                Asked:{" "}
+                                {new Date(
+                                  question.createdAt
+                                ).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
-                          <p className="font-medium text-sm mb-1 truncate">
-                            {question.chapterName}
-                          </p>
-                          <p className="text-slate-700 text-sm line-clamp-2 mb-2">
-                            {question.question}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            By: {question.studentName}
-                          </p>
                         </div>
                       ))
                     )}
                   </CardContent>
                 </Card>
 
-                {/* Response Form */}
+                {/* Answered Questions */}
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Send className="h-5 w-5 text-blue-500" />
-                      {selectedQuestion
-                        ? "Respond to Question"
-                        : "Select a Question"}
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      Answered Questions ({answeredQuestions.length})
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    {selectedQuestion ? (
-                      <div className="space-y-4">
-                        <div className="p-4 bg-slate-50 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline">
-                              {selectedQuestion.courseName}
-                            </Badge>
-                            <span className="text-xs text-slate-500">
-                              {selectedQuestion.chapterName}
-                            </span>
-                          </div>
-                          <p className="text-sm text-slate-700 mb-2">
-                            {selectedQuestion.question}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            By: {selectedQuestion.studentName}
-                          </p>
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-slate-700">
-                            Your Response
-                          </label>
-                          <Textarea
-                            value={response}
-                            onChange={(e) => setResponse(e.target.value)}
-                            placeholder="Type your response here..."
-                            className="min-h-32"
-                          />
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={handleSubmitResponse}
-                            disabled={isSubmitting || !response.trim()}
-                            className="flex items-center gap-2"
-                          >
-                            <Send className="h-4 w-4" />
-                            {isSubmitting ? "Submitting..." : "Submit Response"}
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setSelectedQuestion(null);
-                              setResponse("");
-                            }}
-                            variant="outline"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
+                  <CardContent className="space-y-3 max-h-80 overflow-y-auto">
+                    {answeredQuestions.length === 0 ? (
+                      <div className="text-center py-8">
+                        <CheckCircle className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                        <p className="text-slate-500">No answered questions</p>
                       </div>
                     ) : (
-                      <div className="text-center py-12">
-                        <MessageCircle className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-slate-500">
-                          Select a question to respond
-                        </p>
-                      </div>
+                      answeredQuestions.map((question) => (
+                        <div
+                          key={question.id}
+                          className="p-3 sm:p-4 border rounded-lg border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between">
+                              <h4 className="font-medium text-slate-900 text-sm">
+                                {question.question}
+                              </h4>
+                              <Badge className="text-xs bg-green-100 text-green-800">
+                                Answered
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-slate-500 space-y-1">
+                              <p>Student: {question.studentName}</p>
+                              <p>Course: {question.courseName}</p>
+                              <p>
+                                Asked:{" "}
+                                {new Date(
+                                  question.createdAt
+                                ).toLocaleDateString()}
+                              </p>
+                            </div>
+                            {question.response && (
+                              <div className="mt-2 p-2 bg-green-50 rounded text-xs">
+                                <p className="font-medium text-green-800">
+                                  Your Response:
+                                </p>
+                                <p className="text-green-700 mt-1">
+                                  {question.response}
+                                </p>
+                              </div>
+                            )}
+                            <div className="flex gap-2 mt-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditResponse(question)}
+                                className="text-xs"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() =>
+                                  question.responseId &&
+                                  handleDeleteResponse(question.responseId)
+                                }
+                                disabled={isDeleting}
+                                className="text-xs"
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
                     )}
                   </CardContent>
                 </Card>
               </div>
+
+              <Dialog open={!!selectedQuestion} onOpenChange={() => {
+                setSelectedQuestion(null);
+                setResponse("");
+                setIsEditing(false);
+              }}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{isEditing ? "Edit Response" : "Respond to Question"}</DialogTitle>
+                    <p className="text-sm text-slate-600 font-medium">{selectedQuestion?.question}</p>
+                    <p className="text-xs text-slate-500">Student: {selectedQuestion?.studentName} | Course: {selectedQuestion?.courseName}</p>
+                  </DialogHeader>
+                  <Textarea
+                    placeholder="Type your response here..."
+                    value={response}
+                    onChange={(e) => setResponse(e.target.value)}
+                    className="min-h-[120px]"
+                  />
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => {
+                      setSelectedQuestion(null);
+                      setResponse("");
+                      setIsEditing(false);
+                    }}>Cancel</Button>
+                    <Button onClick={handleSubmitResponse} disabled={isSubmitting || !response.trim()}>
+                      {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      {isEditing ? "Update" : "Submit"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

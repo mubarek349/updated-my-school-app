@@ -267,7 +267,8 @@ export default function TraditionalQA({
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-xs sm:text-sm truncate">
-                      {question.student.firstName} {question.student.fatherName}
+                      {question.student?.firstName}{" "}
+                      {question.student?.fatherName}
                     </p>
                     <div className="flex items-center gap-1 sm:gap-2 text-xs text-gray-500">
                       <Clock className="w-3 h-3 flex-shrink-0" />
@@ -284,7 +285,8 @@ export default function TraditionalQA({
                 <p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base ml-8 sm:ml-11 leading-relaxed">
                   {question.question}
                 </p>
-                {question.responses.length > 0 ? (
+
+                {question.responses?.length > 0 ? (
                   <div className="ml-8 sm:ml-11 space-y-2 sm:space-y-3 border-l-2 border-gray-200 pl-3 sm:pl-4 mt-2">
                     {question.responses.map((response) => (
                       <div key={response.id} className="space-y-1 sm:space-y-2">
@@ -295,8 +297,8 @@ export default function TraditionalQA({
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
                               <span className="truncate">
-                                {response.instructor.firstName}{" "}
-                                {response.instructor.fatherName}
+                                {response.instructor?.firstName}{" "}
+                                {response.instructor?.fatherName}
                               </span>
                               <Badge variant="default" className="ml-1 text-xs">
                                 {lang === "en" ? "Instructor" : "አስተማሪ"}
