@@ -329,7 +329,7 @@ function Page() {
                             </TabsTrigger>
                           </TabsList>
                         </div>
-                        <div className="border-b border-gray-100"></div>
+                        <div className="border-b border-gray-200 mt-2"></div>
                         <div className="flex-1 min-h-0">
                           <TabsContent value="mainmenu" className="h-full">
                             <MainMenu data={packageData} />

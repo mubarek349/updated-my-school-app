@@ -210,7 +210,7 @@ const StudentQuestionForm = ({
 
   return (
     <motion.div
-      className="flex flex-col gap-6 py-6 px-4 md:px-8 rounded-xl shadow-lg"
+      className="flex flex-col gap-6 py-6 px-4 md:px-8 shadow-lg"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -222,7 +222,7 @@ const StudentQuestionForm = ({
               {chapter.questions.map((question, index) => (
                 <motion.div
                   key={question.id}
-                  className="p-4 border rounded-lg bg-white/80 dark:bg-sky-900/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300"
+                  className="p-4 bg-white dark:bg-sky-900/80 shadow-sm hover:shadow-md transition-all duration-300"
                   variants={cardVariants}
                   initial="hidden"
                   animate="visible"
