@@ -165,8 +165,8 @@ PlayerProps) {
         onMouseEnter={() => !isMobile && setShowControls(true)}
         onMouseLeave={() => !isMobile && setShowControls(false)}
         className={cn(
-          "relative max-md:w-full",
-          isFullscreen ? "md:w-full" : "md:w-[70%]"
+          "relative max-md: w-full ",
+          // isFullscreen ? "md:w-full" : "md:w-[100%]  "
         )}
       >
         <video
