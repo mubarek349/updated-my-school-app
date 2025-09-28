@@ -325,7 +325,7 @@ function Page() {
 
                           {/* Content Area */}
                           <div className="flex-1 overflow-y-auto lg:overflow-visible">
-                            <div className="px-4 py-2">
+                            <div className="px-2 py-2">
                               <div className="lg:overflow-visible">
                                 <TabsContent
                                   value="mainmenu"

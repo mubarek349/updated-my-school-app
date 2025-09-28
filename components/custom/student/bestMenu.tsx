@@ -137,7 +137,6 @@ export default function MainMenu({ data, className }: MainMenuProps) {
           </motion.div> */}
 
           {/* Course Content */}
-          <div className="w-full">
             {data.activePackage.courses.map((course, courseIndex) => (
               <motion.div
                 key={course.id}
@@ -148,14 +147,14 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                 className="w-full"
               >
                 {/* Section Header */}
-                <div className="px-4 py-3">
+                <div className="py-2">
                   <h3 className="text-sm font-semibold text-gray-800">
                     Section {courseIndex + 1} - {course.title}
                   </h3>
                 </div>
 
                 {/* Lessons List */}
-                <div className="w-full">
+                <div className="w-full ">
                   {course.chapters.map((chapter, chapterIndex) => {
                     const isCompleted = chapterProgress?.[chapter.id];
                     const chapterLink = `/en/student/${wdt_ID}/${course.id}/${chapter.id}`;
@@ -235,7 +234,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
               exit="hidden"
               className="w-full"
             >
-              <div className="px-4 py-3">
+              <div className="py-2">
                 <h3 className="text-sm font-semibold text-gray-800">
                   Final Assessment
                 </h3>
@@ -274,7 +273,6 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                 </div>
               </button>
             </motion.div>
-          </div>
         </div>
       )}
     </div>
