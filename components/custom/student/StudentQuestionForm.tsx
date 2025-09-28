@@ -210,19 +210,19 @@ const StudentQuestionForm = ({
 
   return (
     <motion.div
-      className="flex flex-col gap-6 py-6 px-4 md:px-8 shadow-lg"
+      className="flex flex-col gap-2 py-2 md:px-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       {chapter?.questions.length ? (
         <TooltipProvider>
-          <div className="space-y-1 flex-1 max-md:overflow-y-auto md:max-h-dvh">
+          <div className="space-y-0 flex-1 max-md:overflow-y-auto md:max-h-dvh">
             <AnimatePresence>
               {chapter.questions.map((question, index) => (
                 <motion.div
                   key={question.id}
-                  className="p-4 md:p-2 bg-white dark:bg-sky-900/80 hover:shadow-md transition-all duration-300"
+                  className="py-2"
                   variants={cardVariants}
                   initial="hidden"
                   animate="visible"

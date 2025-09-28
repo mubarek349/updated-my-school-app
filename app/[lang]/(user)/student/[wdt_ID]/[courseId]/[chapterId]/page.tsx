@@ -270,61 +270,62 @@ function Page() {
                       <div className="flex-1 flex flex-col bg-white overflow-hidden lg:overflow-visible">
                         <Tabs
                           defaultValue={defaultTab}
-                          className="h-full flex flex-col lg:h-auto"
+                          className="h-full flex flex-col lg:h-auto "
                         >
-                          {/* Content Tabs Below Player */}
-                          <div className="bg-white border-b border-gray-200 flex-shrink-0">
-                            <div className="px-6 py-4">
-                              <TabsList className="flex space-x-8 bg-transparent p-0">
-                                <TabsTrigger
-                                  value="mainmenu"
-                                  className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 lg:hidden transition-all duration-200 hover:text-gray-700"
-                                >
-                                  Main Menu
-                                </TabsTrigger>
-                                <TabsTrigger
-                                  value="quiz"
-                                  className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700"
-                                >
-                                  Quiz
-                                </TabsTrigger>
-                                <TabsTrigger
-                                  value="qna"
-                                  className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700"
-                                >
-                                  Q&A
-                                </TabsTrigger>
-                                <TabsTrigger
-                                  value="feedback"
-                                  className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700"
-                                >
-                                  Feedback
-                                </TabsTrigger>
-                                <TabsTrigger
-                                  value="materials"
-                                  className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700"
-                                >
-                                  Materials
-                                </TabsTrigger>
-                                <TabsTrigger
-                                  value="announcements"
-                                  className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700"
-                                >
-                                  Announcements
-                                </TabsTrigger>
-                                <TabsTrigger
-                                  value="ai"
-                                  className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 lg:hidden transition-all duration-200 hover:text-gray-700"
-                                >
-                                  AI Assistance
-                                </TabsTrigger>
-                              </TabsList>
-                            </div>
-                          </div>
+                           {/* Content Tabs Below Player */}
+                            <div className="bg-white flex-shrink-0 ">
+                                <div className="overflow-x-auto scrollbar-hide scroll-smooth border-b-1 px-2 pt-1 border-gray-300">
+                                 <TabsList className="flex space-x-8 bg-transparent p-0 min-w-max ">
+                                 <TabsTrigger
+                                   value="mainmenu"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800  data-[state=active]:bg-gray-100 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 lg:hidden transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Main Menu
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="quiz"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Quiz
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="qna"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Q&A
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="feedback"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-red-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Feedback
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="materials"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Materials
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="announcements"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Announcements
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="ai"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 lg:hidden transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   AI Assistance
+                                 </TabsTrigger>
+                               </TabsList>
+                               
+                             </div>
+                           </div>
 
                           {/* Content Area */}
                           <div className="flex-1 overflow-y-auto lg:overflow-visible">
-                            <div className="px-4 py-6">
+                            <div className="px-4 py-2">
                               <div className="lg:overflow-visible">
                                 <TabsContent
                                   value="mainmenu"

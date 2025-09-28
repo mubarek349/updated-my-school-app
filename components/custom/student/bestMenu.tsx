@@ -125,7 +125,16 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       ) : (
         <div className="w-full">
           {/* Course Title */}
-    
+          {/* <motion.div
+            className="px-4 py-3 border-b border-gray-200 bg-gray-50"
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <h2 className="text-lg font-semibold text-black">
+              {data.activePackage.name}
+            </h2>
+          </motion.div> */}
 
           {/* Course Content */}
           <div className="w-full">
