@@ -9,7 +9,7 @@ export default async function middleware(request: NextRequest) {
   const userType = (session?.user as any)?.userType;
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/en/login", "/en/student"];
+  const publicRoutes = ["/en/login", "/en/student", "/en/student/[wdt_ID]"];
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
