@@ -9,7 +9,7 @@ export default async function middleware(request: NextRequest) {
   const userType = (session?.user as any)?.userType;
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/en/login", "/en/student"];
+  const publicRoutes = ["/en/login", "/en/student",];
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
@@ -53,7 +53,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public (public folder assets)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
   ],
 };
