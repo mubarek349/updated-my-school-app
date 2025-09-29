@@ -6,6 +6,9 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
     []
   );
   const [input, setInput] = useState("");
+  const [selectedModel, setSelectedModel] = useState<"chatgpt" | "gemini">(
+    "chatgpt"
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,7 +22,9 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
     setInput("");
 
     try {
-      const res = await fetch("/api/chat", {
+      const apiEndpoint =
+        selectedModel === "chatgpt" ? "/api/chatgpt" : "/api/gemine";
+      const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages, packageId }),
@@ -40,6 +45,29 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
   return (
     <div className="flex flex-col items-center justify-center w-full px-2 py-4 ">
       <div className="flex flex-col w-full max-w-lg h-[400px] sm:h-[500px] border rounded-lg shadow-lg ">
+        {/* Model Selection Tabs */}
+        <div className="flex border-b bg-gray-50">
+          <button
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              selectedModel === "chatgpt"
+                ? "bg-blue-500 text-white"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+            onClick={() => setSelectedModel("chatgpt")}
+          >
+            Model 1 (ChatGPT)
+          </button>
+          <button
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              selectedModel === "gemini"
+                ? "bg-blue-500 text-white"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+            onClick={() => setSelectedModel("gemini")}
+          >
+            Model 2 (Gemini)
+          </button>
+        </div>
         <div className="flex-1 overflow-y-auto p-2 sm:p-4">
           {messages.map((m, i) => (
             <div
