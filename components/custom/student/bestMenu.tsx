@@ -125,11 +125,6 @@ export default function MainMenu({ data, className }: MainMenuProps) {
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
-  const handleFinalExamClick = () => {
-    if (allCoursesCompleted) {
-      window.location.href = `/en/student/${data?.wdt_ID}/finalexam/${data?.activePackage?.id}`;
-    }
-  };
 
   return (
     <div
@@ -359,10 +354,9 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                             className="w-full"
                           >
                             {isCompleted === null ? (
-                              <button
-                                disabled={true}
+                              <div
                                 className={cn(
-                                  "w-full pl-4 pr-3 py-2 text-left hover:bg-gray-50 transition-colors duration-200",
+                                  "w-full pl-4 pr-3 py-2 text-left transition-colors duration-200",
                                   "opacity-50 cursor-not-allowed"
                                 )}
                               >
@@ -393,7 +387,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                     </div>
                                   </div>
                                 </div>
-                              </button>
+                              </div>
                             ) : (
                               <Link
                                 href={
@@ -461,35 +455,51 @@ export default function MainMenu({ data, className }: MainMenuProps) {
               className="w-full mt-4"
             >
               <div className="border-b border-gray-200">
-                <button
-                  onClick={handleFinalExamClick}
-                  disabled={!allCoursesCompleted}
-                  className={cn(
-                    "w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-200 flex items-center gap-3",
-                    !allCoursesCompleted && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {/* Final Exam Icon */}
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
-                    <Trophy className="w-4 h-4 text-yellow-600" />
-                  </div>
-                  
-                  {/* Final Exam Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-800">
-                      Final Assessment
-                    </h3>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                      <span>Exam</span>
-                      {!allCoursesCompleted && (
-                        <>
-                          <span>•</span>
-                          <span className="text-orange-600 font-medium">Complete all lessons to unlock</span>
-                        </>
-                      )}
+                {!allCoursesCompleted ? (
+                  <div
+                    className={cn(
+                      "w-full px-4 py-3 text-left transition-colors duration-200 flex items-center gap-3",
+                      "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    {/* Final Exam Icon */}
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                      <Trophy className="w-4 h-4 text-yellow-600" />
+                    </div>
+                    
+                    {/* Final Exam Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold text-gray-800">
+                        Final Assessment
+                      </h3>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                        <span>Exam</span>
+                        <span>•</span>
+                        <span className="text-orange-600 font-medium">Complete all lessons to unlock</span>
+                      </div>
                     </div>
                   </div>
-                </button>
+                ) : (
+                  <Link
+                    href={`/en/student/${data?.wdt_ID}/finalexam/${data?.activePackage?.id}`}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-200 flex items-center gap-3"
+                  >
+                    {/* Final Exam Icon */}
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                      <Trophy className="w-4 h-4 text-yellow-600" />
+                    </div>
+                    
+                    {/* Final Exam Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold text-gray-800">
+                        Final Assessment
+                      </h3>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                        <span>Exam</span>
+                      </div>
+                    </div>
+                  </Link>
+                )}
               </div>
             </motion.div>
         </div>
