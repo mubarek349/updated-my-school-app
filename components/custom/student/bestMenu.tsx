@@ -22,7 +22,7 @@ import {
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 
-import Loading from "../admin/loading";
+// Removed Loading import - using custom skeleton instead
 
 interface MainMenuProps {
   data:
@@ -138,8 +138,145 @@ export default function MainMenu({ data, className }: MainMenuProps) {
       )}
     >
       {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <Loading />
+        <div className="w-full p-4 space-y-4">
+          {/* Course Content Skeleton */}
+          <div className="space-y-3">
+            {/* Section 1 Skeleton */}
+            <div className="border-b border-gray-200">
+              <div className="bg-gray-50 py-2 pl-3 pr-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-2 animate-pulse"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-20 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 w-4 bg-gray-300 rounded animate-pulse"></div>
+                </div>
+              </div>
+              
+              {/* Lessons Skeleton */}
+              <div className="space-y-0">
+                {[1, 2, 3].map((index) => (
+                  <div key={index} className="pl-4 pr-3 py-2">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full animate-pulse"></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="h-4 bg-gray-300 rounded w-2/3 animate-pulse"></div>
+                          <div className="h-3 w-3 bg-gray-300 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 bg-gray-300 rounded w-12 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 2 Skeleton */}
+            <div className="border-b border-gray-200">
+              <div className="bg-gray-50 py-2 pl-3 pr-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="h-4 bg-gray-300 rounded w-2/3 mb-2 animate-pulse"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 bg-gray-300 rounded w-14 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-18 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-20 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 w-4 bg-gray-300 rounded animate-pulse"></div>
+                </div>
+              </div>
+              
+              {/* Lessons Skeleton */}
+              <div className="space-y-0">
+                {[1, 2].map((index) => (
+                  <div key={index} className="pl-4 pr-3 py-2">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full animate-pulse"></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="h-4 bg-gray-300 rounded w-3/4 animate-pulse"></div>
+                          <div className="h-3 w-3 bg-gray-300 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 bg-gray-300 rounded w-12 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-14 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 3 Skeleton */}
+            <div className="border-b border-gray-200">
+              <div className="bg-gray-50 py-2 pl-3 pr-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="h-4 bg-gray-300 rounded w-4/5 mb-2 animate-pulse"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-22 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 w-4 bg-gray-300 rounded animate-pulse"></div>
+                </div>
+              </div>
+              
+              {/* Lessons Skeleton */}
+              <div className="space-y-0">
+                {[1, 2, 3, 4].map((index) => (
+                  <div key={index} className="pl-4 pr-3 py-2">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full animate-pulse"></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="h-4 bg-gray-300 rounded w-5/6 animate-pulse"></div>
+                          <div className="h-3 w-3 bg-gray-300 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 bg-gray-300 rounded w-12 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-18 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Final Exam Skeleton */}
+          <div className="mt-4 border-b border-gray-200">
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-gray-300 rounded-lg animate-pulse"></div>
+                <div className="flex-1 min-w-0">
+                  <div className="h-4 bg-gray-300 rounded w-32 mb-2 animate-pulse"></div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 bg-gray-300 rounded w-12 animate-pulse"></div>
+                    <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                    <div className="h-3 bg-gray-300 rounded w-40 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       ) : !data || !data.activePackage ? (
         <div className="text-center py-8 text-gray-500 text-sm">
