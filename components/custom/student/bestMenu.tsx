@@ -22,6 +22,7 @@ import {
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { toast } from "sonner";
 
 // Removed Loading import - using custom skeleton instead
 
@@ -119,10 +120,22 @@ export default function MainMenu({ data, className }: MainMenuProps) {
   }, [data, wdt_ID]);
 
 
- 
+
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  };
+
+  const handleLockedLessonClick = (chapterTitle: string) => {
+    toast.warning("🔒 Lesson Locked", {
+      description: `You need to complete the quiz for "${chapterTitle}" first to unlock this lesson.`,
+      duration: 4000,
+      style: {
+        background: "#FEF3C7",
+        color: "#92400E",
+        border: "1px solid #F59E0B",
+      },
+    });
   };
 
 
@@ -133,7 +146,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
         className
       )}
     >
-      {isLoading ? (
+        {isLoading ? (
         <div className="w-full p-4 space-y-4">
           {/* Course Content Skeleton */}
           <div className="space-y-3">
@@ -273,20 +286,20 @@ export default function MainMenu({ data, className }: MainMenuProps) {
               </div>
             </div>
           </div>
-        </div>
-      ) : !data || !data.activePackage ? (
+          </div>
+        ) : !data || !data.activePackage ? (
         <div className="text-center py-8 text-gray-500 text-sm">
-          No active package found.
-        </div>
-      ) : (
+            No active package found.
+          </div>
+        ) : (
         <div className="w-full">
           {/* Course Title */}
           {/* <motion.div
             className="px-4 py-3 border-b border-gray-200 bg-gray-50"
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-          >
+              variants={itemVariants}
+              initial="hidden"
+              animate="visible"
+            >
             <h2 className="text-lg font-semibold text-black">
               {data.activePackage.name}
             </h2>
@@ -337,127 +350,103 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                           )}
                         </div>
                       </div>
-                    </div>
-                  </AccordionTrigger>
+                          </div>
+                        </AccordionTrigger>
                   
                   <AccordionContent className="pb-1">
                     <div className="space-y-0">
                       {course.chapters.map((chapter, chapterIndex) => {
-                        const isCompleted = chapterProgress?.[chapter.id];
-                        const chapterLink = `/en/student/${wdt_ID}/${course.id}/${chapter.id}`;
+                            const isCompleted = chapterProgress?.[chapter.id];
+                            const chapterLink = `/en/student/${wdt_ID}/${course.id}/${chapter.id}`;
                         const isActive = false; // You can determine this based on current route
                         
-                        return (
-                          <motion.div
-                            key={chapter.id}
+                            return (
+                              <motion.div
+                                key={chapter.id}
                             variants={itemVariants}
                             className="w-full"
                           >
-                            {isCompleted === null ? (
-                              <div
-                                className={cn(
-                                  "w-full pl-4 pr-3 py-2 text-left transition-colors duration-200",
-                                  "opacity-50 cursor-not-allowed"
-                                )}
-                              >
-                                <div className="flex items-start gap-3">
-                                  {/* Lesson Number */}
-                                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center mt-0.5">
-                                    <span className="text-xs font-medium text-gray-600">
-                                      {chapterIndex + 1}
-                                    </span>
-                                  </div>
+                            <Link
+                              href={
+                                isCompleted === false
+                                  ? `${chapterLink}?isClicked=true&tab=quiz`
+                                  : isCompleted === true
+                                  ? `${chapterLink}?isClicked=true&tab=mainmenu`
+                                  : `${chapterLink}?isClicked=true&tab=quiz`
+                              }
+                              onClick={() => {
+                                if (isCompleted === null) {
+                                  handleLockedLessonClick(chapter.title);
+                                }
+                              }}
+                              className={cn(
+                                "w-full pl-4 pr-3 py-2 text-left hover:bg-gray-50 transition-colors duration-200 block",
+                                isCompleted === false && "bg-gray-100",
+                                isCompleted === null && "opacity-50"
+                              )}
+                            >
+                              <div className="flex items-start gap-3">
+                                {/* Lesson Number */}
+                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center mt-0.5">
+                                  <span className="text-xs font-medium text-gray-600">
+                                    {chapterIndex + 1}
+                                  </span>
+                                </div>
 
-                                  {/* Lesson Content */}
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <h4 className={cn(
-                                        "text-sm font-medium text-gray-900 truncate",
-                                        isActive && "font-semibold"
-                                      )}>
-                                        {chapter.title}
-                                      </h4>
+                                {/* Lesson Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className={cn(
+                                      "text-sm font-medium text-gray-900 truncate",
+                                      isActive && "font-semibold"
+                                    )}>
+                                      {chapter.title}
+                                    </h4>
+                                    {isCompleted === true && (
+                                      <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                    )}
+                                    {isCompleted === false && (
+                                      <PlayCircle className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                    )}
+                                    {isCompleted === null && (
                                       <Lock className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                      <span>Video</span>
-                                      <span>•</span>
-                                      <span>Locked</span>
-                                    </div>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                                    <span>Video</span>
+                                    <span>•</span>
+                                    <span>
+                                      {isCompleted === true ? "Completed" : 
+                                       isCompleted === false ? "In Progress" : 
+                                       "Locked"}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
-                            ) : (
-                              <Link
-                                href={
-                                  isCompleted === false
-                                    ? `${chapterLink}?isClicked=true&tab=quiz`
-                                    : `${chapterLink}?isClicked=true&tab=mainmenu`
-                                }
-                                className={cn(
-                                  "w-full pl-4 pr-3 py-2 text-left hover:bg-gray-50 transition-colors duration-200 block",
-                                  isCompleted === false && "bg-gray-100"
-                                )}
-                              >
-                                <div className="flex items-start gap-3">
-                                  {/* Lesson Number */}
-                                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center mt-0.5">
-                                    <span className="text-xs font-medium text-gray-600">
-                                      {chapterIndex + 1}
-                                    </span>
-                                  </div>
-
-                                  {/* Lesson Content */}
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <h4 className={cn(
-                                        "text-sm font-medium text-gray-900 truncate",
-                                        isActive && "font-semibold"
-                                      )}>
-                                        {chapter.title}
-                                      </h4>
-                                      {isCompleted === true && (
-                                        <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-                                      )}
-                                      {isCompleted === false && (
-                                        <PlayCircle className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                                      )}
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                      <span>Video</span>
-                                      <span>•</span>
-                                      <span>
-                                        {isCompleted === true ? "Completed" : "In Progress"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </Link>
-                            )}
-                          </motion.div>
-                        );
-                      })}
+                            </Link>
+                              </motion.div>
+                            );
+                          })}
                     </div>
-                  </AccordionContent>
-                </AccordionItem>
+                        </AccordionContent>
+                      </AccordionItem>
               );
             })}
           </Accordion>
 
             {/* Final Exam Section */}
-            <motion.div
-              variants={itemVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
+                  <motion.div
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
               className="w-full mt-4"
-            >
+                  >
               <div className="border-b border-gray-200">
                 {!allCoursesCompleted ? (
                   <div
-                    className={cn(
+                      className={cn(
                       "w-full px-4 py-3 text-left transition-colors duration-200 flex items-center gap-3",
                       "opacity-50 cursor-not-allowed"
                     )}
@@ -499,11 +488,11 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                       </div>
                     </div>
                   </Link>
-                )}
-              </div>
-            </motion.div>
+                          )}
+                        </div>
+                  </motion.div>
         </div>
-      )}
-    </div>
+        )}
+      </div>
   );
 }
