@@ -126,7 +126,16 @@ function Page() {
   if (typeof window !== "undefined") {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("isClicked") === "true") {
-      defaultTab = "quiz";
+      // Check if specific tab is requested
+      const requestedTab = urlParams.get("tab");
+      if (requestedTab === "quiz") {
+        defaultTab = "quiz";
+      } else if (requestedTab === "mainmenu") {
+        defaultTab = "mainmenu";
+      } else {
+        // Default to quiz for backward compatibility
+        defaultTab = "quiz";
+      }
     }
   }
 

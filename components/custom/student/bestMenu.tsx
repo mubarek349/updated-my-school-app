@@ -21,6 +21,7 @@ import {
 } from "@/actions/student/progress";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 // Removed Loading import - using custom skeleton instead
 
@@ -357,59 +358,90 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                             variants={itemVariants}
                             className="w-full"
                           >
-                            <button
-                              disabled={isCompleted === null}
-                              onClick={() => {
-                                if (isCompleted === true || isCompleted === false) {
-                                  window.location.href = `${chapterLink}?isClicked=true`;
-                                }
-                              }}
-                              className={cn(
-                                "w-full pl-4 pr-3 py-2 text-left hover:bg-gray-50 transition-colors duration-200",
-                                isCompleted === false && "bg-gray-100",
-                                isCompleted === null && "opacity-50 cursor-not-allowed"
-                              )}
-                            >
-                              <div className="flex items-start gap-3">
-                                {/* Lesson Number */}
-                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center mt-0.5">
-                                  <span className="text-xs font-medium text-gray-600">
-                                    {chapterIndex + 1}
-                                  </span>
-                                </div>
-
-                                {/* Lesson Content */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h4 className={cn(
-                                      "text-sm font-medium text-gray-900 truncate",
-                                      isActive && "font-semibold"
-                                    )}>
-                                      {chapter.title}
-                                    </h4>
-                                    {isCompleted === true && (
-                                      <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-                                    )}
-                                    {isCompleted === false && (
-                                      <PlayCircle className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                                    )}
-                                    {isCompleted === null && (
-                                      <Lock className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                                    )}
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    <span>Video</span>
-                                    <span>•</span>
-                                    <span>
-                                      {isCompleted === true ? "Completed" : 
-                                       isCompleted === false ? "In Progress" : 
-                                       "Locked"}
+                            {isCompleted === null ? (
+                              <button
+                                disabled={true}
+                                className={cn(
+                                  "w-full pl-4 pr-3 py-2 text-left hover:bg-gray-50 transition-colors duration-200",
+                                  "opacity-50 cursor-not-allowed"
+                                )}
+                              >
+                                <div className="flex items-start gap-3">
+                                  {/* Lesson Number */}
+                                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center mt-0.5">
+                                    <span className="text-xs font-medium text-gray-600">
+                                      {chapterIndex + 1}
                                     </span>
                                   </div>
+
+                                  {/* Lesson Content */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className={cn(
+                                        "text-sm font-medium text-gray-900 truncate",
+                                        isActive && "font-semibold"
+                                      )}>
+                                        {chapter.title}
+                                      </h4>
+                                      <Lock className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                      <span>Video</span>
+                                      <span>•</span>
+                                      <span>Locked</span>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </button>
+                              </button>
+                            ) : (
+                              <Link
+                                href={
+                                  isCompleted === false
+                                    ? `${chapterLink}?isClicked=true&tab=quiz`
+                                    : `${chapterLink}?isClicked=true&tab=mainmenu`
+                                }
+                                className={cn(
+                                  "w-full pl-4 pr-3 py-2 text-left hover:bg-gray-50 transition-colors duration-200 block",
+                                  isCompleted === false && "bg-gray-100"
+                                )}
+                              >
+                                <div className="flex items-start gap-3">
+                                  {/* Lesson Number */}
+                                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center mt-0.5">
+                                    <span className="text-xs font-medium text-gray-600">
+                                      {chapterIndex + 1}
+                                    </span>
+                                  </div>
+
+                                  {/* Lesson Content */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className={cn(
+                                        "text-sm font-medium text-gray-900 truncate",
+                                        isActive && "font-semibold"
+                                      )}>
+                                        {chapter.title}
+                                      </h4>
+                                      {isCompleted === true && (
+                                        <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                      )}
+                                      {isCompleted === false && (
+                                        <PlayCircle className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                      )}
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                      <span>Video</span>
+                                      <span>•</span>
+                                      <span>
+                                        {isCompleted === true ? "Completed" : "In Progress"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            )}
                           </motion.div>
                         );
                       })}
