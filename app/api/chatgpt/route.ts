@@ -9,7 +9,26 @@ const client = new OpenAI({
 
 export async function POST(req: Request) {
   try {
+    console.log("ChatGPT API called");
+
+    // Check if OpenAI API key is available
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OpenAI API key not found");
+      return NextResponse.json(
+        { error: "OpenAI API key not configured" },
+        { status: 500 }
+      );
+    }
+
     const { messages, packageId } = await req.json();
+    console.log("Request data:", { messages: messages.length, packageId });
+
+    if (!packageId) {
+      return NextResponse.json(
+        { error: "Package ID is required" },
+        { status: 400 }
+      );
+    }
 
     const jsonData = await prisma.coursePackage.findUnique({
       where: { id: packageId },
@@ -20,6 +39,7 @@ export async function POST(req: Request) {
       ? `You are an educational assistant. Use the following course material to answer: ${jsonData.aiPdfData}`
       : "You are an educational assistant. Only answer questions related to education, courses, and learning. If the question is outside education, politely refuse.";
 
+    console.log("Calling OpenAI API...");
     const completion = await client.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -31,10 +51,18 @@ export async function POST(req: Request) {
       ],
     });
 
+    console.log("OpenAI response received");
     return NextResponse.json({
       reply: completion.choices[0].message,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("ChatGPT API error:", error);
+    return NextResponse.json(
+      {
+        error: error.message || "Unknown error occurred",
+        details: error.toString(),
+      },
+      { status: 500 }
+    );
   }
 }
