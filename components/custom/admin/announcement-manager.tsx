@@ -1,10 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Send, X } from "lucide-react";
+import { Plus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -18,7 +30,9 @@ interface AnnouncementManagerProps {
   }>;
 }
 
-export function AnnouncementManager({ coursePackages }: AnnouncementManagerProps) {
+export function AnnouncementManager({
+  coursePackages,
+}: AnnouncementManagerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState("");
   const [description, setDescription] = useState("");
@@ -27,7 +41,7 @@ export function AnnouncementManager({ coursePackages }: AnnouncementManagerProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedPackage || !description.trim()) {
       toast.error("Please select a course package and enter a description");
       return;
@@ -51,7 +65,9 @@ export function AnnouncementManager({ coursePackages }: AnnouncementManagerProps
       router.refresh();
     } catch (error) {
       console.error("Error creating announcement:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to create announcement");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create announcement"
+      );
     } finally {
       setIsSubmitting(false);
     }

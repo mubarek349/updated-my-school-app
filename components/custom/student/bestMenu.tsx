@@ -7,7 +7,6 @@ import {
   PlayCircle,
   Lock,
   Trophy,
-  UserCircle,
 } from "lucide-react";
 import {
   Accordion,
@@ -15,19 +14,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+
 import {
   getStudentProgressPerChapter,
   isCompletedAllChaptersInthePackage,
 } from "@/actions/student/progress";
-import { useParams, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import Loading from "../admin/loading";
+import { useParams } from "next/navigation";
+import { motion } from "framer-motion";
+import Link from "next/link";
+
+// Removed Loading import - using custom skeleton instead
 
 interface MainMenuProps {
   data:
@@ -59,7 +55,6 @@ interface MainMenuProps {
 
 export default function MainMenu({ data, className }: MainMenuProps) {
   const params = useParams();
-  const router = useRouter();
   const wdt_ID = Number(params?.wdt_ID ?? 0);
 
   const [chapterProgress, setChapterProgress] = React.useState<
@@ -67,6 +62,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
   >({});
   const [isLoading, setIsLoading] = React.useState(true);
   const [allCoursesCompleted, setAllCoursesCompleted] = React.useState(false);
+  const [openSections, setOpenSections] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     async function fetchAllProgress() {
@@ -91,13 +87,28 @@ export default function MainMenu({ data, className }: MainMenuProps) {
             ];
           })
         );
-        setChapterProgress(Object.fromEntries(progressEntries));
+        const progressMap = Object.fromEntries(progressEntries);
+        setChapterProgress(progressMap);
+        
         const areAllChaptersTrulyCompleted =
           await isCompletedAllChaptersInthePackage(
             data.activePackage.id,
             data.wdt_ID
           );
         setAllCoursesCompleted(areAllChaptersTrulyCompleted);
+        
+        // Auto-open first section with in-progress chapters
+        const firstInProgressCourse = data.activePackage.courses.find(course => 
+          course.chapters.some(chapter => progressMap[chapter.id] === false)
+        );
+        if (firstInProgressCourse) {
+          setOpenSections([firstInProgressCourse.id]);
+        } else {
+          // If no in-progress chapters, open the first section
+          if (data.activePackage.courses.length > 0) {
+            setOpenSections([data.activePackage.courses[0].id]);
+          }
+        }
       } catch (error) {
         console.error("Error fetching progress:", error);
       } finally {
@@ -107,16 +118,8 @@ export default function MainMenu({ data, className }: MainMenuProps) {
     fetchAllProgress();
   }, [data, wdt_ID]);
 
-  const getCourseProgress = (chapters: { id: string }[]) => {
-    const totalChapters = chapters.length;
-    const completedChapters = chapters.filter(
-      (chapter) => chapterProgress[chapter.id] === true
-    ).length;
-    return totalChapters > 0
-      ? Math.round((completedChapters / totalChapters) * 100)
-      : 0;
-  };
 
+ 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -124,200 +127,373 @@ export default function MainMenu({ data, className }: MainMenuProps) {
 
   const handleFinalExamClick = () => {
     if (allCoursesCompleted) {
-      router.push(
-        `/en/student/${data?.wdt_ID}/finalexam/${data?.activePackage?.id}`
-      );
+      window.location.href = `/en/student/${data?.wdt_ID}/finalexam/${data?.activePackage?.id}`;
     }
   };
 
   return (
-    <nav
+    <div
       className={cn(
-        "overflow-y-hidden py-4 px-2 flex flex-col gap-4 bg-gradient-to-b from-sky-50 to-sky-100 dark:from-sky-900 dark:to-sky-950 shadow transition-all duration-300",
+        "w-full bg-white overflow-y-auto",
         className
       )}
-      aria-label="Main navigation"
     >
-      <div className="flex-1 overflow-auto">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-8">
-            <Loading />
+      {isLoading ? (
+        <div className="w-full p-4 space-y-4">
+          {/* Course Content Skeleton */}
+          <div className="space-y-3">
+            {/* Section 1 Skeleton */}
+            <div className="border-b border-gray-200">
+              <div className="bg-gray-50 py-2 pl-3 pr-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-2 animate-pulse"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-20 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 w-4 bg-gray-300 rounded animate-pulse"></div>
+                </div>
+              </div>
+              
+              {/* Lessons Skeleton */}
+              <div className="space-y-0">
+                {[1, 2, 3].map((index) => (
+                  <div key={index} className="pl-4 pr-3 py-2">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full animate-pulse"></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="h-4 bg-gray-300 rounded w-2/3 animate-pulse"></div>
+                          <div className="h-3 w-3 bg-gray-300 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 bg-gray-300 rounded w-12 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 2 Skeleton */}
+            <div className="border-b border-gray-200">
+              <div className="bg-gray-50 py-2 pl-3 pr-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="h-4 bg-gray-300 rounded w-2/3 mb-2 animate-pulse"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 bg-gray-300 rounded w-14 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-18 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-20 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 w-4 bg-gray-300 rounded animate-pulse"></div>
+                </div>
+              </div>
+              
+              {/* Lessons Skeleton */}
+              <div className="space-y-0">
+                {[1, 2].map((index) => (
+                  <div key={index} className="pl-4 pr-3 py-2">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full animate-pulse"></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="h-4 bg-gray-300 rounded w-3/4 animate-pulse"></div>
+                          <div className="h-3 w-3 bg-gray-300 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 bg-gray-300 rounded w-12 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-14 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 3 Skeleton */}
+            <div className="border-b border-gray-200">
+              <div className="bg-gray-50 py-2 pl-3 pr-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="h-4 bg-gray-300 rounded w-4/5 mb-2 animate-pulse"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                      <div className="h-3 bg-gray-300 rounded w-22 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 w-4 bg-gray-300 rounded animate-pulse"></div>
+                </div>
+              </div>
+              
+              {/* Lessons Skeleton */}
+              <div className="space-y-0">
+                {[1, 2, 3, 4].map((index) => (
+                  <div key={index} className="pl-4 pr-3 py-2">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full animate-pulse"></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="h-4 bg-gray-300 rounded w-5/6 animate-pulse"></div>
+                          <div className="h-3 w-3 bg-gray-300 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 bg-gray-300 rounded w-12 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                          <div className="h-3 bg-gray-300 rounded w-18 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ) : !data || !data.activePackage ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
-            No active package found.
+
+          {/* Final Exam Skeleton */}
+          <div className="mt-4 border-b border-gray-200">
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-gray-300 rounded-lg animate-pulse"></div>
+                <div className="flex-1 min-w-0">
+                  <div className="h-4 bg-gray-300 rounded w-32 mb-2 animate-pulse"></div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 bg-gray-300 rounded w-12 animate-pulse"></div>
+                    <div className="h-3 bg-gray-300 rounded w-1 animate-pulse"></div>
+                    <div className="h-3 bg-gray-300 rounded w-40 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <>
-            <motion.h3
-              className="text-base font-semibold text-sky-800 dark:text-sky-100 mb-3"
+        </div>
+      ) : !data || !data.activePackage ? (
+        <div className="text-center py-8 text-gray-500 text-sm">
+          No active package found.
+        </div>
+      ) : (
+        <div className="w-full">
+          {/* Course Title */}
+          {/* <motion.div
+            className="px-4 py-3 border-b border-gray-200 bg-gray-50"
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <h2 className="text-lg font-semibold text-black">
+              {data.activePackage.name}
+            </h2>
+          </motion.div> */}
+
+          {/* Course Content with Accordion */}
+          <Accordion 
+            type="multiple" 
+            value={openSections} 
+            onValueChange={setOpenSections}
+            className="w-full"
+          >
+            {data.activePackage.courses.map((course, courseIndex) => {
+              const hasInProgressChapters = course.chapters.some(
+                chapter => chapterProgress?.[chapter.id] === false
+              );
+              
+              // Calculate progress percentage for this course
+              const totalChapters = course.chapters.length;
+              const completedChapters = course.chapters.filter(
+                chapter => chapterProgress?.[chapter.id] === true
+              ).length;
+              const progressPercentage = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+              
+              return (
+                <AccordionItem key={course.id} value={course.id} className="border-b border-gray-200">
+                  <AccordionTrigger className={cn(
+                    "hover:no-underline py-2 pl-3 pr-3 transition-colors duration-200 bg-gray-50"
+                  )}>
+                    <div className="flex items-center gap-3 text-left">
+                      {/* Course Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className={cn(
+                          "text-sm font-semibold truncate",
+                          hasInProgressChapters ? "text-gray-800" : "text-gray-800"
+                        )}>
+                          Section {courseIndex + 1} - {course.title}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                          <span>{course.chapters.length} lessons</span>
+                          <span>•</span>
+                          <span className="text-gray-600 font-medium">{progressPercentage}% complete</span>
+                          {hasInProgressChapters && (
+                            <>
+                              <span>•</span>
+                              <span className="text-blue-600 font-medium">In Progress</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  
+                  <AccordionContent className="pb-1">
+                    <div className="space-y-0">
+                      {course.chapters.map((chapter, chapterIndex) => {
+                        const isCompleted = chapterProgress?.[chapter.id];
+                        const chapterLink = `/en/student/${wdt_ID}/${course.id}/${chapter.id}`;
+                        const isActive = false; // You can determine this based on current route
+                        
+                        return (
+                          <motion.div
+                            key={chapter.id}
+                            variants={itemVariants}
+                            className="w-full"
+                          >
+                            {isCompleted === null ? (
+                              <button
+                                disabled={true}
+                                className={cn(
+                                  "w-full pl-4 pr-3 py-2 text-left hover:bg-gray-50 transition-colors duration-200",
+                                  "opacity-50 cursor-not-allowed"
+                                )}
+                              >
+                                <div className="flex items-start gap-3">
+                                  {/* Lesson Number */}
+                                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center mt-0.5">
+                                    <span className="text-xs font-medium text-gray-600">
+                                      {chapterIndex + 1}
+                                    </span>
+                                  </div>
+
+                                  {/* Lesson Content */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className={cn(
+                                        "text-sm font-medium text-gray-900 truncate",
+                                        isActive && "font-semibold"
+                                      )}>
+                                        {chapter.title}
+                                      </h4>
+                                      <Lock className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                      <span>Video</span>
+                                      <span>•</span>
+                                      <span>Locked</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                            ) : (
+                              <Link
+                                href={
+                                  isCompleted === false
+                                    ? `${chapterLink}?isClicked=true&tab=quiz`
+                                    : `${chapterLink}?isClicked=true&tab=mainmenu`
+                                }
+                                className={cn(
+                                  "w-full pl-4 pr-3 py-2 text-left hover:bg-gray-50 transition-colors duration-200 block",
+                                  isCompleted === false && "bg-gray-100"
+                                )}
+                              >
+                                <div className="flex items-start gap-3">
+                                  {/* Lesson Number */}
+                                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center mt-0.5">
+                                    <span className="text-xs font-medium text-gray-600">
+                                      {chapterIndex + 1}
+                                    </span>
+                                  </div>
+
+                                  {/* Lesson Content */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className={cn(
+                                        "text-sm font-medium text-gray-900 truncate",
+                                        isActive && "font-semibold"
+                                      )}>
+                                        {chapter.title}
+                                      </h4>
+                                      {isCompleted === true && (
+                                        <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                      )}
+                                      {isCompleted === false && (
+                                        <PlayCircle className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                      )}
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                      <span>Video</span>
+                                      <span>•</span>
+                                      <span>
+                                        {isCompleted === true ? "Completed" : "In Progress"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+
+            {/* Final Exam Section */}
+            <motion.div
               variants={itemVariants}
               initial="hidden"
               animate="visible"
+              exit="hidden"
+              className="w-full mt-4"
             >
-              {data.activePackage.name}
-            </motion.h3>
-            <TooltipProvider>
-              <Accordion type="single" collapsible className="space-y-2 w-full">
-                <AnimatePresence>
-                  {data.activePackage.courses.map((course) => (
-                    <motion.div
-                      key={course.id}
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="hidden"
-                    >
-                      <AccordionItem
-                        value={`course-${course.id}`}
-                        className={cn(
-                          "border border-sky-200 dark:border-sky-800 rounded-lg bg-white/80 dark:bg-sky-900/80 shadow-sm"
-                        )}
-                      >
-                        <AccordionTrigger
-                          className={cn(
-                            "px-3 py-2 text-sm font-semibold text-sky-800 dark:text-sky-200 hover:bg-sky-100/50 dark:hover:bg-sky-800/50 rounded-t-lg"
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sky-600 dark:text-sky-400 font-bold">
-                              {course.order}.
-                            </span>
-                            <span className="truncate">{course.title}</span>
-                            <span className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400">
-                              {getCourseProgress(course.chapters)}%
-                            </span>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-3 py-2 space-y-2 rounded-b-lg">
-                          {course.chapters.map((chapter) => {
-                            const isCompleted = chapterProgress?.[chapter.id];
-                            const chapterLink = `/en/student/${wdt_ID}/${course.id}/${chapter.id}`;
-                            return (
-                              <motion.div
-                                key={chapter.id}
-                                className={cn(
-                                  "flex items-center p-2 rounded-md transition-all duration-200 hover:bg-sky-100/50 dark:hover:bg-sky-800/50 group border border-sky-200 dark:border-sky-700"
-                                )}
-                                variants={itemVariants}
-                              >
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span
-                                      className={cn(
-                                        "flex items-center text-xs font-semibold",
-                                        isCompleted === true
-                                          ? "text-green-500"
-                                          : isCompleted === false
-                                          ? "text-gray-400"
-                                          : "text-yellow-500"
-                                      )}
-                                    >
-                                      {isCompleted === true ? (
-                                        <CheckCircle className="w-4 h-4 mr-2" />
-                                      ) : isCompleted === false ? (
-                                        <PlayCircle className="w-4 h-4 mr-2" />
-                                      ) : (
-                                        <Lock className="w-4 h-4 mr-2" />
-                                      )}
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right">
-                                    {isCompleted === true
-                                      ? "Completed"
-                                      : isCompleted === false
-                                      ? "In Progress"
-                                      : "Locked"}
-                                  </TooltipContent>
-                                </Tooltip>
-                                <button
-                                  disabled={!isCompleted}
-                                  className={cn(
-                                    "text-left text-xs font-medium ml-1 truncate",
-                                    isCompleted
-                                      ? "text-sky-600 dark:text-sky-400 hover:underline"
-                                      : "text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                                  )}
-                                  onClick={() => {
-                                    if (isCompleted) {
-                                      router.push(
-                                        `${chapterLink}?isClicked=true`
-                                      );
-                                    }
-                                  }}
-                                  tabIndex={isCompleted ? 0 : -1}
-                                  aria-disabled={!isCompleted}
-                                  type="button"
-                                  aria-label={`Go to ${chapter.title} ${
-                                    isCompleted ? "" : "(Locked)"
-                                  }`}
-                                >
-                                  <span>
-                                    Lesson {chapter.position}: {chapter.title}
-                                  </span>
-                                </button>
-                              </motion.div>
-                            );
-                          })}
-                        </AccordionContent>
-                      </AccordionItem>
-                    </motion.div>
-                  ))}
-
-                  {/* Final Exam Accordion Item */}
-                  <motion.div
-                    variants={itemVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                  >
-                    <AccordionItem
-                      value="final-exam"
-                      className={cn(
-                        "border border-blue-300 dark:border-blue-700 rounded-lg bg-blue-50/80 dark:bg-blue-900/80 shadow"
+              <div className="border-b border-gray-200">
+                <button
+                  onClick={handleFinalExamClick}
+                  disabled={!allCoursesCompleted}
+                  className={cn(
+                    "w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-200 flex items-center gap-3",
+                    !allCoursesCompleted && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {/* Final Exam Icon */}
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                    <Trophy className="w-4 h-4 text-yellow-600" />
+                  </div>
+                  
+                  {/* Final Exam Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-gray-800">
+                      Final Assessment
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                      <span>Exam</span>
+                      {!allCoursesCompleted && (
+                        <>
+                          <span>•</span>
+                          <span className="text-orange-600 font-medium">Complete all lessons to unlock</span>
+                        </>
                       )}
-                    >
-                      <AccordionTrigger
-                        onClick={handleFinalExamClick}
-                        className={cn(
-                          "px-3 py-2 text-sm font-semibold text-blue-800 dark:text-blue-200 hover:bg-blue-100/50 dark:hover:bg-blue-800/50 rounded-lg",
-                          !allCoursesCompleted &&
-                            "cursor-not-allowed opacity-50"
-                        )}
-                        disabled={!allCoursesCompleted}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Trophy className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                          <span className="truncate">Final Exam</span>
-                          {!allCoursesCompleted && (
-                            <span className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400">
-                              (Complete all to unlock)
-                            </span>
-                          )}
-                        </div>
-                      </AccordionTrigger>
-                    </AccordionItem>
-                  </motion.div>
-                </AnimatePresence>
-              </Accordion>
-            </TooltipProvider>
-          </>
-        )}
-      </div>
-
-      {/* <footer className="flex items-center justify-between gap-2 pt-2 border-t border-sky-200 dark:border-sky-800 mt-2">
-        <button
-          className="flex items-center gap-1 px-2 py-1 rounded-lg font-medium"
-          onClick={() => {
-            router.push(`/en/student/${wdt_ID}/profile`);
-          }}
-          type="button"
-          aria-label="Go to Student Dashboard"
-        >
-          <UserCircle className="w-6 h-6 text-sky-600 dark:text-sky-400" />
-        </button>
-        <LightDarkToggle className="ml-auto p-1 rounded-full bg-sky-200 dark:bg-sky-800 hover:bg-sky-300 dark:hover:bg-sky-700 transition-colors duration-200 shadow-sm" />
-      </footer> */}
-    </nav>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+        </div>
+      )}
+    </div>
   );
 }

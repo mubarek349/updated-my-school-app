@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import useAction from "@/hooks/useAction";
 import { correctAnswer, submitAnswers } from "@/actions/student/question";
 import { getstudentId } from "@/actions/student/dashboard";
@@ -9,7 +8,7 @@ import { updatePathProgressData } from "@/actions/student/progress";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useMainMenu } from "@/app/[lang]/(user)/student/layout";
+// import { useMainMenu } from "@/app/[lang]/(user)/student/layout";
 import AnimatedCircularProgress from "./animatedcountdownprogress";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -118,7 +117,8 @@ const StudentQuestionForm = ({
       refresh();
     },
   ]);
-  const { refresh } = useMainMenu();
+  // const { refresh } = useMainMenu();
+  const refresh = () => {}; // Placeholder function
 
   // Timer for retry after incorrect answers
   useEffect(() => {
@@ -192,13 +192,6 @@ const StudentQuestionForm = ({
     }
   }
 
-  // Progress calculation
-  const answeredQuestions =
-    chapter?.questions.filter(
-      (q) => selectedAnswers[q.id] && selectedAnswers[q.id].length > 0
-    ).length || 0;
-  const totalQuestions = chapter?.questions.length || 1;
-  const progress = (answeredQuestions / totalQuestions) * 100;
   const allAnswered =
     chapter?.questions.every(
       (q) => selectedAnswers[q.id] && selectedAnswers[q.id].length > 0
@@ -217,19 +210,19 @@ const StudentQuestionForm = ({
 
   return (
     <motion.div
-      className="flex flex-col gap-6 py-6 px-4 md:px-8 rounded-xl shadow-lg"
+      className="flex flex-col gap-2 py-2 md:px-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       {chapter?.questions.length ? (
         <TooltipProvider>
-          <div className="space-y-4 flex-1 max-md:overflow-y-auto md:max-h-dvh">
+          <div className="space-y-0 flex-1 max-md:overflow-y-auto md:max-h-dvh">
             <AnimatePresence>
               {chapter.questions.map((question, index) => (
                 <motion.div
                   key={question.id}
-                  className="p-4 border rounded-lg bg-white/80 dark:bg-sky-900/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300"
+                  className="py-2"
                   variants={cardVariants}
                   initial="hidden"
                   animate="visible"

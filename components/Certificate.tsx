@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React from "react";
 
 interface CertificateProps {
@@ -108,8 +109,7 @@ const Certificate: React.FC<CertificateProps> = ({
                 ኮርሶችን ፓኬጅ ማጠናቀቁን/ቋን እና ከ
                 <span className="font-bold"> {total} </span>
                 ጥያቄዎች
-                <span className="font-bold"> {correct} </span>
-                ን በመመለስ
+                <span className="font-bold"> {correct} </span>ን በመመለስ
                 <span className="font-bold">{score * 100}%</span>: ያገኘ/ች መሆኑን/ኗን
                 ያረጋግጣል።
                 <p className="mt-2 mb-2 text-s leading-snug">

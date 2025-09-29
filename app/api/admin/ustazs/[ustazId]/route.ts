@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { auth } from "@/auth";
@@ -5,7 +6,7 @@ import { auth } from "@/auth";
 // PUT - Update ustaz
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { ustazId: string } }
+  { params }: { params: Promise<{ ustazId: string }> }
 ) {
   try {
     const session = await auth();
@@ -14,7 +15,8 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ustazId = parseInt(params.ustazId);
+    const resolvedParams = await params;
+    const ustazId = parseInt(resolvedParams.ustazId);
     if (isNaN(ustazId)) {
       return NextResponse.json({ error: "Invalid ustaz ID" }, { status: 400 });
     }
@@ -78,7 +80,7 @@ export async function PUT(
 // DELETE - Delete ustaz
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { ustazId: string } }
+  { params }: { params: Promise<{ ustazId: string }> }
 ) {
   try {
     const session = await auth();
@@ -87,7 +89,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ustazId = parseInt(params.ustazId);
+    const resolvedParams = await params;
+    const ustazId = parseInt(resolvedParams.ustazId);
     if (isNaN(ustazId)) {
       return NextResponse.json({ error: "Invalid ustaz ID" }, { status: 400 });
     }

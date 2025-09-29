@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { MessageCircle, Calendar, User } from "lucide-react";
 import { getAnnouncements } from "@/actions/student/courseData";
 import useAction from "@/hooks/useAction";
-import { get } from "http";
 
 interface Announcement {
   id: string;
@@ -19,11 +18,15 @@ export default function CourseAnnouncements({
   courseId: string;
   lang: string;
 }) {
-    const [announcements, , loading] = useAction(getAnnouncements, [true, () => {}], courseId);
-//   const { data: announcements, loading } = useData({
-//     func: getAnnouncements,
-//     args: [courseId],
-//   });
+  const [announcements, , loading] = useAction(
+    getAnnouncements,
+    [true, () => {}],
+    courseId
+  );
+  //   const { data: announcements, loading } = useData({
+  //     func: getAnnouncements,
+  //     args: [courseId],
+  //   });
 
   if (loading) {
     return (

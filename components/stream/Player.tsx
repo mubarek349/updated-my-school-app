@@ -88,8 +88,6 @@ PlayerProps) {
     };
   }, [currentSrc]);
 
-
-
   useEffect(() => {
     const video = videoRef.current;
     if (video) video.playbackRate = speed;
@@ -167,8 +165,8 @@ PlayerProps) {
         onMouseEnter={() => !isMobile && setShowControls(true)}
         onMouseLeave={() => !isMobile && setShowControls(false)}
         className={cn(
-          "relative max-md:w-full",
-          isFullscreen ? "md:w-full" : "md:w-[70%]"
+          "relative max-md: w-full ",
+          // isFullscreen ? "md:w-full" : "md:w-[100%]  "
         )}
       >
         <video
@@ -177,7 +175,7 @@ PlayerProps) {
           width="100%"
           height="auto"
           style={{
-            borderRadius: 8,
+            // borderRadius: 8,
             width: "100%",
             // maxWidth: 640,
             display: "block",

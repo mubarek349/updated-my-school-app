@@ -1,6 +1,5 @@
 "use server";
 import prisma from "@/lib/db";
-import { revalidatePath } from "next/cache";
 
 export async function submitVideoQuestion(
   wdt_ID: number,
@@ -24,13 +23,21 @@ export async function getVideoQuestions(packageId: string) {
   try {
     const questions = await prisma.qandAQuestion.findMany({
       where: { coursepackageId: packageId },
+      include: {
+        responses: {
+          select: {
+            response: true,
+            createdAt: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
     return {
       success: true,
       data: questions,
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       message: "Failed to retrieve questions.",

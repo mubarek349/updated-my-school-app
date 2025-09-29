@@ -30,7 +30,7 @@ function LoginPage() {
   });
 
   const [pending, setPending] = useState(false);
-  const [a, b, c] = useAction(authenticate, [, () => {}]);
+  const [] = useAction(authenticate, [, () => {}]);
 
   const onSubmit = async (values: FormValues) => {
     setPending(true);

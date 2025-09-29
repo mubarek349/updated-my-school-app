@@ -1,35 +1,21 @@
 "use client";
 import React, { useEffect } from "react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+
 import { useParams, useRouter } from "next/navigation";
 import useAction from "@/hooks/useAction";
 import { packageCompleted } from "@/actions/student/progress";
 import { getQuestionForActivePackageChapterUpdate } from "@/actions/student/test";
 import { noProgress } from "@/actions/student/progress";
 import StudentQuestionForm from "@/components/custom/student/StudentQuestionForm";
-import ProgressPage from "@/components/custom/student/progressSkeleten";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  AlertCircle,
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCoursesPackageId } from "@/actions/admin/package";
 import CourseTopOverview from "@/components/courseTopOverview";
@@ -49,12 +35,11 @@ const itemVariants = {
 
 function Page() {
   const params = useParams();
-  const router = useRouter();
   const lang = "en";
   const wdt_ID = Number(params?.wdt_ID ?? 0);
   const courseId = String(params?.courseId ?? "");
   const chapterId = String(params?.chapterId ?? "");
-  const [packageData, refresh] = useAction(
+  const [packageData] = useAction(
     getPackageData,
     [true, (response) => console.log(response)],
     Number(wdt_ID)
@@ -73,6 +58,9 @@ function Page() {
     courseId
   );
   const [error, setError] = React.useState<string | null>(null);
+  const [sidebarActiveTab, setSidebarActiveTab] = React.useState<
+    "mainmenu" | "ai"
+  >("mainmenu");
 
   // FIX: Correctly access coursesPackageId from the 'data' object.
   // Assuming 'data' will have a 'packageId' property when successfully fetched.
@@ -138,7 +126,16 @@ function Page() {
   if (typeof window !== "undefined") {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("isClicked") === "true") {
-      defaultTab = "quiz";
+      // Check if specific tab is requested
+      const requestedTab = urlParams.get("tab");
+      if (requestedTab === "quiz") {
+        defaultTab = "quiz";
+      } else if (requestedTab === "mainmenu") {
+        defaultTab = "mainmenu";
+      } else {
+        // Default to quiz for backward compatibility
+        defaultTab = "quiz";
+      }
     }
   }
 
@@ -148,7 +145,7 @@ function Page() {
   if (progressData === true) {
     return (
       <motion.div
-        className="flex flex-col items-center justify-center min-h-[60vh] bg-gradient-to-b from-sky-100 to-sky-200 dark:from-sky-900 dark:to-sky-950"
+        className="flex flex-col items-center justify-center min-h-[60vh] bg-gradient-to-b from-sky-100 to-sky-100 dark:from-sky-900 dark:to-sky-950"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -189,24 +186,22 @@ function Page() {
 
   return (
     <motion.div
-      className="px-4 md:px-12 bg-blue-50 py-1 pb-6 grid grid-rows-[auto_1fr] min-h-screen overflow-hidden"
+      className="bg-white min-h-screen overflow-hidden"
       style={{
-        background:
-          "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 50%, #f5f7fa 100%) cl",
-        backgroundAttachment: "fixed",
+        background: "#f8f9fa",
       }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* <ProgressPage /> */}
-      <div className="flex flex-col flex-1 overflow-hidden px-2 ">
+      <div className="flex flex-col h-screen overflow-hidden">
         {/* Content */}
         <AnimatePresence>
           {isLoading ? (
             //to show loading skeleton
             <motion.div
-              className="flex items-center justify-center min-h-[50vh] bg-gradient-to-r from-gray-100 to-gray-200 dark:from-yellow-900 dark:to-yellow-800 rounded-xl"
+              className="flex items-center justify-center min-h-[50vh] bg-gradient-to-r from-gray-100 to-gray-100 dark:from-yellow-900 dark:to-yellow-800 rounded-xl"
               variants={itemVariants}
               initial="hidden"
               animate="visible"
@@ -237,127 +232,238 @@ function Page() {
             <Message message={data.message} wdt_ID={wdt_ID} />
           ) : (
             <>
-              {data && "chapter" in data && data.chapter?.videoUrl ? (
-                <div
-                  className="w-full mx-auto max-w-3xl flex-shrink-0 overflow-auto"
-                  style={{
-                    position: "relative",
-                    aspectRatio: "16/9",
-                    overflow: "hidden md:overflow-auto",
-                    maxHeight: "60vh",
-                  }}
-                >
-                  <iframe
-                    className="w-full h-full rounded-lg shadow-lg"
-                    src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
-                    title="Darulkubra video player"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                    aria-label="Chapter video player"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      display: "block",
-                    }}
-                  />
-                </div>
-              ) : (
-                <CourseTopOverview
-                  {...{
-                    video: data?.chapter?.customVideo || "",
-                  }}
-                />
-              )}
-              {data &&
-                "chapter" in data &&
-                data.chapter &&
-                Array.isArray(data.chapter.questions) && (
-                  <motion.div
-                    className="mt-6 flex-1 flex flex-col overflow-hidden"
-                    variants={itemVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {/* Tabs with horizontal x-axis scroll only, now includes Q&A tab */}
-                    <div className="w-full max-w-2xl mx-auto mb-1 flex-1 flex flex-col overflow-hidden">
-                      <Tabs
-                        defaultValue={defaultTab}
-                        className="flex-1 flex flex-col overflow-hidden"
-                      >
-                        <div
-                          className="overflow-x-auto max-w-full scrollbar-hide scroll-smooth"
-                          style={{
-                            scrollbarWidth: "none",
-                            msOverflowStyle: "none",
+              {/* Main Layout Container */}
+              <div className="flex h-screen bg-white">
+                {/* Main Content Area */}
+                <div className="flex-1 flex flex-col overflow-hidden lg:overflow-y-auto">
+                  {/* Video Player Section */}
+                  <div className="  bg-black flex-shrink-0 flex justify-center ">
+                    {data && "chapter" in data && data.chapter?.videoUrl ? (
+                     <iframe
+                     className="aspect-video lg:w-3xl"
+                     src={`https://www.youtube.com/embed/${data.chapter.videoUrl}`}
+                     title="Darulkubra video player"
+                     frameBorder="0"
+                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                     referrerPolicy="strict-origin-when-cross-origin"
+                     allowFullScreen
+                     aria-label="Chapter video player" 
+                     style={{
+                       // width: "100%",
+                       // height: "100%",
+                       display: "block",
+                     }}
+                   />
+                    ) : data?.chapter?.customVideo ? (
+                      <div className="w-full h-full lg:w-3xl lg:h-auto">
+                        <CourseTopOverview
+                          {...{
+                            video: data?.chapter?.customVideo,
                           }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                        <span className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                          No video available
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content Tabs Area */}
+                  {data &&
+                    "chapter" in data &&
+                    data.chapter &&
+                    Array.isArray(data.chapter.questions) && (
+                      <div className="flex-1 flex flex-col bg-white overflow-hidden lg:overflow-visible">
+                        <Tabs
+                          defaultValue={defaultTab}
+                          className="h-full flex flex-col lg:h-auto "
                         >
-                          <TabsList className="flex flex-nowrap gap-2 min-w-max">
-                            <TabsTrigger value="mainmenu">
-                              Main Menu
-                            </TabsTrigger>
-                            <TabsTrigger value="quiz">Quiz</TabsTrigger>
-                            <TabsTrigger value="qna">Q&amp;A</TabsTrigger>
-                            <TabsTrigger value="feedback">Feedback</TabsTrigger>
-                            <TabsTrigger value="materials">
-                              Materials
-                            </TabsTrigger>
-                            <TabsTrigger value="announcements">
-                              Announcements
-                            </TabsTrigger>
-                            <TabsTrigger value="ai">AI Assistance</TabsTrigger>
-                          </TabsList>
+                           {/* Content Tabs Below Player */}
+                            <div className="bg-white flex-shrink-0 ">
+                                <div className="overflow-x-auto scrollbar-hide scroll-smooth border-b-1 px-2 pt-1 border-gray-300">
+                                 <TabsList className="flex space-x-8 bg-transparent p-0 min-w-max ">
+                                 <TabsTrigger
+                                   value="mainmenu"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800  data-[state=active]:bg-gray-100 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 lg:hidden transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Main Menu
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="quiz"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Quiz
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="qna"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Q&A
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="feedback"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-red-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Feedback
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="materials"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Materials
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="announcements"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   Announcements
+                                 </TabsTrigger>
+                                 <TabsTrigger
+                                   value="ai"
+                                   className="text-sm font-medium px-0 py-2 bg-transparent border-none rounded-none data-[state=active]:text-gray-800 data-[state=active]:border-b-3 data-[state=active]:border-blue-600 data-[state=active]:font-semibold data-[state=inactive]:text-gray-500 lg:hidden transition-all duration-200 hover:text-gray-700 whitespace-nowrap"
+                                 >
+                                   AI Assistance
+                                 </TabsTrigger>
+                               </TabsList>
+                               
+                             </div>
+                           </div>
+
+                          {/* Content Area */}
+                          <div className="flex-1 overflow-y-auto lg:overflow-visible">
+                            <div className="px-2 py-2">
+                              <div className="lg:overflow-visible">
+                                <TabsContent
+                                  value="mainmenu"
+                                  className="lg:hidden"
+                                >
+                                  <MainMenu data={packageData} />
+                                </TabsContent>
+                                <TabsContent
+                                  value="quiz"
+                                  className=""
+                                >
+                                  <StudentQuestionForm
+                                    chapter={{
+                                      questions: data.chapter.questions,
+                                    }}
+                                    wdt_ID={wdt_ID}
+                                    courseId={courseId}
+                                    chapterId={data.chapter.id}
+                                  />
+                                </TabsContent>
+                                <TabsContent
+                                  value="qna"
+                                  className="h-full overflow-y-auto"
+                                >
+                                  <TraditionalQA
+                                    packageId={data.packageId}
+                                    lang={lang}
+                                    studentId={wdt_ID}
+                                  />
+                                </TabsContent>
+                                <TabsContent
+                                  value="feedback"
+                                  className=""
+                                >
+                                  <CourseFeedback
+                                    studentId={wdt_ID}
+                                    courseId={data.packageId}
+                                    lang={lang}
+                                  />
+                                </TabsContent>
+                                <TabsContent
+                                  value="materials"
+                                  className=""
+                                >
+                                  <CourseMaterials
+                                    courseId={data.packageId}
+                                    lang={lang}
+                                  />
+                                </TabsContent>
+                                <TabsContent
+                                  value="announcements"
+                                  className=""
+                                >
+                                  <CourseAnnouncements
+                                    courseId={data.packageId}
+                                    lang={lang}
+                                  />
+                                </TabsContent>
+                                <TabsContent
+                                  value="ai"
+                                  className="lg:hidden"
+                                >
+                                  <ChatComponent packageId={data.packageId} />
+                                </TabsContent>
+                              </div>
+                            </div>
+                          </div>
+                        </Tabs>
+                      </div>
+                    )}
+                </div>
+
+                {/* Sticky Right Sidebar - Desktop Only */}
+                <div className="hidden lg:block w-80 border-l border-gray-200 bg-white sticky top-0 h-screen overflow-hidden">
+                  <div className="h-full flex flex-col">
+                    {/* Sidebar Header */}
+                    <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-gray-800">
+                          Course content
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">
+                            AI Assistant
+                          </span>
+                          <div className="w-8 h-4 bg-blue-500 rounded-full relative cursor-pointer">
+                            <div className="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5 transition-transform duration-200"></div>
+                          </div>
                         </div>
-                        <div className="flex-1 min-h-0">
-                          <TabsContent value="mainmenu" className="h-full">
-                            <MainMenu data={packageData} />
-                          </TabsContent>
-                          <TabsContent value="quiz" className="h-full">
-                            <StudentQuestionForm
-                              chapter={{
-                                questions: data.chapter.questions,
-                              }}
-                              wdt_ID={wdt_ID}
-                              courseId={courseId}
-                              chapterId={data.chapter.id}
-                              // first={"first" in data ? data.first : true}
-                            />
-                          </TabsContent>
-                          <TabsContent value="qna" className="h-full">
-                            <TraditionalQA
-                              packageId={data.packageId}
-                              lang={lang}
-                              studentId={wdt_ID}
-                            />
-                          </TabsContent>
-                          <TabsContent value="feedback" className="h-full">
-                            <CourseFeedback
-                              studentId={wdt_ID}
-                              courseId={data.packageId}
-                              lang={lang}
-                            />
-                          </TabsContent>
-                          <TabsContent value="materials" className="h-full">
-                            <CourseMaterials
-                              courseId={data.packageId}
-                              lang={lang}
-                            />
-                          </TabsContent>
-                          <TabsContent value="announcements" className="h-full">
-                            <CourseAnnouncements
-                              courseId={data.packageId}
-                              lang={lang}
-                            />
-                          </TabsContent>
-                          <TabsContent value="ai" className="h-full">
-                            <ChatComponent packageId={data.packageId} />
-                          </TabsContent>
-                        </div>
-                      </Tabs>
+                      </div>
                     </div>
-                  </motion.div>
-                )}
+
+                    {/* Sidebar Tabs */}
+                    <div className="border-b border-gray-200 bg-white flex-shrink-0">
+                      <div className="flex">
+                        <button
+                          onClick={() => setSidebarActiveTab("mainmenu")}
+                          className={`flex-1 px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                            sidebarActiveTab === "mainmenu"
+                              ? "text-gray-800 bg-white border-b-2 border-blue-500 font-semibold"
+                              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          Course content
+                        </button>
+                        <button
+                          onClick={() => setSidebarActiveTab("ai")}
+                          className={`flex-1 px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                            sidebarActiveTab === "ai"
+                              ? "text-gray-800 bg-white border-b-2 border-blue-500 font-semibold"
+                              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          AI Assistant
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Sidebar Content - Only this scrolls */}
+                    <div className="flex-1 overflow-y-auto bg-white">
+                      {sidebarActiveTab === "mainmenu" ? (
+                        <MainMenu data={packageData} />
+                      ) : (
+                        <ChatComponent packageId={data?.packageId || ""} />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </AnimatePresence>
@@ -385,7 +491,7 @@ function Message({ message, wdt_ID }: { message: string; wdt_ID: number }) {
   return (
     <AnimatePresence>
       <motion.div
-        className="flex flex-col items-center justify-center min-h-[50vh] bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 rounded-xl"
+        className="flex flex-col items-center justify-center min-h-[50vh] bg-gradient-to-r from-green-100 to-green-100 dark:from-green-900 dark:to-green-800 rounded-xl"
         variants={itemVariants}
         initial="hidden"
         animate="visible"

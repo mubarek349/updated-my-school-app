@@ -152,6 +152,7 @@ export default function UstazDashboard() {
       }
     };
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading) {

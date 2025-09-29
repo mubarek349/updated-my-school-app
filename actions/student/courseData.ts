@@ -109,23 +109,33 @@ export async function addFeedback(
   rating: number
 ) {
   try {
-    // const session = await auth();
-    // const userId = Number(session?.user?.id);
-    // if (!userId) {
-    //   return { success: false, error: "Unauthorized" };
-    // }
     if (!coursePackageId || !feedback?.trim() || !rating) {
       return { success: false, error: "Invalid payload" };
     }
-    await prisma.feedback.create({
-      data: {
-        coursePackageId,
-        studentId,
-        feedback: feedback.trim(),
-        rating: Number(Math.max(1, Math.min(5, Math.round(Number(rating))))),
-      },
+    
+    const existingFeedback = await prisma.feedback.findFirst({
+      where: { coursePackageId, studentId }
     });
-    console.log("Feedback added successfully");
+    
+    if (existingFeedback) {
+      await prisma.feedback.update({
+        where: { id: existingFeedback.id },
+        data: {
+          feedback: feedback.trim(),
+          rating: Number(Math.max(1, Math.min(5, Math.round(Number(rating))))),
+        },
+      });
+    } else {
+      await prisma.feedback.create({
+        data: {
+          coursePackageId,
+          studentId,
+          feedback: feedback.trim(),
+          rating: Number(Math.max(1, Math.min(5, Math.round(Number(rating))))),
+        },
+      });
+    }
+    
     return { success: true };
   } catch (error) {
     console.error("Error adding feedback:", error);

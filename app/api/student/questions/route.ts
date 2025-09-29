@@ -6,23 +6,20 @@ export async function GET() {
   try {
     const session = await auth();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!session?.user || (session.user as any).userType !== "ustaz") {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const ustazId = parseInt(session.user.id || "0");
+    const studentId = parseInt(session.user.id);
 
     const questions = await prisma.qandAQuestion.findMany({
+      where: { studentId },
       include: {
         student: true,
         coursePackage: true,
         responses: {
-          where: { ustazId },
-          select: {
-            id: true,
-            response: true,
-            createdAt: true,
+          include: {
+            ustaz: true,
           },
         },
       },
@@ -32,19 +29,26 @@ export async function GET() {
     const formattedQuestions = questions.map((q) => ({
       id: q.id,
       question: q.question,
-      studentName: q.student?.name || "Unknown Student",
       courseName: q.coursePackage?.name || "Unknown Course",
       timestamp: q.timestamp,
       type: q.type,
       createdAt: q.createdAt.toISOString(),
-      hasResponse: q.responses?.length > 0,
-      response: q.responses?.[0]?.response || null,
-      responseId: q.responses?.[0]?.id || null,
+      student: {
+        firstName: q.student?.name?.split(' ')[0] || 'Student',
+        fatherName: q.student?.name?.split(' ')[1] || '',
+      },
+      responses:
+        q.responses?.map((r) => ({
+          id: r.id,
+          response: r.response,
+          ustazName: r.ustaz?.ustazname || "Unknown Ustaz",
+          createdAt: r.createdAt.toISOString(),
+        })) || [],
     }));
 
     return NextResponse.json(formattedQuestions);
   } catch (error) {
-    console.error("Error fetching questions:", error);
+    console.error("Error fetching student questions:", error);
     return NextResponse.json(
       { error: "Failed to fetch questions" },
       { status: 500 }

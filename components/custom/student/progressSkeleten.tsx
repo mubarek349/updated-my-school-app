@@ -38,7 +38,7 @@ export default function ProgressPage() {
 
   const params = useParams();
 
-  const wdt_ID = Number(params.wdt_ID);
+  const wdt_ID = Number(params?.wdt_ID);
 
   // Fetch progress data using useAction
   const [progressData, , isLoading] = useAction(

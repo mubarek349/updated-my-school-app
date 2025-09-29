@@ -1,8 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import fs from "fs/promises";
-import path from "path";
-import pdfParse from "pdf-parse";
 import prisma from "@/lib/db";
 
 const client = new OpenAI({
