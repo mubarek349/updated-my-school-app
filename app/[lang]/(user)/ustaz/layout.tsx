@@ -1,13 +1,13 @@
-import { requireStudent } from "@/lib/auth-utils";
+import { requireUstaz } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 
-export default async function StudentLayout({
+export default async function UstazLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   try {
-    await requireStudent();
+    await requireUstaz();
     return <>{children}</>;
   } catch (error) {
     redirect("/en/login");
