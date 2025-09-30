@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import prisma from "@/lib/db";
@@ -6,10 +7,10 @@ import { revalidatePath } from "next/cache";
 
 export interface Ustaz {
   id: number;
-  ustazname: string;
-  phoneno: string;
-  permissioned: boolean;
-  chat_id: string;
+  ustazname: string | null;
+  phoneno: string | null;
+  permissioned: boolean | null;
+  chat_id: string | null;
   _count?: {
     qandAResponse: number;
   };
@@ -28,7 +29,7 @@ export interface UpdateUstazData {
 }
 
 // Fetch all ustazs
-export async function getUstazs(): Promise<{ success: boolean; data?: Ustaz[]; error?: string }> {
+export async function getUstazs(): Promise<{ success: boolean; data?: Ustaz[]; error?: string; currentUserType?: string }> {
   try {
     const session = await auth();
 

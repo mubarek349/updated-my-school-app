@@ -185,8 +185,8 @@ export default function UstazManagement() {
   // Filter and sort ustazs
   const filteredAndSortedUstazs: Ustaz[] = ustazs
     .filter(ustaz => {
-      const matchesSearch = ustaz.ustazname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           ustaz.phoneno.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = (ustaz.ustazname?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+                           (ustaz.phoneno?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
       
       const matchesFilter = filterType === "all" || 
                            (filterType === "active" && ustaz.permissioned) ||
@@ -197,7 +197,7 @@ export default function UstazManagement() {
     .sort((a, b) => {
       switch (sortType) {
         case "name":
-          return a.ustazname.localeCompare(b.ustazname);
+          return (a.ustazname || "").localeCompare(b.ustazname || "");
         case "responses":
           return (b._count?.qandAResponse || 0) - (a._count?.qandAResponse || 0);
         case "recent":
@@ -580,8 +580,8 @@ export default function UstazManagement() {
                             onClick={() => {
                               setEditingUstaz(ustaz);
                               setEditUstaz({
-                                ustazname: ustaz.ustazname,
-                                phoneno: ustaz.phoneno,
+                                ustazname: ustaz.ustazname || "",
+                                phoneno: ustaz.phoneno || "",
                                 passcode: ""
                               });
                             }}
@@ -630,7 +630,7 @@ export default function UstazManagement() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               if (permissionUstaz) {
-                handleTogglePermission(permissionUstaz.id, permissionUstaz.permissioned);
+                handleTogglePermission(permissionUstaz.id, permissionUstaz.permissioned || false);
                 setPermissionUstaz(null);
               }
             }}>
