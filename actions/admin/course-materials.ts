@@ -29,6 +29,11 @@ export async function uploadCourseMaterial(formData: FormData) {
       return { success: false, message: "File and package ID are required" };
     }
 
+    // Validate file size (100MB limit)
+    if (file.size > 100 * 1024 * 1024) {
+      return { success: false, message: "File size must be less than 100MB" };
+    }
+
     // Create uploads directory if it doesn't exist
     const uploadsDir = join(process.cwd(), "uploads", "materials");
     await mkdir(uploadsDir, { recursive: true });

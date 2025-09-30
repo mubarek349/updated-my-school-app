@@ -25,7 +25,7 @@ export default async function UstazsPage() {
 
         {/* Main Content */}
         <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto">
+          <div className="h-full overflow-y-hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
               <UstazManagement />
             </div>
