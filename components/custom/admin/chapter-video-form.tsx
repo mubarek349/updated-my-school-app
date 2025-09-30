@@ -27,7 +27,7 @@ interface ChapterVideoFormProps {
 }
 
 const formSchema = z.object({
-  videoUrl: z.string().min(1),
+  videoUrl: z.string().min(0),
 });
 
 export const ChapterVideoForm = ({
