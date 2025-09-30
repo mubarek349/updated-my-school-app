@@ -9,7 +9,7 @@ export default async function Layout({
   try {
     await requireAuth();
     return <>{children}</>;
-  } catch (error) {
+  } catch {
     redirect("/en/login");
   }
 }

@@ -10,6 +10,7 @@ export async function getCurrentUser() {
 
 export async function getCurrentUserType(): Promise<UserType | null> {
   const user = await getCurrentUser();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (user as any)?.userType || null;
 }
 

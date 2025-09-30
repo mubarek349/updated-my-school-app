@@ -9,7 +9,7 @@ export default async function StudentLayout({
   try {
     await requireStudent();
     return <>{children}</>;
-  } catch (error) {
+  } catch  {
     redirect("/en/login");
   }
 }

@@ -25,7 +25,7 @@ export default function AuthGuard({
       router.push("/en/login");
       return;
     }
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userType = (session.user as any)?.userType;
     if (!allowedTypes.includes(userType)) {
       // User doesn't have the right permissions
@@ -44,7 +44,7 @@ export default function AuthGuard({
   if (!session) {
     return null; // Will redirect to login
   }
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userType = (session.user as any)?.userType;
   if (!allowedTypes.includes(userType)) {
     return (
