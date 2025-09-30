@@ -51,12 +51,21 @@ export async function GET(
           contentType = "application/octet-stream";
       }
 
+      // Check if download is requested
+      const url = new URL(request.url);
+      const isDownload = url.searchParams.get('download') === 'true';
+      
       return new NextResponse(new Uint8Array(fileBuffer), {
         headers: {
           "Content-Type": contentType,
           "Content-Length": fileBuffer.length.toString(),
-          "Content-Disposition": `inline; filename="${filename}"`,
+          "Content-Disposition": isDownload 
+            ? `attachment; filename="${filename}"` 
+            : `inline; filename="${filename}"`,
           "Cache-Control": "public, max-age=31536000",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET",
+          "Access-Control-Allow-Headers": "Content-Type",
         },
       });
     } catch {

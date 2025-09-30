@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Trash2, Brain, CheckCircle } from "lucide-react";
+import { Upload, Trash2, Brain, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { uploadAiPdfData, removeAiPdfData } from "@/actions/admin/ai-pdf-data";
+import { removeAiPdfData } from "@/actions/admin/ai-pdf-data";
+import { finalizeAiPdfUpload } from "@/actions/admin/ai-pdf-data-chunked";
+import { ChunkedUploader } from "@/lib/chunkedUploader";
 
 interface AiPdfUploaderProps {
   packageId: string;
@@ -18,6 +21,8 @@ interface AiPdfUploaderProps {
 export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState("");
   const router = useRouter();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,31 +35,59 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
     }
 
     if (file.size > 1000 * 1024 * 1024) { // 1000MB limit
-      toast.error('File size must be less than 10MB');
+      toast.error('File size must be less than 1000MB');
       return;
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStatus("Preparing upload...");
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('packageId', packageId);
+      const uploader = new ChunkedUploader("/api/upload-pdf-chunked", {
+        chunkSize: 5 * 1024 * 1024, // 5MB chunks
+        maxRetries: 3,
+        onProgress: (progress) => {
+          setUploadProgress(progress);
+          setUploadStatus(`Uploading... ${Math.round(progress)}%`);
+        },
+        onError: (error) => {
+          console.error('Chunked upload error:', error);
+          toast.error(error);
+          setIsUploading(false);
+        },
+        onSuccess: async () => {
+          setUploadStatus("Finalizing upload...");
+          setUploadProgress(95);
+          
+          // Update database with filename
+          const result = await finalizeAiPdfUpload(packageId, file.name);
+          
+          if (result.success) {
+            setUploadProgress(100);
+            setUploadStatus("Upload complete!");
+            toast.success('AI PDF Data uploaded successfully!');
+            router.refresh();
+          } else {
+            throw new Error(result.message);
+          }
+          
+          setIsUploading(false);
+        }
+      });
 
-      const result = await uploadAiPdfData(formData);
-      
-      if (!result.success) {
-        throw new Error(result.message);
-      }
-
-      toast.success('AI PDF Data uploaded successfully!');
-      router.refresh();
+      await uploader.uploadFile(file, packageId);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload AI PDF Data');
-    } finally {
       setIsUploading(false);
+    } finally {
       event.target.value = '';
+      // Clear progress after 3 seconds
+      setTimeout(() => {
+        setUploadProgress(0);
+        setUploadStatus("");
+      }, 3000);
     }
   };
 
@@ -122,31 +155,55 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
           </div>
         ) : (
           /* Upload Section */
-          <div className="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors bg-white/50">
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={handleFileUpload}
-              disabled={isUploading}
-              className="hidden"
-              id={`ai-pdf-upload-${packageId}`}
-            />
-            <label
-              htmlFor={`ai-pdf-upload-${packageId}`}
-              className="cursor-pointer flex flex-col items-center gap-3"
-            >
-              <div className="rounded-full bg-purple-100 p-4">
-                <Upload className="h-8 w-8 text-purple-600" />
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors bg-white/50">
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleFileUpload}
+                disabled={isUploading}
+                className="hidden"
+                id={`ai-pdf-upload-${packageId}`}
+              />
+              <label
+                htmlFor={`ai-pdf-upload-${packageId}`}
+                className="cursor-pointer flex flex-col items-center gap-3"
+              >
+                <div className="rounded-full bg-purple-100 p-4">
+                  {isUploading ? (
+                    <Loader2 className="h-8 w-8 text-purple-600 animate-spin" />
+                  ) : (
+                    <Upload className="h-8 w-8 text-purple-600" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    {isUploading ? 'Processing AI PDF Data...' : 'Upload AI PDF Data'}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    PDF files only • Max 1000MB
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {/* Upload Progress */}
+            {isUploading && (
+              <div className="bg-white/70 rounded-lg p-4 border border-purple-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-800">
+                    {uploadStatus}
+                  </span>
+                  <span className="text-sm text-slate-600">
+                    {Math.round(uploadProgress)}%
+                  </span>
+                </div>
+                <Progress 
+                  value={uploadProgress} 
+                  className="h-2"
+                />
               </div>
-              <div>
-                <p className="text-sm font-medium text-slate-800">
-                  {isUploading ? 'Processing AI PDF Data...' : 'Upload AI PDF Data'}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  PDF files only • Max 10MB
-                </p>
-              </div>
-            </label>
+            )}
           </div>
         )}
 

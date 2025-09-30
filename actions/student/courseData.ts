@@ -34,27 +34,28 @@ export async function getCourseMaterials(coursePackageId: string) {
       try {
         const obj = JSON.parse(item as unknown as string);
         if (obj && typeof obj === "object" && (obj as any).url) {
-          const url = (obj as any).url as string;
-          const name = (obj as any).name ?? url.split("/").pop() ?? "material";
-          const type = ((obj as any).type ?? url.split(".").pop() ?? "file")
+          const filename = (obj as any).url as string;
+          const name = (obj as any).name ?? filename.split("/").pop() ?? "material";
+          const type = ((obj as any).type ?? filename.split(".").pop() ?? "file")
             .toString()
             .toLowerCase();
+          const url = `/api/materials/${encodeURIComponent(filename)}`;
           return { name, url, type };
         }
-        // If parsed but not as expected, fall back to treating it as a URL string
-        const url = String(item);
+        // If parsed but not as expected, fall back to treating it as a filename
+        const filename = String(item);
         return {
-          name: url.split("/").pop() ?? "material",
-          url,
-          type: url.split(".").pop() ?? "file",
+          name: filename.split("/").pop() ?? "material",
+          url: `/api/materials/${encodeURIComponent(filename)}`,
+          type: filename.split(".").pop() ?? "file",
         };
       } catch {
-        // Backward compatibility: previously stored plain URLs in the array or comma-separated
-        const url = String(item);
+        // Backward compatibility: previously stored plain filenames in the array or comma-separated
+        const filename = String(item);
         return {
-          name: url.split("/").pop() ?? "material",
-          url,
-          type: url.split(".").pop() ?? "file",
+          name: filename.split("/").pop() ?? "material",
+          url: `/api/materials/${encodeURIComponent(filename)}`,
+          type: filename.split(".").pop() ?? "file",
         };
       }
     });
