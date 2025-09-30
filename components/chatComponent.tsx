@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bouncy } from "ldrs/react";
 
 export default function ChatComponent({ packageId }: { packageId: string }) {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>(
@@ -10,17 +11,31 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
   const [selectedModel, setSelectedModel] = useState<"chatgpt" | "gemini">(
     "chatgpt"
   );
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const loadSamplePDF = async (): Promise<string> => {
+    try {
+      const response = await fetch("/apidata/sample.pdf");
+      const arrayBuffer = await response.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      return base64;
+    } catch (error) {
+      console.error("Error loading sample PDF:", error);
+      return "";
+    }
+  };
+
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
     const newMessages = [...messages, { role: "user", content: input }];
     setMessages(newMessages);
     setInput("");
+    setIsLoading(true);
 
     try {
       const apiEndpoint =
@@ -30,10 +45,29 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
       console.log("Package ID:", packageId);
       console.log("Selected model:", selectedModel);
 
+      // Load sample PDF for ChatGPT
+      let fileData = null;
+      if (selectedModel === "chatgpt") {
+        const samplePDFBase64 = await loadSamplePDF();
+        if (samplePDFBase64) {
+          fileData = [
+            {
+              type: "input_file",
+              filename: "sample.pdf",
+              file_data: samplePDFBase64,
+            },
+          ];
+        }
+      }
+
       const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, packageId }),
+        body: JSON.stringify({
+          messages: newMessages,
+          packageId,
+          files: fileData,
+        }),
       });
 
       console.log("Response status:", res.status);
@@ -48,6 +82,7 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
             content: `API Error: ${errorData.error || res.statusText}`,
           },
         ]);
+        setIsLoading(false);
         return;
       }
 
@@ -62,6 +97,7 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
           { role: "system", content: "No response from AI model." },
         ]);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error("Fetch error:", error);
       setMessages((prev) => [
@@ -73,6 +109,7 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
           }`,
         },
       ]);
+      setIsLoading(false);
     }
   };
 
@@ -151,33 +188,83 @@ export default function ChatComponent({ packageId }: { packageId: string }) {
               </div>
             </div>
           ))}
+
+          {/* Loading Animation */}
+          {isLoading && (
+            <div
+              className={`mb-4 p-3 rounded-lg bg-green-50 border-l-4 border-green-500 mr-4`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                  {selectedModel === "chatgpt" ? "ChatGPT" : "Gemini"}
+                </span>
+              </div>
+              <div className="flex items-center justify-center py-4">
+                <Bouncy size="45" speed="1.75" color="#10b981" />
+              </div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
         {/* Input Area */}
         <div className="sticky bottom-0 bg-white border-t p-2 sm:p-3 rounded-b-lg">
+          {/* Sample PDF Indicator */}
+          {selectedModel === "chatgpt" && (
+            <div className="mb-3 p-2 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-blue-600">📄</span>
+                <span className="text-xs font-medium text-blue-600">
+                  Using sample.pdf for ChatGPT analysis
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <input
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") sendMessage();
+                if (e.key === "Enter" && !isLoading) sendMessage();
               }}
-              placeholder={`Ask ${
-                selectedModel === "chatgpt" ? "ChatGPT" : "Gemini"
-              }...`}
+              placeholder={
+                isLoading
+                  ? "AI is thinking..."
+                  : `Ask ${
+                      selectedModel === "chatgpt" ? "ChatGPT" : "Gemini"
+                    }...`
+              }
+              disabled={isLoading}
             />
             <button
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={sendMessage}
-              disabled={!input.trim()}
+              disabled={!input.trim() || isLoading}
             >
-              Send
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Loading...</span>
+                </div>
+              ) : (
+                "Send"
+              )}
             </button>
           </div>
           <div className="mt-2 text-xs text-gray-500 text-center">
-            Using {selectedModel === "chatgpt" ? "ChatGPT" : "Gemini"} • Press
-            Enter to send
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>AI is thinking...</span>
+              </div>
+            ) : (
+              `Using ${
+                selectedModel === "chatgpt" ? "ChatGPT" : "Gemini"
+              } • Press Enter to send`
+            )}
           </div>
         </div>
       </div>
