@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       : "You are an educational assistant. Only answer questions related to education, courses, and learning. If the question is outside education, politely refuse.";
 
     // Get the generative model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     // Convert messages to Gemini format
     const chat = model.startChat({

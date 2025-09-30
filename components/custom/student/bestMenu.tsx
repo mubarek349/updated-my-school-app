@@ -363,7 +363,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                             return (
                               <motion.div
                                 key={chapter.id}
-                                variants={itemVariants}
+                            variants={itemVariants}
                             className="w-full"
                           >
                             <Link
@@ -379,7 +379,7 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                   handleLockedLessonClick(chapter.title);
                                 }
                               }}
-                                      className={cn(
+                              className={cn(
                                 "w-full pl-4 pr-3 py-2 text-left hover:bg-gray-50 transition-colors duration-200 block",
                                 isCompleted === false && "bg-gray-100",
                                 isCompleted === null && "opacity-50"
@@ -416,11 +416,11 @@ export default function MainMenu({ data, className }: MainMenuProps) {
                                   <div className="flex items-center gap-2 text-xs text-gray-500">
                                     <span>Video</span>
                                     <span>•</span>
-                                  <span>
+                                    <span>
                                       {isCompleted === true ? "Completed" : 
                                        isCompleted === false ? "In Progress" : 
                                        "Locked"}
-                                  </span>
+                                    </span>
                                   </div>
                                 </div>
                               </div>
