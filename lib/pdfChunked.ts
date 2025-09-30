@@ -61,9 +61,11 @@ async function processMediumPdf(filePath: string, fileSize: number): Promise<str
   });
   
   await new Promise<void>((resolve, reject) => {
-    stream.on('data', (chunk: Buffer) => {
-      chunk.copy(buffer, offset);
-      offset += chunk.length;
+    stream.on('data', (chunk: string | Buffer) => {
+      if (Buffer.isBuffer(chunk)) {
+        chunk.copy(buffer, offset);
+        offset += chunk.length;
+      }
     });
     
     stream.on('end', () => {
@@ -123,13 +125,15 @@ async function processVeryLargePdf(filePath: string, fileSize: number): Promise<
   });
   
   await new Promise<void>((resolve, reject) => {
-    stream.on('data', (chunk: Buffer) => {
-      chunk.copy(buffer, offset);
-      offset += chunk.length;
-      
-      // Force garbage collection periodically during processing
-      if (offset % (1024 * 1024) === 0 && global.gc) { // Every 1MB
-        global.gc();
+    stream.on('data', (chunk: string | Buffer) => {
+      if (Buffer.isBuffer(chunk)) {
+        chunk.copy(buffer, offset);
+        offset += chunk.length;
+        
+        // Force garbage collection periodically during processing
+        if (offset % (1024 * 1024) === 0 && global.gc) { // Every 1MB
+          global.gc();
+        }
       }
     });
     

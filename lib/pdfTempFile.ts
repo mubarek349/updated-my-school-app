@@ -61,13 +61,15 @@ async function processWithMinimalMemory(filePath: string, fileSize: number): Pro
   });
   
   await new Promise<void>((resolve, reject) => {
-    stream.on('data', (chunk: Buffer) => {
-      chunk.copy(buffer, offset);
-      offset += chunk.length;
-      
-      // Force garbage collection periodically during processing
-      if (offset % (512 * 1024) === 0 && global.gc) { // Every 512KB
-        global.gc();
+    stream.on('data', (chunk: string | Buffer) => {
+      if (Buffer.isBuffer(chunk)) {
+        chunk.copy(buffer, offset);
+        offset += chunk.length;
+        
+        // Force garbage collection periodically during processing
+        if (offset % (512 * 1024) === 0 && global.gc) { // Every 512KB
+          global.gc();
+        }
       }
     });
     

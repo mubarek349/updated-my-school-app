@@ -30,7 +30,7 @@ export async function extractPdfTextStreaming(): Promise<string> {
 
     // For very large files, we'll use a different approach
     if (stats.size > 50 * 1024 * 1024) { // 50MB threshold
-      return await processLargePdf(filePath, stats.size);
+      return await processLargePdf(filePath);
     }
 
     // For smaller files, use the optimized streaming approach
@@ -64,9 +64,11 @@ async function processSmallPdf(filePath: string): Promise<string> {
   });
   
   await new Promise<void>((resolve, reject) => {
-    stream.on('data', (chunk: Buffer) => {
-      chunk.copy(tempBuffer, offset);
-      offset += chunk.length;
+    stream.on('data', (chunk: string | Buffer) => {
+      if (Buffer.isBuffer(chunk)) {
+        chunk.copy(tempBuffer, offset);
+        offset += chunk.length;
+      }
     });
     
     stream.on('end', () => {
@@ -96,7 +98,7 @@ async function processSmallPdf(filePath: string): Promise<string> {
 /**
  * Process larger PDFs (> 50MB) with advanced memory management
  */
-async function processLargePdf(filePath: string, fileSize: number): Promise<string> {
+async function processLargePdf(filePath: string): Promise<string> {
   console.log('Processing large PDF with advanced memory management...');
   
   // For very large files, we might need to implement page-by-page processing
@@ -110,13 +112,15 @@ async function processLargePdf(filePath: string, fileSize: number): Promise<stri
   const maxSize = 100 * 1024 * 1024; // 100MB limit
   
   await new Promise<void>((resolve, reject) => {
-    stream.on('data', (chunk: Buffer) => {
-      chunks.push(chunk);
-      totalSize += chunk.length;
-      
-      if (totalSize > maxSize) {
-        stream.destroy();
-        reject(new Error(`PDF file too large (>${maxSize / 1024 / 1024}MB). Please use a smaller file or implement page-by-page processing.`));
+    stream.on('data', (chunk: string | Buffer) => {
+      if (Buffer.isBuffer(chunk)) {
+        chunks.push(chunk);
+        totalSize += chunk.length;
+        
+        if (totalSize > maxSize) {
+          stream.destroy();
+          reject(new Error(`PDF file too large (>${maxSize / 1024 / 1024}MB). Please use a smaller file or implement page-by-page processing.`));
+        }
       }
     });
     
