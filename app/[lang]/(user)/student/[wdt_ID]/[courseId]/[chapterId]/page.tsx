@@ -397,7 +397,8 @@ function Page() {
                                   value="ai"
                                   className="lg:hidden"
                                 >
-                                  <ChatComponent packageId={data.packageId} />
+                                  {/* packageId={data.packageId} */}
+                                  <ChatComponent  />
                                 </TabsContent>
                               </div>
                             </div>
@@ -416,14 +417,6 @@ function Page() {
                         <h3 className="text-sm font-semibold text-gray-800">
                           Course content
                         </h3>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">
-                            AI Assistant
-                          </span>
-                          <div className="w-8 h-4 bg-blue-500 rounded-full relative cursor-pointer">
-                            <div className="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5 transition-transform duration-200"></div>
-                          </div>
-                        </div>
                       </div>
                     </div>
 
@@ -458,7 +451,8 @@ function Page() {
                       {sidebarActiveTab === "mainmenu" ? (
                         <MainMenu data={packageData} />
                       ) : (
-                        <ChatComponent packageId={data?.packageId || ""} />
+                        // packageId={data?.packageId || ""}
+                        <ChatComponent  />
                       )}
                     </div>
                   </div>
