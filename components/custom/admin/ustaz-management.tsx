@@ -499,7 +499,7 @@ export default function UstazManagement() {
           )}
 
           {/* Ustazs List */}
-          <div className="space-y-4 pb-30">
+          <div className="space-y-4 pb-32">
             {!showCreateForm && (
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -536,7 +536,7 @@ export default function UstazManagement() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 pb-10">
+              <div className="grid gap-4 pb-12">
                 {filteredAndSortedUstazs.map((ustaz: Ustaz) => (
                   <Card key={ustaz.id} className="shadow-sm hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
