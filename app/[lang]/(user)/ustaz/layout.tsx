@@ -1,13 +1,13 @@
-import { requireAdminOrUstaz } from "@/lib/auth-utils";
+import { requireUstaz } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 
-export default async function Layout({
+export default async function UstazLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   try {
-    await requireAdminOrUstaz();
+    await requireUstaz();
     return <>{children}</>;
   } catch {
     redirect("/en/login");

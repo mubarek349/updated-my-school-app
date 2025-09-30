@@ -1,6 +1,9 @@
-"use client";
-import React from "react";
-
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return <div className="grid overflow-hidden ">{children}</div>;
+export default function StudentLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Student folder is completely public - no authentication required
+  // Anyone can access student routes without login
+  return <>{children}</>;
 }
