@@ -397,7 +397,8 @@ function Page() {
                                   value="ai"
                                   className="lg:hidden"
                                 >
-                                  <ChatComponent packageId={data.packageId} />
+                                  {/* packageId={data?.packageId || ""}  */}
+                                  <ChatComponent />
                                 </TabsContent>
                               </div>
                             </div>
@@ -450,7 +451,8 @@ function Page() {
                       {sidebarActiveTab === "mainmenu" ? (
                         <MainMenu data={packageData} />
                       ) : (
-                        <ChatComponent packageId={data?.packageId || ""} />
+                        // packageId={data?.packageId || ""} 
+                        <ChatComponent />
                       )}
                     </div>
                   </div>
