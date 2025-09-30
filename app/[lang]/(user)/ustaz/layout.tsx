@@ -9,7 +9,7 @@ export default async function UstazLayout({
   try {
     await requireUstaz();
     return <>{children}</>;
-  } catch  {
+  } catch {
     redirect("/en/login");
   }
 }

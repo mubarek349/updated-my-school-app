@@ -128,7 +128,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - login page
+     * - student routes (students access via direct links)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|en/login).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|en/login|en/student).*)",
   ],
 };

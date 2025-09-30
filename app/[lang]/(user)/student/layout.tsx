@@ -1,15 +1,9 @@
-import { requireStudent } from "@/lib/auth-utils";
-import { redirect } from "next/navigation";
-
-export default async function StudentLayout({
+export default function StudentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  try {
-    await requireStudent();
-    return <>{children}</>;
-  } catch  {
-    redirect("/en/login");
-  }
+  // Student folder is completely public - no authentication required
+  // Anyone can access student routes without login
+  return <>{children}</>;
 }

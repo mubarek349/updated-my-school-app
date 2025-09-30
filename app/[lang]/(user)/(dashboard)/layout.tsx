@@ -1,4 +1,4 @@
-import { requireAuth } from "@/lib/auth-utils";
+import { requireAdminOrUstaz } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 
 export default async function Layout({
@@ -7,7 +7,7 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   try {
-    await requireAuth();
+    await requireAdminOrUstaz();
     return <>{children}</>;
   } catch {
     redirect("/en/login");
