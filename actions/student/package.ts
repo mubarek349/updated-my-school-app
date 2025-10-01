@@ -1,5 +1,6 @@
 "use server";
 import prisma from "@/lib/db";
+import { hasMatchingSubject } from "@/lib/subject-matching";
 
 export async function getPackageData(wdt_ID: number) {
   // 1. Get student and active package with courses and chapters
@@ -52,15 +53,16 @@ export async function getAvailablePacakges(
   subject: string,
   kidpackage: boolean
 ) {
-  const assignedPackages = await prisma.subjectPackage.findMany({
+  // Get all subject packages for this package type and kid status
+  const allSubjectPackages = await prisma.subjectPackage.findMany({
     where: {
       packageType: packageType,
-      subject: subject,
       kidpackage: kidpackage,
     },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
+      subject: true,
       package: {
         select: {
           id: true,
@@ -70,6 +72,10 @@ export async function getAvailablePacakges(
     },
   });
 
-  // Return the unique pairs as objects
-  return assignedPackages;
+  // Filter packages where student's subjects match any of the required subjects
+  const matchingPackages = allSubjectPackages.filter((pkg) =>
+    hasMatchingSubject(subject, pkg.subject || "")
+  );
+
+  return matchingPackages;
 }

@@ -8,6 +8,7 @@ import {
 } from "../student/finalExamResult";
 import { getAttendanceofAllStudents } from "../student/attendance";
 import { differenceInDays } from "date-fns";
+import { hasMatchingSubject } from "@/lib/subject-matching";
 
 export async function getStudentProgressStatus(
   studentId: number,
@@ -1242,15 +1243,15 @@ export async function getAvailablePackagesForStudent(studentId: number) {
 
   if (!student) return [];
 
-  // Get all packages available for this student's subject/package/isKid combination
-  const availablePackages = await prisma.subjectPackage.findMany({
+  // Get all subject packages for this package type and kid status
+  const allSubjectPackages = await prisma.subjectPackage.findMany({
     where: {
-      subject: student.subject,
       packageType: student.package,
       kidpackage: student.isKid,
     },
     select: {
       packageId: true,
+      subject: true,
       package: {
         select: {
           id: true,
@@ -1259,6 +1260,11 @@ export async function getAvailablePackagesForStudent(studentId: number) {
       },
     },
   });
+
+  // Filter packages where student's subjects match any of the required subjects
+  const availablePackages = allSubjectPackages.filter((pkg) =>
+    hasMatchingSubject(student.subject || "", pkg.subject || "")
+  );
 
   // For each package, get the student's progress status and details
   const packagesWithProgress = await Promise.all(
