@@ -10,6 +10,7 @@ export default async function HomePage() {
   }
 
   // Get user type from session
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const userType = (session.user as any)?.userType;
 
   // Redirect based on user type

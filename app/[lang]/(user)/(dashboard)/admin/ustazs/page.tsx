@@ -1,6 +1,6 @@
 import { requireAuthentication } from "@/actions/admin/authentication";
 import UstazManagement from "@/components/custom/admin/ustaz-management";
-import { Users, UserCheck, Shield, MessageSquare } from "lucide-react";
+import { UserCheck, Shield, MessageSquare } from "lucide-react";
 
 export default async function UstazsPage() {
   await requireAuthentication();

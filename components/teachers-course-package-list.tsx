@@ -12,8 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { coursePackage } from "@prisma/client";
 import { 
   BookOpen, 
-  Clock, 
-  Users, 
+  Clock,  
   ArrowRight, 
   Calendar,
   CheckCircle,
