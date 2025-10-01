@@ -1,36 +1,62 @@
 import { requireAuthentication } from "@/actions/admin/authentication";
 import UstazManagement from "@/components/custom/admin/ustaz-management";
+import { Users, UserCheck, Shield, MessageSquare } from "lucide-react";
 
 export default async function UstazsPage() {
   await requireAuthentication();
-  console.log("mubarek");
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="h-screen flex flex-col">
-        {/* Header */}
-        <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-b border-slate-200/60 px-4 sm:px-6 lg:px-8 py-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                  Ustaz Management
-                </h1>
-                <p className="text-sm sm:text-base text-slate-600 mt-1">
-                  Manage ustazs who can respond to student questions
-                </p>
-              </div>
+    <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200/60 hover:shadow-lg transition-all duration-300">
+          <div className="flex items-center">
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <UserCheck className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Ustazs</p>
+              <p className="text-2xl font-bold text-gray-900">-</p>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-hidden">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
-              <UstazManagement />
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200/60 hover:shadow-lg transition-all duration-300">
+          <div className="flex items-center">
+            <div className="p-3 bg-green-100 rounded-lg">
+              <Shield className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Active</p>
+              <p className="text-2xl font-bold text-gray-900">-</p>
             </div>
           </div>
         </div>
+
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200/60 hover:shadow-lg transition-all duration-300">
+          <div className="flex items-center">
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <MessageSquare className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Responses</p>
+              <p className="text-2xl font-bold text-gray-900">-</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Ustaz Management
+          </h2>
+          <p className="text-gray-600 mt-1">
+            Add, edit, and manage ustaz permissions and settings
+          </p>
+        </div>
+        <UstazManagement />
       </div>
     </div>
   );
