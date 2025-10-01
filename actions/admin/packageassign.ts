@@ -14,7 +14,34 @@ export async function getDistinctPackagesWithSubjects() {
     },
     distinct: ["package", "subject"],
   });
-  return result;
+
+  // Process the results to split multiple subjects
+  const processedResults = [];
+  const seenCombinations = new Set(); // To track unique package-subject combinations
+
+  for (const item of result) {
+    if (item.subject && item.package) {
+      // Split subjects by comma and trim whitespace
+      const subjects = item.subject
+        .split(",")
+        .map((subject) => subject.trim())
+        .filter((subject) => subject.length > 0);
+
+      // Create separate entries for each subject
+      for (const subject of subjects) {
+        const combination = `${item.package}|${subject}`; // Create unique key
+        if (!seenCombinations.has(combination)) {
+          seenCombinations.add(combination);
+          processedResults.push({
+            package: item.package,
+            subject: subject,
+          });
+        }
+      }
+    }
+  }
+
+  return processedResults;
 }
 
 export async function assignPackage(
@@ -339,8 +366,7 @@ export async function getAssignedUstazs(
       ? coursePackage.ustaz
       : [coursePackage.ustaz];
   } catch (error) {
-    console.error('❌ Failed to fetch assigned Ustazs:', error);
+    console.error("❌ Failed to fetch assigned Ustazs:", error);
     return null;
   }
 }
-
