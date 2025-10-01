@@ -26,6 +26,18 @@ export async function getCoursePackages() {
     return { success: true, data: coursePackages };
   } catch (error) {
     console.error("Failed to fetch course packages:", error);
-    return { success: false, error: "Failed to fetch course packages" };
+    
+    // More specific error handling
+    if (error instanceof Error) {
+      return { 
+        success: false, 
+        error: `Database error: ${error.message}` 
+      };
+    }
+    
+    return { 
+      success: false, 
+      error: "Failed to fetch course packages" 
+    };
   }
 }
