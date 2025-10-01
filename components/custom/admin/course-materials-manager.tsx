@@ -1,16 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, FileText, Eye, Trash2 } from "lucide-react";
+import { Upload, FileText, Eye, Trash2, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { uploadCourseMaterial, updateCourseMaterials } from "@/actions/admin/course-materials";
+import { updateCourseMaterials } from "@/actions/admin/course-materials";
+import { ChunkedUploader } from "@/lib/chunkedUploader";
 
 interface CourseMaterialsManagerProps {
   packageId: string;
   packageName: string;
   initialMaterials: string | null;
+}
+
+interface UploadProgress {
+  filename: string;
+  progress: number;
+  status: string;
+  isComplete: boolean;
+  error?: string;
 }
 
 export function CourseMaterialsManager({
@@ -21,6 +32,7 @@ export function CourseMaterialsManager({
     initialMaterials ? initialMaterials.split(',').filter(Boolean) : []
   );
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
   const router = useRouter();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,40 +41,95 @@ export function CourseMaterialsManager({
 
     setIsUploading(true);
     const uploadedFiles: string[] = [];
+    
+    // Initialize progress tracking for all files
+    const initialProgress: UploadProgress[] = Array.from(files).map(file => ({
+      filename: file.name,
+      progress: 0,
+      status: "Preparing...",
+      isComplete: false,
+    }));
+    setUploadProgress(initialProgress);
 
     try {
-      for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('packageId', packageId);
-
-        const result = await uploadCourseMaterial(formData);
+      for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+        const file = files[fileIndex];
         
-        if (!result.success) {
-          throw new Error(result.message);
+        // Validate file size
+        if (file.size > 1000 * 1024 * 1024) {
+          setUploadProgress(prev => prev.map((p, i) => 
+            i === fileIndex 
+              ? { ...p, status: "File too large", error: "File exceeds 1000MB limit", isComplete: true }
+              : p
+          ));
+          continue;
         }
 
-        uploadedFiles.push(result.filename!);
+        // Update progress to uploading
+        setUploadProgress(prev => prev.map((p, i) => 
+          i === fileIndex 
+            ? { ...p, progress: 10, status: "Starting upload..." }
+            : p
+        ));
+
+        const uploader = new ChunkedUploader("/api/upload-material-chunked", {
+          chunkSize: 5 * 1024 * 1024, // 5MB chunks
+          maxRetries: 3,
+          onProgress: (progress) => {
+            setUploadProgress(prev => prev.map((p, i) => 
+              i === fileIndex 
+                ? { ...p, progress: Math.min(90, progress), status: `Uploading... ${Math.round(progress)}%` }
+                : p
+            ));
+          },
+          onError: (error) => {
+            setUploadProgress(prev => prev.map((p, i) => 
+              i === fileIndex 
+                ? { ...p, status: "Upload failed", error: error, isComplete: true }
+                : p
+            ));
+          },
+          onSuccess: () => {
+            setUploadProgress(prev => prev.map((p, i) => 
+              i === fileIndex 
+                ? { ...p, progress: 100, status: "Upload complete", isComplete: true }
+                : p
+            ));
+            uploadedFiles.push(file.name);
+          }
+        });
+
+        await uploader.uploadFile(file, packageId);
       }
 
-      const updatedMaterials = [...materials, ...uploadedFiles];
-      setMaterials(updatedMaterials);
+      // Wait a moment for all uploads to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Update database
-      const updateResult = await updateCourseMaterials(packageId, updatedMaterials.join(','));
-      
-      if (!updateResult.success) {
-        throw new Error(updateResult.message);
+      if (uploadedFiles.length > 0) {
+        const updatedMaterials = [...materials, ...uploadedFiles];
+        setMaterials(updatedMaterials);
+
+        // Update database
+        const updateResult = await updateCourseMaterials(packageId, updatedMaterials.join(','));
+        
+        if (!updateResult.success) {
+          throw new Error(updateResult.message);
+        }
+
+        toast.success(`${uploadedFiles.length} file(s) uploaded successfully!`);
+        router.refresh();
       }
 
-      toast.success(`${uploadedFiles.length} file(s) uploaded successfully!`);
-      router.refresh();
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload files');
     } finally {
       setIsUploading(false);
       event.target.value = '';
+      // Clear progress after 3 seconds
+      setTimeout(() => {
+        setUploadProgress([]);
+      }, 3000);
     }
   };
 
@@ -107,18 +174,74 @@ export function CourseMaterialsManager({
           className="cursor-pointer flex flex-col items-center gap-2"
         >
           <div className="rounded-full bg-slate-100 p-3">
-            <Upload className="h-6 w-6 text-slate-600" />
+            {isUploading ? (
+              <Loader2 className="h-6 w-6 text-slate-600 animate-spin" />
+            ) : (
+              <Upload className="h-6 w-6 text-slate-600" />
+            )}
           </div>
           <div>
             <p className="text-sm font-medium text-slate-800">
               {isUploading ? 'Uploading...' : 'Upload Materials'}
             </p>
             <p className="text-xs text-slate-500">
-              PDF, PPT, DOC, XLS files supported
+              PDF, PPT, DOC, XLS files supported (Max 1000MB each)
             </p>
           </div>
         </label>
       </div>
+
+      {/* Upload Progress */}
+      {uploadProgress.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-slate-800">
+            Upload Progress ({uploadProgress.length} files)
+          </h4>
+          {uploadProgress.map((progress, index) => (
+            <div key={index} className="bg-slate-50 rounded-lg p-4 border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-slate-600" />
+                  <span className="text-sm font-medium text-slate-800 truncate">
+                    {progress.filename}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {progress.isComplete ? (
+                    progress.error ? (
+                      <Badge variant="destructive" className="text-xs">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Failed
+                      </Badge>
+                    ) : (
+                      <Badge variant="default" className="text-xs bg-green-100 text-green-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Complete
+                      </Badge>
+                    )
+                  ) : (
+                    <Badge variant="secondary" className="text-xs">
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      {progress.status}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <Progress 
+                value={progress.progress} 
+                className="h-2"
+              />
+              <div className="flex justify-between text-xs text-slate-500 mt-1">
+                <span>{progress.status}</span>
+                <span>{progress.progress}%</span>
+              </div>
+              {progress.error && (
+                <p className="text-xs text-red-600 mt-1">{progress.error}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Materials List */}
       {materials.length > 0 && (
@@ -126,7 +249,6 @@ export function CourseMaterialsManager({
           <h4 className="text-sm font-medium text-slate-800">
             Uploaded Materials ({materials.length})
           </h4>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
             {materials.map((material, index) => (
               <div
                 key={index}
@@ -158,7 +280,6 @@ export function CourseMaterialsManager({
                 </div>
               </div>
             ))}
-          </div>
         </div>
       )}
 

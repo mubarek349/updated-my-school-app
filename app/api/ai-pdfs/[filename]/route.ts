@@ -9,6 +9,7 @@ export async function GET(
   try {
     const resolvedParams = await params;
     const filename = resolvedParams.filename;
+    
     const filePath = join(process.cwd(), "docs", "ai-pdfs", filename);
 
     const fileBuffer = await readFile(filePath);

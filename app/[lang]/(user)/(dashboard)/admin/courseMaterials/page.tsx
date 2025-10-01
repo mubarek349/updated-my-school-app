@@ -5,23 +5,35 @@ import { CourseMaterialsSelector } from "@/components/custom/admin/course-materi
 import { getCoursePackages } from "@/actions/admin/course-packages";
 
 const CourseMaterialsPage = async () => {
-  const result = await getCoursePackages();
+  console.log("CourseMaterialsPage1");
   
-  if (!result.success) {
-    return (
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-red-600">Failed to load course packages</div>
+  try {
+    const result = await getCoursePackages();
+    console.log("CourseMaterialsPage result:", result);
+    
+    if (!result.success) {
+      console.error("Error in getCoursePackages:", result.error);
+      return (
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+          <div className="container mx-auto px-6 py-8">
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="text-red-600 text-lg font-semibold mb-2">
+                  Failed to load course packages
+                </div>
+                <div className="text-red-500 text-sm">
+                  {result.error || "Unknown error occurred"}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  const coursePackages = result.data || [];
+    const coursePackages = result.data || [];
 
-  return (
+    return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="h-screen flex flex-col">
         {/* Header */}
@@ -67,7 +79,26 @@ const CourseMaterialsPage = async () => {
         </div>
       </div>
     </div>
-  );
+    );
+  } catch (error) {
+    console.error("Unexpected error in CourseMaterialsPage:", error);
+    return (
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="text-red-600 text-lg font-semibold mb-2">
+                Unexpected error occurred
+              </div>
+              <div className="text-red-500 text-sm">
+                Please try refreshing the page
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default CourseMaterialsPage;

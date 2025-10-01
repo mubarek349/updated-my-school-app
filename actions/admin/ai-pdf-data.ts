@@ -20,9 +20,9 @@ export async function uploadAiPdfData(formData: FormData) {
       return { success: false, message: "Only PDF files are allowed" };
     }
 
-    // Validate file size (10MB limit)
-    if (file.size > 1000 * 1024 * 1024) {
-      return { success: false, message: "File size must be less than 1000MB" };
+    // Validate file size (100MB limit)
+    if (file.size > 100 * 1024 * 1024) {
+      return { success: false, message: "File size must be less than 100MB" };
     }
 
     // Generate unique filename

@@ -79,6 +79,11 @@ export default function CourseMaterials({
     )}`;
   };
 
+  const getDownloadUrl = (url: string) => {
+    // Add download parameter to force download instead of inline viewing
+    return `${url}?download=true`;
+  };
+
   const canInlinePreview = (type: string) => {
     const t = type.toLowerCase();
     return ["pdf", "jpg", "jpeg", "png", "gif", "txt"].includes(t);
@@ -97,32 +102,95 @@ export default function CourseMaterials({
   const viewerContent = useMemo(() => {
     if (!viewing) return null;
     const type = viewing.type.toLowerCase();
-    const src = (() => {
-      if (["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(type)) {
-        return officeViewerUrl(viewing.url);
-      }
-      return viewing.url;
-    })();
-
+    
+    // For images, display directly
     if (["jpg", "jpeg", "png", "gif"].includes(type)) {
       return (
-        <img
-          src={src}
-          alt={viewing.name}
-          className="max-h-[80vh] w-auto object-contain"
-        />
+        <div className="flex items-center justify-center h-[80vh] bg-gray-50">
+          <img
+            src={viewing.url}
+            alt={viewing.name}
+            className="max-h-full max-w-full object-contain rounded-lg shadow-lg"
+            onError={(e) => {
+              console.error('Image failed to load:', e);
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        </div>
       );
     }
 
-    // Fallback to iframe for pdf, txt and others that can render inline
+    // For PDFs, use iframe with proper error handling
+    if (type === "pdf") {
+      return (
+        <div className="h-[80vh] bg-gray-50 rounded-lg overflow-hidden">
+          <iframe
+            src={viewing.url}
+            className="w-full h-full border-0"
+            loading="eager"
+            onError={() => {
+              console.error('PDF failed to load in iframe');
+            }}
+          />
+        </div>
+      );
+    }
+
+    // For text files, try to display inline
+    if (type === "txt") {
+      return (
+        <div className="h-[80vh] bg-gray-50 rounded-lg overflow-hidden">
+          <iframe
+            src={viewing.url}
+            className="w-full h-full border-0"
+            loading="eager"
+          />
+        </div>
+      );
+    }
+
+    // For Office documents, use Office Online viewer
+    if (["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(type)) {
+      const officeUrl = officeViewerUrl(viewing.url);
+      return (
+        <div className="h-[80vh] bg-gray-50 rounded-lg overflow-hidden">
+          <iframe
+            src={officeUrl}
+            className="w-full h-full border-0"
+            loading="eager"
+            onError={() => {
+              console.error('Office document failed to load in viewer');
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Fallback for unsupported types
     return (
-      <iframe
-        src={src}
-        className="w-full h-[80vh] rounded-lg border"
-        loading="eager"
-      />
+      <div className="h-[80vh] bg-gray-50 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <File className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {lang === "en" ? "Preview not available" : "ቅኝት አይቻልም"}
+          </h3>
+          <p className="text-gray-500 mb-4">
+            {lang === "en" 
+              ? "This file type cannot be previewed. Please download to view." 
+              : "ይህ የፋይል አይነት ሊታይ አይችልም። ለማየት እባክዎ ያውርዱ።"}
+          </p>
+          <a
+            href={getDownloadUrl(viewing.url)}
+            download={viewing.name}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            {lang === "en" ? "Download File" : "ፋይል አውርድ"}
+          </a>
+        </div>
+      </div>
     );
-  }, [viewing]);
+  }, [viewing, lang]);
 
   if (loading) {
     return (
@@ -178,9 +246,8 @@ export default function CourseMaterials({
                       {lang === "en" ? "Read" : "አንብብ"}
                     </button>
                     <a
-                      href={material.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={getDownloadUrl(material.url)}
+                      download={material.name}
                       className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                     >
                       <Download className="w-4 h-4" />
@@ -221,22 +288,35 @@ export default function CourseMaterials({
               {viewerContent}
             </div>
 
-            {/* Fallback link for non-previewable types */}
-            {!canInlinePreview(viewing.type) && (
-              <div className="mt-3 text-sm text-gray-600 dark:text-gray-300">
-                {lang === "en"
-                  ? "Preview is provided via Office Online viewer. If it doesn't load, open in a new tab:"
-                  : "ቅኝት በ Office Online ቪውወር ተሰጥቷል። ካልጫነ በአዲስ ታብ ይክፈቱ፦"}
-                <a
-                  href={officeViewerUrl(viewing.url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-400"
-                >
-                  {lang === "en" ? "Open in new tab" : "በአዲስ ታብ ክፈት"}
-                </a>
+            {/* Additional actions */}
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                {lang === "en" 
+                  ? "Having trouble viewing? Try downloading the file." 
+                  : "ማየት አስቸጋሪ ነው? ፋይሉን ያውርዱ።"}
               </div>
-            )}
+              <div className="flex gap-2">
+                <a
+                  href={getDownloadUrl(viewing.url)}
+                  download={viewing.name}
+                  className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  <Download className="w-3 h-3" />
+                  {lang === "en" ? "Download" : "አውርድ"}
+                </a>
+                {!canInlinePreview(viewing.type) && (
+                  <a
+                    href={officeViewerUrl(viewing.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                  >
+                    <Eye className="w-3 h-3" />
+                    {lang === "en" ? "Open Online" : "በመስመር ክፈት"}
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
