@@ -34,7 +34,7 @@ async function Page() {
   const takencoursePercent = 80;
 
   return (
-    <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 h-full overflow-auto">
       {/* Action Button */}
       <div className="mb-8 flex justify-end">
         <Link href="/en/admin/analytics/viewAll">
