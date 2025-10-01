@@ -249,7 +249,6 @@ export function CourseMaterialsManager({
           <h4 className="text-sm font-medium text-slate-800">
             Uploaded Materials ({materials.length})
           </h4>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
             {materials.map((material, index) => (
               <div
                 key={index}
@@ -281,7 +280,6 @@ export function CourseMaterialsManager({
                 </div>
               </div>
             ))}
-          </div>
         </div>
       )}
 
