@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir, readFile } from "fs/promises";
 import { join } from "path";
 
-const MAX_FILE_SIZE = 1000 * 1024 * 1024; // 1000MB max file size
 
 export async function POST(request: NextRequest) {
   try {
