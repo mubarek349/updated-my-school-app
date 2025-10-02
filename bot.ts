@@ -707,13 +707,7 @@ export async function startBot() {
             timestamp: Date.now(),
           };
 
-          // Clean up old data (older than 1 hour)
-          const oneHourAgo = Date.now() - 60 * 60 * 1000;
-          Object.keys((global as any).tempCallbackData).forEach((key) => {
-            if ((global as any).tempCallbackData[key].timestamp < oneHourAgo) {
-              delete (global as any).tempCallbackData[key];
-            }
-          });
+          // Note: No automatic cleanup - links never expire
 
           const buttonMarkup = {
             reply_markup: {
@@ -789,13 +783,9 @@ export async function startBot() {
               },
             });
 
-            const now = new Date();
-            const oneHourMs = 60 * 60 * 1000;
-            const isWithinOneHour =
-              lastAttendance?.createdAt &&
-              now.getTime() - lastAttendance.createdAt.getTime() <= oneHourMs;
+            const isWithinTwentyFourHours = true; // Always true - no time limit
 
-            if (isWithinOneHour && lastAttendance?.id) {
+            if (isWithinTwentyFourHours && lastAttendance?.id) {
               await prisma.tarbiaAttendance.update({
                 where: { id: lastAttendance.id },
                 data: {
@@ -1172,7 +1162,7 @@ export async function startBot() {
     const tempData = (global as any).tempCallbackData?.[data];
     if (!tempData) {
       await ctx.answerCallbackQuery(
-        "❌ Link expired. Please request a new one."
+        "❌ Link not found. Please request a new one."
       );
       return;
     }
@@ -1214,42 +1204,20 @@ export async function startBot() {
       },
     });
 
-    // Step 3: Check if the button was clicked within 1 hour
-    const now = new Date();
-    const sentTime = lastCreatedAttendance?.createdAt;
-    const oneHourMs = 60 * 60 * 1000;
-
-    if (sentTime && now.getTime() - sentTime.getTime() <= oneHourMs) {
-      // ✅ Within 1 hour — mark attendance and send Zoom link
+    // Always send Zoom link and mark attendance (no time limit)
+    if (lastCreatedAttendance?.id) {
       await prisma.tarbiaAttendance.update({
         where: {
-          id: lastCreatedAttendance?.id,
+          id: lastCreatedAttendance.id,
         },
         data: {
           status: true,
         },
       });
-
-      await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`);
-      await ctx.reply(`🔗 የዙም ሊንክ፦ ${zoomLink}`);
-    } else {
-      // ❌ Expired — send fallback message
-      const update = await updatePathProgressData(student.wdt_ID);
-      if (!update) {
-        return undefined;
-      }
-      const lang = "en";
-      const stud = "student";
-      const url = `${BASE_URL}/${lang}/${stud}/${student.wdt_ID}/${update[0]}/${update[1]}`;
-      const channelName = student.name || "ዳሩል-ኩብራ";
-      const keyboard = new InlineKeyboard().webApp(
-        `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
-        url
-      );
-      await ctx.reply(`⏰ ይቅርታ፣ የዙም ሊንኩ ጊዜው አልፎበታል።ት/ትዎን ይከታተሉ፡፡`, {
-        reply_markup: keyboard,
-      });
     }
+
+    await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`);
+    await ctx.reply(`🔗 የዙም ሊንክ፦ ${zoomLink}`);
   });
 
   // Cancel handler
