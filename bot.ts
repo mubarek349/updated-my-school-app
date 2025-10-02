@@ -14,6 +14,7 @@ import { filterStudentsByPackageandStatus } from "./actions/admin/analysis";
 import { updatePathProgressData } from "./actions/student/progress";
 import { InlineKeyboard } from "grammy";
 import { getAvailablePacakges } from "./actions/student/package";
+import { hasMatchingSubject } from "./lib/subject-matching";
 
 dotenv.config();
 const BASE_URL = process.env.FORWARD_URL || process.env.AUTH_URL;
@@ -104,15 +105,23 @@ export async function startBot() {
       const kidPackage = channel.isKid;
       if (!packageType || !subject || kidPackage === null) continue;
 
-      const subjectPackage = await prisma.subjectPackage.findMany({
+      // Get all subject packages for this package type and kid status
+      const allSubjectPackages = await prisma.subjectPackage.findMany({
         where: {
-          subject: subject,
           packageType: packageType,
           kidpackage: kidPackage,
         },
         orderBy: { createdAt: "desc" },
-        select: { packageId: true },
+        select: {
+          packageId: true,
+          subject: true,
+        },
       });
+
+      // Filter packages where student's subjects match any of the required subjects
+      const subjectPackage = allSubjectPackages.filter((pkg) =>
+        hasMatchingSubject(subject, pkg.subject || "")
+      );
       if (!subjectPackage || subjectPackage.length === 0) continue;
       const lastPackageId = subjectPackage[0].packageId;
       // Check if the active package is already set
