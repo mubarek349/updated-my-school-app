@@ -2,6 +2,21 @@ import { Bot } from "grammy";
 import cron from "node-cron";
 import prisma from "./lib/db";
 import dotenv from "dotenv";
+
+// Extend global type for temporary callback data
+declare global {
+  var tempCallbackData:
+    | Record<
+        string,
+        {
+          zoomLink: string;
+          studentName: string;
+          packageId: string;
+          timestamp: number;
+        }
+      >
+    | undefined;
+}
 import { allPackages } from "./actions/admin/adminBot";
 import {
   getStudentsByPackage,
@@ -673,7 +688,31 @@ export async function startBot() {
         const studentId = studentsId.shift() ?? "";
 
         if (!isAdmin && ctx.message.text) {
-          const callbackData = `join_zoom~${pending.packageId}~${ctx.message.text}~${studentId}~${studentName}`;
+          // Create a shorter callback data to avoid Telegram's 64-byte limit
+          const callbackData = `zoom~${pending.packageId}~${studentId}`;
+
+          // Store the zoom link and student name in a temporary storage
+          const tempData = {
+            zoomLink: ctx.message.text,
+            studentName: studentName,
+            packageId: pending.packageId,
+          };
+
+          // Store in a simple in-memory cache (you might want to use Redis or database for production)
+          if (!(global as any).tempCallbackData)
+            (global as any).tempCallbackData = {};
+          (global as any).tempCallbackData[callbackData] = {
+            ...tempData,
+            timestamp: Date.now(),
+          };
+
+          // Clean up old data (older than 1 hour)
+          const oneHourAgo = Date.now() - 60 * 60 * 1000;
+          Object.keys((global as any).tempCallbackData).forEach((key) => {
+            if ((global as any).tempCallbackData[key].timestamp < oneHourAgo) {
+              delete (global as any).tempCallbackData[key];
+            }
+          });
 
           const buttonMarkup = {
             reply_markup: {
@@ -1124,9 +1163,25 @@ export async function startBot() {
   bot.on("callback_query:data", async (ctx) => {
     const data = ctx.callbackQuery.data;
     const chatId = ctx.chat?.id;
-    if (!data.startsWith("join_zoom~")) return;
+    if (!data.startsWith("zoom~")) return;
 
-    const [, packageId, zoomLink, wdt_ID, name] = data.split("~");
+    const [, packageId, wdt_ID] = data.split("~");
+
+    // Get the stored data from temporary storage
+    const tempData = (global as any).tempCallbackData?.[data];
+    if (!tempData) {
+      await ctx.answerCallbackQuery(
+        "❌ Link expired. Please request a new one."
+      );
+      return;
+    }
+
+    const { zoomLink, studentName } = tempData;
+
+    // Clean up the temporary data after use
+    if ((global as any).tempCallbackData) {
+      delete (global as any).tempCallbackData[data];
+    }
 
     // Step 1: Get student info
     const student = await prisma.wpos_wpdatatable_23.findFirst({
@@ -1134,7 +1189,6 @@ export async function startBot() {
         chat_id: String(chatId),
         status: { in: ["Active", "Not yet"] },
         wdt_ID: Number(wdt_ID),
-        name: String(name),
       },
       select: {
         wdt_ID: true,
