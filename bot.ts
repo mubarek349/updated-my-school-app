@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bot } from "grammy";
 import cron from "node-cron";
 import prisma from "./lib/db";
@@ -1176,7 +1177,7 @@ export async function startBot() {
       return;
     }
 
-    const { zoomLink, studentName } = tempData;
+    const { zoomLink } = tempData;
 
     // Clean up the temporary data after use
     if ((global as any).tempCallbackData) {
