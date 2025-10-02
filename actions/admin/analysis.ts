@@ -105,7 +105,9 @@ export async function filterStudentsByPackageandStatus(
       (sp) =>
         sp.packageType === student.package &&
         sp.kidpackage === student.isKid &&
-        hasMatchingSubject(student.subject, sp.subject || "")
+        sp.subject &&
+        student.subject &&
+        hasMatchingSubject(student.subject, sp.subject)
     );
   });
 
@@ -196,7 +198,9 @@ export async function getStudentsByPackage(
       (sp) =>
         sp.packageType === student.package &&
         sp.kidpackage === student.isKid &&
-        hasMatchingSubject(student.subject, sp.subject || "")
+        sp.subject &&
+        student.subject &&
+        hasMatchingSubject(student.subject, sp.subject)
     );
   });
 
@@ -249,7 +253,9 @@ export async function getStudentsByPackageAndTeacher(
       (sp) =>
         sp.packageType === student.package &&
         sp.kidpackage === student.isKid &&
-        hasMatchingSubject(student.subject, sp.subject || "")
+        sp.subject &&
+        student.subject &&
+        hasMatchingSubject(student.subject, sp.subject)
     );
   });
 
