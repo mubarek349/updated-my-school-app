@@ -558,8 +558,17 @@ export async function startBot() {
 
     const ADMIN_IDS = admins.map((a) => Number(a.chat_id)); // Replace with actual admin IDs
     const isAdmin = ADMIN_IDS.includes(senderId);
-    // Restrict non-admins to text only
-    if (!isAdmin && !ctx.message.text) {
+
+    // Check if sender is an ustaz (teacher)
+    const isUstaz = await prisma.ustaz.findFirst({
+      where: { chat_id: senderId?.toString() },
+    });
+
+    console.log("Sender ID:", senderId);
+    console.log("Is Admin:", isAdmin);
+    console.log("Is Ustaz:", !!isUstaz);
+    // Restrict non-admins and non-ustaz to text only
+    if (!isAdmin && !isUstaz && !ctx.message.text) {
       console.log("mubarek");
       const reason = "Attempted to send media";
       const content = JSON.stringify(ctx.message, null, 2);
@@ -583,8 +592,8 @@ export async function startBot() {
       return;
     }
 
-    // Restrict non-admins from sending non-Zoom links
-    if (!isAdmin && ctx.message.text) {
+    // Restrict non-admins and non-ustaz from sending non-Zoom links
+    if (!isAdmin && !isUstaz && ctx.message.text) {
       const text = ctx.message.text.trim();
       const containsLink = /https?:\/\/[^\s]+/i.test(text);
       const isZoomLink = /https?:\/\/(?:[\w-]+\.)?zoom\.us\/[^\s]*/i.test(text);
@@ -618,21 +627,39 @@ export async function startBot() {
 
     // Prepare content
     let sendFn;
+    console.log(
+      "Message type:",
+      ctx.message.text
+        ? "text"
+        : ctx.message.photo
+        ? "photo"
+        : ctx.message.voice
+        ? "voice"
+        : "unknown"
+    );
+    console.log("isAdmin:", isAdmin);
+    console.log("isUstaz:", !!isUstaz);
+
     if (ctx.message.text) {
       sendFn = (id: number) => ctx.api.sendMessage(id, ctx.message.text!);
-    } else if (ctx.message.photo && isAdmin) {
+      console.log("✅ sendFn created for text message");
+    } else if (ctx.message.photo && (isAdmin || isUstaz)) {
       const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
       sendFn = (id: number) =>
         ctx.api.sendPhoto(id, fileId, { caption: ctx.message.caption });
-    } else if (ctx.message.voice && isAdmin) {
+      console.log("✅ sendFn created for photo message");
+    } else if (ctx.message.voice && (isAdmin || isUstaz)) {
       const fileId = ctx.message.voice.file_id;
       sendFn = (id: number) =>
         ctx.api.sendVoice(id, fileId, { caption: ctx.message.caption });
+      console.log("✅ sendFn created for voice message");
     } else {
+      console.log("❌ Unsupported message type or not admin/ustaz");
       await ctx.reply("❌ የሚደገፍ ያልሆነ ዓይነት መልእክት።");
       return;
     }
     console.log("chatIds", pending.chatIds);
+    console.log("sendFn defined:", !!sendFn);
 
     // Send to all selected students
     const sent: number[] = [];
@@ -662,12 +689,21 @@ export async function startBot() {
             buttonMarkup
           );
         } else {
-          await sendFn(chatId);
+          if (sendFn) {
+            console.log(`Attempting to send message to chatId: ${chatId}`);
+            await sendFn(chatId);
+            console.log(`✅ Message sent to chatId: ${chatId}`);
+          } else {
+            console.error("sendFn is not defined for chatId:", chatId);
+            failed.push(chatId);
+            continue;
+          }
         }
 
         sent.push(chatId);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        console.log(`✅ Message sent successfully to chatId: ${chatId}`);
       } catch (err) {
+        console.error(`❌ Failed to send message to chatId: ${chatId}`, err);
         failed.push(chatId);
       }
     }
