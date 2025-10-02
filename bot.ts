@@ -82,7 +82,7 @@ export async function startBot() {
     let channels = await prisma.wpos_wpdatatable_23.findMany({
       where: {
         chat_id: chatId.toString(),
-        status: { in: ["Active", "Not yet"] },
+        status: { in: ["Active", "Not yet","On progress"] },
       },
       select: {
         wdt_ID: true,
@@ -162,7 +162,7 @@ export async function startBot() {
     channels = await prisma.wpos_wpdatatable_23.findMany({
       where: {
         chat_id: chatId.toString(),
-        status: { in: ["Active", "Not yet"] },
+        status: { in: ["Active", "Not yet", "On progress"] },
       },
       select: {
         wdt_ID: true,
@@ -311,7 +311,7 @@ export async function startBot() {
       where: {
         chat_id: chatId?.toString(),
         wdt_ID: wdt_ID,
-        status: { in: ["Active", "Not yet"] },
+        status: { in: ["Active", "Not yet", "On progress"] },
       },
       data: {
         youtubeSubject: packageId,
@@ -759,7 +759,7 @@ export async function startBot() {
             package: s.packageType,
             isKid: s.kidpackage,
             chat_id: { in: sent.map(String) },
-            status: { in: ["Active", "Not yet"] },
+            status: { in: ["Active", "Not yet", "On progress"] },
           },
           select: {
             wdt_ID: true,
@@ -809,7 +809,7 @@ export async function startBot() {
     const failedIds = await prisma.wpos_wpdatatable_23.findMany({
       where: {
         chat_id: { in: failed.map(String) },
-        status: { in: ["Active", "Not yet"] },
+        status: { in: ["Active", "Not yet", "On progress"] },
       },
       select: {
         name: true,
@@ -1178,7 +1178,7 @@ export async function startBot() {
     const student = await prisma.wpos_wpdatatable_23.findFirst({
       where: {
         chat_id: String(chatId),
-        status: { in: ["Active", "Not yet"] },
+        status: { in: ["Active", "Not yet", "On progress"] },
         wdt_ID: Number(wdt_ID),
       },
       select: {
