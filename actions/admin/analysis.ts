@@ -82,19 +82,31 @@ export async function filterStudentsByPackageandStatus(
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  const students = await prisma.wpos_wpdatatable_23.findMany({
+  // Get all students and filter by subject matching
+  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
     where: {
       status: { in: ["Active", "Not yet"] },
-      OR: subjectPackages.map((sp) => ({
-        subject: sp.subject,
-        package: sp.packageType,
-        isKid: sp.kidpackage,
-      })),
     },
     select: {
       wdt_ID: true,
       chat_id: true,
+      subject: true,
+      package: true,
+      isKid: true,
     },
+  });
+
+  // Filter students where their subjects match any of the required subjects
+  const students = allStudents.filter((student) => {
+    if (!student.subject || !student.package || student.isKid === null)
+      return false;
+
+    return subjectPackages.some(
+      (sp) =>
+        sp.packageType === student.package &&
+        sp.kidpackage === student.isKid &&
+        hasMatchingSubject(student.subject, sp.subject || "")
+    );
   });
 
   // 3. For each student, check their progress for the chapters in the package
@@ -160,23 +172,35 @@ export async function getStudentsByPackage(
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  // const studentMap = new Map<string, string>();
-
-  const students = await prisma.wpos_wpdatatable_23.findMany({
+  // Get all students with matching package type and kid status
+  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
     where: {
       status: { in: ["Active", "Not yet"] },
-      OR: subjectPackages.map((sp) => ({
-        subject: sp.subject,
-        package: sp.packageType,
-        isKid: sp.kidpackage,
-      })),
+    },
+    select: {
+      wdt_ID: true,
+      chat_id: true,
+      name: true,
+      subject: true,
+      package: true,
+      isKid: true,
     },
   });
-  // for (const student of students) {
-  //   if (!student.chat_id) continue;
-  //   studentMap.set(student.chat_id, student.wdt_ID.toString());
-  // }
-  return students.map((student) => {
+
+  // Filter students where their subjects match any of the required subjects
+  const matchingStudents = allStudents.filter((student) => {
+    if (!student.subject || !student.package || student.isKid === null)
+      return false;
+
+    return subjectPackages.some(
+      (sp) =>
+        sp.packageType === student.package &&
+        sp.kidpackage === student.isKid &&
+        hasMatchingSubject(student.subject, sp.subject || "")
+    );
+  });
+
+  return matchingStudents.map((student) => {
     return {
       chat_id: student.chat_id,
       wdt_ID: student.wdt_ID,
@@ -185,7 +209,7 @@ export async function getStudentsByPackage(
   });
 }
 
-// Only the teacher’s students within a specific package
+// Only the teacher's students within a specific package
 export async function getStudentsByPackageAndTeacher(
   packageId: string,
   ustazId: string
@@ -199,24 +223,37 @@ export async function getStudentsByPackageAndTeacher(
     },
     distinct: ["subject", "kidpackage", "packageType"],
   });
-  // const studentMap = new Map<string, string>();
 
-  const students = await prisma.wpos_wpdatatable_23.findMany({
+  // Get all students with matching ustaz, package type and kid status
+  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
     where: {
       status: { in: ["Active", "Not yet"] },
       ustaz: ustazId,
-      OR: subjectPackages.map((sp) => ({
-        subject: sp.subject,
-        package: sp.packageType,
-        isKid: sp.kidpackage,
-      })),
+    },
+    select: {
+      wdt_ID: true,
+      chat_id: true,
+      name: true,
+      subject: true,
+      package: true,
+      isKid: true,
     },
   });
-  // for (const student of students) {
-  //   if (!student.chat_id) continue;
-  //   studentMap.set(student.chat_id, student.wdt_ID.toString());
-  // }
-  return students.map((student) => {
+
+  // Filter students where their subjects match any of the required subjects
+  const matchingStudents = allStudents.filter((student) => {
+    if (!student.subject || !student.package || student.isKid === null)
+      return false;
+
+    return subjectPackages.some(
+      (sp) =>
+        sp.packageType === student.package &&
+        sp.kidpackage === student.isKid &&
+        hasMatchingSubject(student.subject, sp.subject || "")
+    );
+  });
+
+  return matchingStudents.map((student) => {
     return {
       chat_id: student.chat_id,
       wdt_ID: student.wdt_ID,
