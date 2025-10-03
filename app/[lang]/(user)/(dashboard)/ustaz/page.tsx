@@ -14,24 +14,33 @@ import {
   Send,
   LogOut,
   User,
+  ChevronDown,
 } from "lucide-react";
 import {
   getCurrentUstaz,
   logout,
 } from "@/actions/ustazResponder/authentication";
+import {
+  getUstazCoursePackages,
+  getUstazQuestions,
+  submitUstazResponse,
+  updateUstazResponse,
+  deleteUstazResponse,
+} from "@/actions/ustazResponder/questions";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 interface Question {
-  id: number;
+  id: string;
   question: string;
   studentName: string;
   courseName: string;
-  chapterName: string;
+  timestamp: number | null;
+  type: string;
   createdAt: string;
   hasResponse: boolean;
-  response?: string;
-  responseId?: number;
+  response?: string | null;
+  responseId?: string | null;
 }
 
 interface UstazData {
@@ -39,9 +48,20 @@ interface UstazData {
   [key: string]: unknown;
 }
 
+interface CoursePackage {
+  id: string;
+  name: string;
+  description: string | null;
+  _count: {
+    questions: number;
+  };
+}
+
 export default function UstazDashboard() {
   const [ustazData, setUstazData] = useState<UstazData | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [coursePackages, setCoursePackages] = useState<CoursePackage[]>([]);
+  const [selectedCoursePackage, setSelectedCoursePackage] = useState<string>("all");
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(
     null
   );
@@ -54,9 +74,10 @@ export default function UstazDashboard() {
 
   const fetchData = async () => {
     try {
-      const [ustazResult, questionsResponse] = await Promise.all([
+      const [ustazResult, coursePackagesResult, questionsResult] = await Promise.all([
         getCurrentUstaz(),
-        fetch("/api/ustaz/questions"),
+        getUstazCoursePackages(),
+        getUstazQuestions(selectedCoursePackage),
       ]);
 
       if (ustazResult.success) {
@@ -68,15 +89,39 @@ export default function UstazDashboard() {
         return;
       }
 
-      if (questionsResponse.ok) {
-        const questionsData = await questionsResponse.json();
-        setQuestions(questionsData);
+      if (coursePackagesResult.success && coursePackagesResult.data) {
+        setCoursePackages(coursePackagesResult.data);
       } else {
-        toast.error("Failed to load questions");
+        toast.error(coursePackagesResult.error || "Failed to load course packages");
+      }
+
+      if (questionsResult.success && questionsResult.data) {
+        setQuestions(questionsResult.data);
+      } else {
+        toast.error(questionsResult.error || "Failed to load questions");
       }
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCoursePackageChange = async (coursePackageId: string) => {
+    setSelectedCoursePackage(coursePackageId);
+    setIsLoading(true);
+    
+    try {
+      const result = await getUstazQuestions(coursePackageId);
+      if (result.success && result.data) {
+        setQuestions(result.data);
+      } else {
+        toast.error(result.error || "Failed to load questions");
+      }
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+      toast.error("Failed to load questions");
     } finally {
       setIsLoading(false);
     }
@@ -90,21 +135,14 @@ export default function UstazDashboard() {
 
     setIsSubmitting(true);
     try {
-      const url = isEditing
-        ? `/api/ustaz/responses/${selectedQuestion.responseId}`
-        : "/api/ustaz/respond";
-      const method = isEditing ? "PUT" : "POST";
+      let result;
+      if (isEditing && selectedQuestion.responseId) {
+        result = await updateUstazResponse(selectedQuestion.responseId, response.trim());
+      } else {
+        result = await submitUstazResponse(selectedQuestion.id, response.trim());
+      }
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questionId: selectedQuestion.id,
-          response: response.trim(),
-        }),
-      });
-
-      if (res.ok) {
+      if (result.success) {
         toast.success(
           isEditing
             ? "Response updated successfully!"
@@ -115,8 +153,7 @@ export default function UstazDashboard() {
         setIsEditing(false);
         fetchData();
       } else {
-        const error = await res.json();
-        toast.error(error.message || "Failed to submit response");
+        toast.error(result.error || "Failed to submit response");
       }
     } catch (error) {
       console.error("Error submitting response:", error);
@@ -132,18 +169,20 @@ export default function UstazDashboard() {
     setIsEditing(true);
   };
 
-  const handleDeleteResponse = async (responseId: number) => {
+  const handleDeleteResponse = async (responseId: string) => {
+    if (!confirm("Are you sure you want to delete this response?")) {
+      return;
+    }
+
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/ustaz/responses/${responseId}`, {
-        method: "DELETE",
-      });
+      const result = await deleteUstazResponse(responseId);
 
-      if (res.ok) {
+      if (result.success) {
         toast.success("Response deleted successfully!");
         fetchData();
       } else {
-        toast.error("Failed to delete response");
+        toast.error(result.error || "Failed to delete response");
       }
     } catch (error) {
       console.error("Error deleting response:", error);
@@ -189,6 +228,10 @@ export default function UstazDashboard() {
 
   const unansweredQuestions = questions.filter((q) => !q.hasResponse);
   const answeredQuestions = questions.filter((q) => q.hasResponse);
+  
+  const selectedPackageName = selectedCoursePackage === "all" 
+    ? "All Course Packages" 
+    : coursePackages.find(pkg => pkg.id === selectedCoursePackage)?.name || "Unknown Package";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -227,6 +270,11 @@ export default function UstazDashboard() {
           <div className="h-full overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
               {/* Stats Cards */}
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-slate-900 mb-2">
+                  Questions for: {selectedPackageName}
+                </h2>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -271,7 +319,66 @@ export default function UstazDashboard() {
                 </Card>
               </div>
 
+              {/* Course Package Filter */}
+              <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-sm mb-6 sm:mb-8">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    Filter by Course Package
+                    {selectedCoursePackage !== "all" && (
+                      <Badge className="bg-blue-100 text-blue-700 text-xs">
+                        Filtered
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <select
+                        value={selectedCoursePackage}
+                        onChange={(e) => handleCoursePackageChange(e.target.value)}
+                        className="w-full appearance-none bg-white border border-slate-300 rounded-lg px-4 py-3 pr-10 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isLoading}
+                      >
+                        <option value="all">All Course Packages ({questions.length} questions)</option>
+                        {coursePackages.map((pkg) => (
+                          <option key={pkg.id} value={pkg.id}>
+                            {pkg.name} ({pkg._count.questions} questions)
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
+                    </div>
+                    {selectedCoursePackage !== "all" && (
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-slate-600">
+                          Showing questions from: <span className="font-semibold text-blue-700">{selectedPackageName}</span>
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCoursePackageChange("all")}
+                          className="text-xs"
+                        >
+                          Show All
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Questions Section */}
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-slate-900 mb-2">
+                  Questions & Answers - {selectedPackageName}
+                </h2>
+                <p className="text-sm text-slate-600">
+                  {selectedCoursePackage === "all" 
+                    ? "Showing all questions from all course packages" 
+                    : `Showing questions from ${selectedPackageName} only`}
+                </p>
+              </div>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                 {/* Pending Questions */}
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-sm">
@@ -285,7 +392,11 @@ export default function UstazDashboard() {
                     {unansweredQuestions.length === 0 ? (
                       <div className="text-center py-8">
                         <Clock className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-slate-500">No pending questions</p>
+                        <p className="text-slate-500">
+                          {selectedCoursePackage === "all" 
+                            ? "No pending questions in any course package" 
+                            : `No pending questions in ${selectedPackageName}`}
+                        </p>
                       </div>
                     ) : (
                       unansweredQuestions.map((question) => (
@@ -308,8 +419,22 @@ export default function UstazDashboard() {
                               </Badge>
                             </div>
                             <div className="text-xs text-slate-500 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant="secondary" 
+                                  className="text-xs bg-blue-100 text-blue-700 cursor-pointer hover:bg-blue-200 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const packageId = coursePackages.find(pkg => pkg.name === question.courseName)?.id;
+                                    if (packageId) {
+                                      handleCoursePackageChange(packageId);
+                                    }
+                                  }}
+                                >
+                                  {question.courseName}
+                                </Badge>
+                              </div>
                               <p>Student: {question.studentName}</p>
-                              <p>Course: {question.courseName}</p>
                               <p>
                                 Asked:{" "}
                                 {new Date(
@@ -336,7 +461,11 @@ export default function UstazDashboard() {
                     {answeredQuestions.length === 0 ? (
                       <div className="text-center py-8">
                         <CheckCircle className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-slate-500">No answered questions</p>
+                        <p className="text-slate-500">
+                          {selectedCoursePackage === "all" 
+                            ? "No answered questions in any course package" 
+                            : `No answered questions in ${selectedPackageName}`}
+                        </p>
                       </div>
                     ) : (
                       answeredQuestions.map((question) => (
@@ -354,8 +483,22 @@ export default function UstazDashboard() {
                               </Badge>
                             </div>
                             <div className="text-xs text-slate-500 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant="secondary" 
+                                  className="text-xs bg-blue-100 text-blue-700 cursor-pointer hover:bg-blue-200 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const packageId = coursePackages.find(pkg => pkg.name === question.courseName)?.id;
+                                    if (packageId) {
+                                      handleCoursePackageChange(packageId);
+                                    }
+                                  }}
+                                >
+                                  {question.courseName}
+                                </Badge>
+                              </div>
                               <p>Student: {question.studentName}</p>
-                              <p>Course: {question.courseName}</p>
                               <p>
                                 Asked:{" "}
                                 {new Date(

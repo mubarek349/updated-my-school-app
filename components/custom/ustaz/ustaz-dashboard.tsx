@@ -25,6 +25,10 @@ import {
   getCurrentUstaz,
   logout,
 } from "@/actions/ustazResponder/authentication";
+import {
+  getUstazQuestions,
+  submitUstazResponse,
+} from "@/actions/ustazResponder/questions";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -73,16 +77,13 @@ export default function UstazDashboard() {
 
   const fetchQuestions = async () => {
     try {
-      const response = await fetch("/api/ustaz/questions");
-      console.log("Questions API response status:", response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Questions data:", data);
-        setQuestions(data);
+      const result = await getUstazQuestions();
+      if (result.success && result.data) {
+        console.log("Questions data:", result.data);
+        setQuestions(result.data);
       } else {
-        const errorData = await response.text();
-        console.error("Questions API error:", response.status, errorData);
-        toast.error("Failed to load questions");
+        console.error("Failed to fetch questions:", result.error);
+        toast.error(result.error || "Failed to load questions");
       }
     } catch (error) {
       console.error("Error fetching questions:", error);
@@ -98,25 +99,15 @@ export default function UstazDashboard() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/ustaz/respond", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          questionId: selectedQuestion.id,
-          response: response.trim(),
-        }),
-      });
+      const result = await submitUstazResponse(selectedQuestion.id.toString(), response.trim());
 
-      if (res.ok) {
+      if (result.success) {
         toast.success("Response submitted successfully!");
         setResponse("");
         setSelectedQuestion(null);
         fetchQuestions(); // Refresh questions
       } else {
-        const error = await res.json();
-        toast.error(error.message || "Failed to submit response");
+        toast.error(result.error || "Failed to submit response");
       }
     } catch (error) {
       console.error("Error submitting response:", error);
