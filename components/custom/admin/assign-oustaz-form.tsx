@@ -8,8 +8,9 @@ import {
 } from '@/actions/admin/packageassign';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, UserCheck2, UserPlus2 } from 'lucide-react';
+import { Loader2, UserCheck2, UserPlus2, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Select from 'react-select';
 
 type Ustaz = {
   wdt_ID: number;
@@ -25,10 +26,13 @@ export default function UstazSelector({ coursesPackageId }: UstazSelectorProps) 
   const [assignedUstazs, setAssignedUstazs] = useState<Ustaz[]>([]);
   const [selectedUstazId, setSelectedUstazId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     async function loadUstazs() {
       try {
+        setInitialLoading(true);
         const [available, assigned] = await Promise.all([
           getAvailableUstazs(),
           getAssignedUstazs(coursesPackageId),
@@ -38,6 +42,8 @@ export default function UstazSelector({ coursesPackageId }: UstazSelectorProps) 
       } catch (error) {
         console.error('❌ Failed to load ustazs:', error);
         toast.error('Failed to load ustazs');
+      } finally {
+        setInitialLoading(false);
       }
     }
 
@@ -57,6 +63,7 @@ export default function UstazSelector({ coursesPackageId }: UstazSelectorProps) 
         const updatedAssigned = await getAssignedUstazs(coursesPackageId);
         setAssignedUstazs(updatedAssigned ?? []);
         setSelectedUstazId(null);
+        setSearchTerm('');
       } else {
         toast.error('Assignment failed');
       }
@@ -67,6 +74,18 @@ export default function UstazSelector({ coursesPackageId }: UstazSelectorProps) 
       setLoading(false);
     }
   };
+
+  // Filter available ustazs based on search term
+  const filteredUstazs = availableUstazs.filter(ustaz =>
+    ustaz.ustazname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ustaz.wdt_ID.toString().includes(searchTerm)
+  );
+
+  // Convert to react-select options format
+  const ustazOptions = filteredUstazs.map(ustaz => ({
+    value: ustaz.wdt_ID,
+    label: `${ustaz.ustazname ?? 'Unnamed Ustaz'} (ID: ${ustaz.wdt_ID})`
+  }));
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -101,23 +120,77 @@ export default function UstazSelector({ coursesPackageId }: UstazSelectorProps) 
         </div>
 
         <div className="mb-4">
-          <Label className="block text-lg text-blue-700 font-semibold mb-2">
-            Select Ustaz:
-          </Label>
-          <select
-            value={selectedUstazId ?? ''}
-            onChange={(e) => setSelectedUstazId(Number(e.target.value))}
-            className="w-full px-4 py-3 border border-purple-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-gray-700 transition-all duration-200"
-          >
-            <option value="" disabled>
-              Choose an Ustaz
-            </option>
-            {availableUstazs.map((ustaz) => (
-              <option key={ustaz.wdt_ID} value={ustaz.wdt_ID}>
-                {ustaz.ustazname ?? 'Unnamed Ustaz'}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="block text-lg text-blue-700 font-semibold">
+              Select Ustaz:
+            </Label>
+            <span className="text-sm text-gray-500">
+              {searchTerm ? `${filteredUstazs.length} of ${availableUstazs.length}` : `${availableUstazs.length} available`}
+            </span>
+          </div>
+          <div className="relative">
+            <Select
+              options={ustazOptions}
+              value={ustazOptions.find(option => option.value === selectedUstazId) || null}
+              onChange={(selectedOption) => {
+                setSelectedUstazId(selectedOption?.value || null);
+              }}
+              onInputChange={(inputValue) => setSearchTerm(inputValue)}
+              placeholder={initialLoading ? "Loading ustazs..." : "Search and select an Ustaz..."}
+              isSearchable
+              isClearable
+              isLoading={initialLoading}
+              isDisabled={initialLoading}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  borderRadius: '0.75rem',
+                  borderColor: '#a78bfa',
+                  boxShadow: '0 0 0 2px #a78bfa33',
+                  minHeight: '48px',
+                  '&:hover': {
+                    borderColor: '#8b5cf6',
+                  },
+                }),
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isSelected
+                    ? '#a78bfa'
+                    : state.isFocused
+                    ? '#f3e8ff'
+                    : 'white',
+                  color: state.isSelected ? 'white' : '#4b5563',
+                  fontWeight: state.isSelected ? 'bold' : 'normal',
+                  '&:hover': {
+                    backgroundColor: state.isSelected ? '#a78bfa' : '#f3e8ff',
+                  },
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: '#9ca3af',
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  color: '#4b5563',
+                }),
+                input: (base) => ({
+                  ...base,
+                  color: '#4b5563',
+                }),
+              }}
+              noOptionsMessage={() => (
+                <div className="text-center py-2 text-gray-500">
+                  <Search className="w-4 h-4 mx-auto mb-1" />
+                  {availableUstazs.length === 0 
+                    ? "No ustazs available" 
+                    : "No ustazs found matching your search"
+                  }
+                </div>
+              )}
+            />
+          </div>
         </div>
 
         <Button
