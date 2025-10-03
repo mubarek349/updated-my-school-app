@@ -1,6 +1,6 @@
 import { requireAuthentication } from "@/actions/admin/authentication";
 import UstazManagement from "@/components/custom/admin/ustaz-management";
-import { UserCheck, Shield, MessageSquare } from "lucide-react";
+// import { UserCheck, Shield, MessageSquare } from "lucide-react";
 
 export default async function UstazsPage() {
   await requireAuthentication();
@@ -8,7 +8,7 @@ export default async function UstazsPage() {
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
       {/* Stats Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200/60 hover:shadow-lg transition-all duration-300">
           <div className="flex items-center">
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -44,7 +44,7 @@ export default async function UstazsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 p-6">
