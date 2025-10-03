@@ -57,13 +57,7 @@ export {
   type StudentQuestion,
 } from './student/student-questions';
 
-// Ustaz API
-export {
-  getUstazQuestions,
-  respondToQuestion,
-  deleteResponse,
-  type UstazQuestion,
-} from './ustaz/ustaz-questions';
+// Ustaz API - Moved to actions/ustazResponder/questions.ts
 
 // Auth API (if needed)
 // Note: NextAuth handles authentication, but we can add custom auth actions here if needed

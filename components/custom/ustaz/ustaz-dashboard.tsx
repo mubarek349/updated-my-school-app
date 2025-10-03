@@ -33,13 +33,16 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 interface Question {
-  id: number;
+  id: string;
   question: string;
   studentName: string;
   courseName: string;
-  chapterName: string;
+  timestamp: number | null;
+  type: string;
   createdAt: string;
   hasResponse: boolean;
+  response?: string | null;
+  responseId?: string | null;
 }
 
 export default function UstazDashboard() {
@@ -256,7 +259,7 @@ export default function UstazDashboard() {
                       </span>
                     </div>
                     <p className="font-medium text-sm mb-1">
-                      {question.chapterName}
+                      {question.type}
                     </p>
                     <p className="text-gray-700 text-sm line-clamp-2">
                       {question.question}
@@ -297,7 +300,7 @@ export default function UstazDashboard() {
                     </Button>
                   </div>
                   <p className="font-medium text-sm mb-1">
-                    {selectedQuestion.chapterName}
+                    {selectedQuestion.type}
                   </p>
                   <p className="text-gray-700 text-sm mb-2">
                     {selectedQuestion.question}
@@ -369,7 +372,7 @@ export default function UstazDashboard() {
                         </span>
                       </div>
                       <p className="font-medium text-sm mb-1">
-                        {question.chapterName}
+                        {question.type}
                       </p>
                       <p className="text-gray-700 text-sm line-clamp-2">
                         {question.question}
