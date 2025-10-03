@@ -54,6 +54,8 @@ export default function UstazDashboard() {
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
   const router = useRouter();
 
   const fetchUstazData = async () => {
@@ -78,19 +80,49 @@ export default function UstazDashboard() {
     }
   };
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (showToast = true) => {
     try {
+      if (showToast && retryCount === 0) {
+        toast.loading("Loading questions...", { id: "fetch-questions" });
+      }
+      
       const result = await getUstazQuestions();
+      
       if (result.success && result.data) {
         console.log("Questions data:", result.data);
         setQuestions(result.data);
+        setRetryCount(0);
+        setLastFetchTime(new Date());
+        
+        if (showToast) {
+          toast.dismiss("fetch-questions");
+          toast.success(`Loaded ${result.data.length} questions successfully`);
+        }
       } else {
         console.error("Failed to fetch questions:", result.error);
-        toast.error(result.error || "Failed to load questions");
+        if (showToast) {
+          toast.dismiss("fetch-questions");
+          toast.error(result.error || "Failed to load questions");
+        }
+        throw new Error(result.error || "Failed to load questions");
       }
     } catch (error) {
       console.error("Error fetching questions:", error);
-      toast.error("Failed to load questions");
+      
+      if (showToast) {
+        toast.dismiss("fetch-questions");
+        
+        if (retryCount < 2) {
+          setRetryCount(prev => prev + 1);
+          toast.error(`Failed to load questions. Retrying... (${retryCount + 1}/3)`);
+          
+          setTimeout(() => {
+            fetchQuestions(false);
+          }, 2000);
+        } else {
+          toast.error("Failed to load questions after multiple attempts. Please refresh the page.");
+        }
+      }
     }
   };
 
@@ -102,19 +134,24 @@ export default function UstazDashboard() {
 
     setIsSubmitting(true);
     try {
+      toast.loading("Submitting response...", { id: "submit-response" });
+      
       const result = await submitUstazResponse(selectedQuestion.id.toString(), response.trim());
 
       if (result.success) {
+        toast.dismiss("submit-response");
         toast.success("Response submitted successfully!");
         setResponse("");
         setSelectedQuestion(null);
-        fetchQuestions(); // Refresh questions
+        await fetchQuestions(false); // Refresh questions without toast
       } else {
+        toast.dismiss("submit-response");
         toast.error(result.error || "Failed to submit response");
       }
     } catch (error) {
       console.error("Error submitting response:", error);
-      toast.error("Failed to submit response");
+      toast.dismiss("submit-response");
+      toast.error("Failed to submit response. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -176,17 +213,36 @@ export default function UstazDashboard() {
               Manage student questions and responses
             </p>
           </div>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => fetchQuestions()}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
+        <div className="mb-4">
+          {lastFetchTime && (
+            <p className="text-xs text-gray-500 text-right">
+              Last updated: {lastFetchTime.toLocaleTimeString()}
+            </p>
+          )}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

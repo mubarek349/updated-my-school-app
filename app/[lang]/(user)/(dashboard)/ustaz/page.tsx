@@ -53,7 +53,7 @@ interface CoursePackage {
   name: string;
   description: string | null;
   _count: {
-    questions: number;
+    qandAQuestion: number;
   };
 }
 
@@ -70,39 +70,83 @@ export default function UstazDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
+  const [hasError, setHasError] = useState(false);
   const router = useRouter();
 
-  const fetchData = async () => {
+  const fetchData = async (showToast = true) => {
     try {
+      setIsLoading(true);
+      
+      // Show loading toast for better UX
+      if (showToast && retryCount === 0) {
+        toast.loading("Loading dashboard data...", { id: "fetch-data" });
+      }
+
       const [ustazResult, coursePackagesResult, questionsResult] = await Promise.all([
         getCurrentUstaz(),
         getUstazCoursePackages(),
         getUstazQuestions(selectedCoursePackage),
       ]);
 
+      // Handle ustaz authentication
       if (ustazResult.success) {
         setUstazData(ustazResult.data);
       } else {
+        toast.dismiss("fetch-data");
         toast.error(ustazResult.message);
-        await logout();
-        router.refresh();
-        return;
+        if (ustazResult.message === "Not authenticated" || ustazResult.message === "Account suspended") {
+          await logout();
+          router.push("/en/login");
+          return;
+        }
+        throw new Error(ustazResult.message);
       }
 
+      // Handle course packages
       if (coursePackagesResult.success && coursePackagesResult.data) {
         setCoursePackages(coursePackagesResult.data);
       } else {
-        toast.error(coursePackagesResult.error || "Failed to load course packages");
+        console.warn("Failed to load course packages:", coursePackagesResult.error);
+        if (showToast) {
+          toast.error(coursePackagesResult.error || "Failed to load course packages");
+        }
       }
 
+      // Handle questions
       if (questionsResult.success && questionsResult.data) {
         setQuestions(questionsResult.data);
+        setRetryCount(0); // Reset retry count on success
+        setLastFetchTime(new Date());
+        setHasError(false);
+        
+        if (showToast) {
+          toast.dismiss("fetch-data");
+          toast.success("Dashboard loaded successfully");
+        }
       } else {
-        toast.error(questionsResult.error || "Failed to load questions");
+        throw new Error(questionsResult.error || "Failed to load questions");
       }
     } catch (error) {
       console.error("Error fetching data:", error);
-      toast.error("Failed to load data");
+      
+      if (showToast) {
+        toast.dismiss("fetch-data");
+        
+        if (retryCount < 2) {
+          setRetryCount(prev => prev + 1);
+          toast.error(`Failed to load data. Retrying... (${retryCount + 1}/3)`);
+          
+          // Retry after a delay
+          setTimeout(() => {
+            fetchData(false);
+          }, 2000);
+        } else {
+          setHasError(true);
+          toast.error("Failed to load data after multiple attempts. Please refresh the page.");
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -113,15 +157,27 @@ export default function UstazDashboard() {
     setIsLoading(true);
     
     try {
+      toast.loading("Loading questions...", { id: "filter-questions" });
+      
       const result = await getUstazQuestions(coursePackageId);
+      
       if (result.success && result.data) {
         setQuestions(result.data);
+        toast.dismiss("filter-questions");
+        
+        const packageName = coursePackageId === "all" 
+          ? "All Course Packages" 
+          : coursePackages.find(pkg => pkg.id === coursePackageId)?.name || "Selected Package";
+        
+        toast.success(`Loaded ${result.data.length} questions from ${packageName}`);
       } else {
+        toast.dismiss("filter-questions");
         toast.error(result.error || "Failed to load questions");
       }
     } catch (error) {
       console.error("Error fetching questions:", error);
-      toast.error("Failed to load questions");
+      toast.dismiss("filter-questions");
+      toast.error("Failed to load questions. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -134,7 +190,13 @@ export default function UstazDashboard() {
     }
 
     setIsSubmitting(true);
+    const action = isEditing ? "updating" : "submitting";
+    
     try {
+      toast.loading(`${action.charAt(0).toUpperCase() + action.slice(1)} response...`, { 
+        id: "submit-response" 
+      });
+      
       let result;
       if (isEditing && selectedQuestion.responseId) {
         result = await updateUstazResponse(selectedQuestion.responseId, response.trim());
@@ -143,6 +205,7 @@ export default function UstazDashboard() {
       }
 
       if (result.success) {
+        toast.dismiss("submit-response");
         toast.success(
           isEditing
             ? "Response updated successfully!"
@@ -151,13 +214,17 @@ export default function UstazDashboard() {
         setResponse("");
         setSelectedQuestion(null);
         setIsEditing(false);
-        fetchData();
+        
+        // Refresh data without showing toast
+        await fetchData(false);
       } else {
+        toast.dismiss("submit-response");
         toast.error(result.error || "Failed to submit response");
       }
     } catch (error) {
       console.error("Error submitting response:", error);
-      toast.error("Failed to submit response");
+      toast.dismiss("submit-response");
+      toast.error("Failed to submit response. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -170,23 +237,30 @@ export default function UstazDashboard() {
   };
 
   const handleDeleteResponse = async (responseId: string) => {
-    if (!confirm("Are you sure you want to delete this response?")) {
+    if (!confirm("Are you sure you want to delete this response? This action cannot be undone.")) {
       return;
     }
 
     setIsDeleting(true);
     try {
+      toast.loading("Deleting response...", { id: "delete-response" });
+      
       const result = await deleteUstazResponse(responseId);
 
       if (result.success) {
+        toast.dismiss("delete-response");
         toast.success("Response deleted successfully!");
-        fetchData();
+        
+        // Refresh data without showing toast
+        await fetchData(false);
       } else {
+        toast.dismiss("delete-response");
         toast.error(result.error || "Failed to delete response");
       }
     } catch (error) {
       console.error("Error deleting response:", error);
-      toast.error("Failed to delete response");
+      toast.dismiss("delete-response");
+      toast.error("Failed to delete response. Please try again.");
     } finally {
       setIsDeleting(false);
     }
@@ -215,12 +289,59 @@ export default function UstazDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (isLoading) {
+  if (isLoading && retryCount === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-slate-600">Loading dashboard...</p>
+          <div className="relative">
+            <RefreshCw className="h-12 w-12 animate-spin mx-auto mb-6 text-blue-500" />
+            <div className="absolute inset-0 rounded-full border-4 border-blue-200"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">Loading Dashboard</h3>
+          <p className="text-slate-600 mb-4">Fetching your questions and responses...</p>
+          <div className="flex items-center justify-center space-x-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError && !isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="rounded-full bg-red-100 p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+            <RefreshCw className="h-8 w-8 text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">Failed to Load Dashboard</h3>
+          <p className="text-slate-600 mb-6">
+            We encountered an error while loading your dashboard. This might be due to a network issue or server problem.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              onClick={() => {
+                setHasError(false);
+                setRetryCount(0);
+                fetchData();
+              }}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Try Again
+            </Button>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh Page
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -253,14 +374,26 @@ export default function UstazDashboard() {
                   </p>
                 </div>
               </div>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                className="flex items-center gap-2 w-fit"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => fetchData()}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  className="flex items-center gap-2 w-fit"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -271,9 +404,16 @@ export default function UstazDashboard() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
               {/* Stats Cards */}
               <div className="mb-4">
-                <h2 className="text-lg font-semibold text-slate-900 mb-2">
-                  Questions for: {selectedPackageName}
-                </h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    Questions for: {selectedPackageName}
+                  </h2>
+                  {lastFetchTime && (
+                    <p className="text-xs text-slate-500">
+                      Last updated: {lastFetchTime.toLocaleTimeString()}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-sm">
@@ -343,7 +483,7 @@ export default function UstazDashboard() {
                         <option value="all">All Course Packages ({questions.length} questions)</option>
                         {coursePackages.map((pkg) => (
                           <option key={pkg.id} value={pkg.id}>
-                            {pkg.name} ({pkg._count.questions} questions)
+                            {pkg.name} ({pkg._count.qandAQuestion} questions)
                           </option>
                         ))}
                       </select>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import { auth } from "@/auth";
@@ -12,11 +13,11 @@ export async function getUstazCoursePackages() {
       return { success: false, error: "Unauthorized" };
     }
 
-    // Get all course packages that have questions
+    // Get all course packages that have Q&A questions
     const coursePackages = await prisma.coursePackage.findMany({
       where: {
-        questions: {
-          some: {}, // Only packages that have at least one question
+        qandAQuestion: {
+          some: {}, // Only packages that have at least one Q&A question
         },
       },
       select: {
@@ -25,7 +26,7 @@ export async function getUstazCoursePackages() {
         description: true,
         _count: {
           select: {
-            questions: true,
+            qandAQuestion: true,
           },
         },
       },
@@ -41,7 +42,7 @@ export async function getUstazCoursePackages() {
   }
 }
 
-export async function getUstazQuestions(coursePackageId?: string) {
+export async function getUstazQuestions(coursepackageId?: string) {
   try {
     const session = await auth();
 
@@ -54,8 +55,8 @@ export async function getUstazQuestions(coursePackageId?: string) {
 
     // Build the where clause
     const whereClause: any = {};
-    if (coursePackageId && coursePackageId !== "all") {
-      whereClause.coursePackageId = coursePackageId;
+    if (coursepackageId && coursepackageId !== "all") {
+      whereClause.coursepackageId = coursepackageId;
     }
 
     const questions = await prisma.qandAQuestion.findMany({
