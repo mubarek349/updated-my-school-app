@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bot } from "grammy";
-import cron from "node-cron";
+// import cron from "node-cron";
 import prisma from "./lib/db";
 import dotenv from "dotenv";
 
@@ -22,7 +22,7 @@ import { allPackages } from "./actions/admin/adminBot";
 import {
   getStudentsByPackage,
   getStudentsByPackageAndTeacher,
-  sendProgressMessages,
+  // sendProgressMessages,
 } from "./actions/admin/analysis";
 import { getStudentAnalyticsperPackage } from "./actions/admin/analysis";
 import { filterStudentsByPackageList } from "./actions/admin/analysis";
@@ -34,7 +34,7 @@ import { hasMatchingSubject } from "./lib/subject-matching";
 
 dotenv.config();
 const BASE_URL = process.env.FORWARD_URL || process.env.AUTH_URL;
-const sentMessageIds: Record<string, number[]> = {};
+// const sentMessageIds: Record<string, number[]> = {};
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN || "");
 export { bot };
 
@@ -1315,93 +1315,93 @@ export async function startBot() {
   // Schedule a task to run every day at 00:00
   // import { sendProgressMessages } from "./actions/admin/analysis";
 
-  cron.schedule("28 12 * * *", async () => {
-    console.log("Running progress notification job...");
-    console.log("Current time:", new Date().toLocaleString());
-    console.log("current time zone  >>>", new Date().getTimezoneOffset());
-    const today = new Date();
-    const dayOfMonth = today.getDate();
+  // cron.schedule("28 12 * * *", async () => {
+  //   console.log("Running progress notification job...");
+  //   console.log("Current time:", new Date().toLocaleString());
+  //   console.log("current time zone  >>>", new Date().getTimezoneOffset());
+  //   const today = new Date();
+  //   const dayOfMonth = today.getDate();
 
-    if (dayOfMonth % 3 !== 0) return;
-    try {
-      const studentsWithProgress = await sendProgressMessages();
+  //   if (dayOfMonth % 3 !== 0) return;
+  //   try {
+  //     const studentsWithProgress = await sendProgressMessages();
 
-      for (const { chatid, progress, studId, name } of studentsWithProgress) {
-        if (!chatid) continue;
+  //     for (const { chatid, progress, studId, name } of studentsWithProgress) {
+  //       if (!chatid) continue;
 
-        // Delete all previous messages for this user
-        if (sentMessageIds[chatid]) {
-          // for (const msgId of sentMessageIds[chatid]) {
-          //   try {
-          //     // await bot.api.deleteMessage(Number(chatid), msgId);
-          //   } catch (err) {
-          //     // Ignore errors (message might already be deleted)
-          //   }
-          // }
-          sentMessageIds[chatid] = [];
-        }
+  //       // Delete all previous messages for this user
+  //       if (sentMessageIds[chatid]) {
+  //         // for (const msgId of sentMessageIds[chatid]) {
+  //         //   try {
+  //         //     // await bot.api.deleteMessage(Number(chatid), msgId);
+  //         //   } catch (err) {
+  //         //     // Ignore errors (message might already be deleted)
+  //         //   }
+  //         // }
+  //         sentMessageIds[chatid] = [];
+  //       }
 
-        let message = "";
-        let extraOptions = {};
+  //       let message = "";
+  //       let extraOptions = {};
 
-        if (progress === "completed") {
-          message =
-            "🎉 እንኳን ደስ አለህ! ኮርሱን በትክክል ጨርሰሃል። አመሰግናለሁ!\n\nበትጋትና በትክክል ስራህን በመሟሟት የተማሪነትህን ምርጥ አሳየህ። ይህ የመጀመሪያ አስደሳች እድገት ነው። በሚቀጥለው ደረጃ ደግሞ በትጋት ቀጥለህ እንዲሰራህ እንመኛለን።\n\nአብረንህ እንሰራለን። አዲስ ትምህርቶችን ለመጀመር ዝግጁ እንደሆንህ አሳየኸን። እንኳን አዲስ ደረጃ ላይ በደህና መጡ!";
-        } else {
-          message =
-            progress === "notstarted"
-              ? "👋 ሰላም፣ ኮርሱን መጀመር አልተጀመርም። እባክህ ዛሬ ጀምር!"
-              : `⏳ ኮርሱ በመካከለኛ ሁኔታ ነው። ሂደተዎ: ${progress} ነው።እባከዎን ት/ትዎን በርትተው ይጨርሱ።`;
+  //       if (progress === "completed") {
+  //         message =
+  //           "🎉 እንኳን ደስ አለህ! ኮርሱን በትክክል ጨርሰሃል። አመሰግናለሁ!\n\nበትጋትና በትክክል ስራህን በመሟሟት የተማሪነትህን ምርጥ አሳየህ። ይህ የመጀመሪያ አስደሳች እድገት ነው። በሚቀጥለው ደረጃ ደግሞ በትጋት ቀጥለህ እንዲሰራህ እንመኛለን።\n\nአብረንህ እንሰራለን። አዲስ ትምህርቶችን ለመጀመር ዝግጁ እንደሆንህ አሳየኸን። እንኳን አዲስ ደረጃ ላይ በደህና መጡ!";
+  //       } else {
+  //         message =
+  //           progress === "notstarted"
+  //             ? "👋 ሰላም፣ ኮርሱን መጀመር አልተጀመርም። እባክህ ዛሬ ጀምር!"
+  //             : `⏳ ኮርሱ በመካከለኛ ሁኔታ ነው። ሂደተዎ: ${progress} ነው።እባከዎን ት/ትዎን በርትተው ይጨርሱ።`;
 
-          const update = await updatePathProgressData(studId);
-          if (!update) {
-            return undefined;
-          }
-          const lang = "en";
-          const stud = "student";
-          const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
-          const channelName = name || "ዳሩል-ኩብራ";
-          const keyboard = new InlineKeyboard().webApp(
-            `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
-            url
-          );
-          extraOptions = { reply_markup: keyboard };
-        }
+  //         const update = await updatePathProgressData(studId);
+  //         if (!update) {
+  //           return undefined;
+  //         }
+  //         const lang = "en";
+  //         const stud = "student";
+  //         const url = `${BASE_URL}/${lang}/${stud}/${studId}/${update[0]}/${update[1]}`;
+  //         const channelName = name || "ዳሩል-ኩብራ";
+  //         const keyboard = new InlineKeyboard().webApp(
+  //           `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
+  //           url
+  //         );
+  //         extraOptions = { reply_markup: keyboard };
+  //       }
 
-        try {
-          const sentMsg = await bot.api.sendMessage(
-            Number(chatid),
-            message,
-            extraOptions
-          );
-          // Track the new message ID
-          await Promise.all(
-            Array(sentMsg.message_id)
-              .fill({})
-              .map((v, i) => i)
-              .reverse()
-              .map(async (v) => {
-                try {
-                  const res = await bot.api.deleteMessage(chatid, v);
-                  console.log("Deleted message >> ", res, v, chatid);
-                } catch (error) {
-                  console.log("Failed to delete message >> ", error);
-                }
-                return;
-              })
-          );
-          // if (!sentMessageIds[chatid]) sentMessageIds[chatid] = [];
-          // sentMessageIds[chatid].push(sentMsg.message_id);
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (err) {
-          // console.error("Failed to send progress message to", chatid, err);
-        }
-      }
-      // console.log("✅ Progress messages sent to all students.");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      // console.error("Error in progress notification job:", error);
-    }
-  });
+  //       try {
+  //         const sentMsg = await bot.api.sendMessage(
+  //           Number(chatid),
+  //           message,
+  //           extraOptions
+  //         );
+  //         // Track the new message ID
+  //         await Promise.all(
+  //           Array(sentMsg.message_id)
+  //             .fill({})
+  //             .map((v, i) => i)
+  //             .reverse()
+  //             .map(async (v) => {
+  //               try {
+  //                 const res = await bot.api.deleteMessage(chatid, v);
+  //                 console.log("Deleted message >> ", res, v, chatid);
+  //               } catch (error) {
+  //                 console.log("Failed to delete message >> ", error);
+  //               }
+  //               return;
+  //             })
+  //         );
+  //         // if (!sentMessageIds[chatid]) sentMessageIds[chatid] = [];
+  //         // sentMessageIds[chatid].push(sentMsg.message_id);
+  //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  //       } catch (err) {
+  //         // console.error("Failed to send progress message to", chatid, err);
+  //       }
+  //     }
+  //     // console.log("✅ Progress messages sent to all students.");
+  //     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  //   } catch (error) {
+  //     // console.error("Error in progress notification job:", error);
+  //   }
+  // });
   // console.log("✅ Daily task scheduled to run at 00:00");
 }
