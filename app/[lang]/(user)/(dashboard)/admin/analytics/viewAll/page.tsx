@@ -6,7 +6,7 @@ import {
 } from "@/actions/admin/analysis";
 import useAction from "@/hooks/useAction";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Filter, BookOpen } from "lucide-react";
 import CustomViewAllTable from "@/components/custom/admin/custom-view-all-table";
 import {
   Dialog,
@@ -15,6 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 function Page() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,6 +31,7 @@ function Page() {
   const [lastSeenFilter, setLastSeenFilter] = useState<
     "today" | "1day" | "2days" | "3days" | "3plus" | ""
   >("");
+  const [tefsirFilter, setTefsirFilter] = useState<boolean>(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(
     null
@@ -45,7 +48,8 @@ function Page() {
     itemsPerPage,
     progressFilter || undefined, // Pass undefined if no filter selected
     statusFilter || undefined, // Pass undefined if no filter selected
-    lastSeenFilter || undefined // Pass undefined if no filter selected
+    lastSeenFilter || undefined, // Pass undefined if no filter selected
+    tefsirFilter // Pass tefsir filter
   );
 
   const columns = [
@@ -117,77 +121,189 @@ function Page() {
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Analytics
       </Link>
-      <h1 className="text-xl font-bold mb-1">Student Progress In Package</h1>
-      {/* Progress Filter */}
-      <div className="m-1">
-        <label className="mr-2 font-medium">Filter by Progress:</label>
-        <select
-          value={progressFilter}
-          onChange={(e) => {
-            setProgressFilter(
-              e.target.value as "notstarted" | "inprogress" | "completed" | ""
-            );
-            setCurrentPage(1); // Reset page to 1 when filter changes
-          }}
-          className="border border-gray-300 rounded px-2 py-1"
-        >
-          <option value="">All</option>
-          <option value="notstarted">Not Started</option>
-          <option value="inprogress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Student Analytics Dashboard</h1>
+        
+        {/* Professional Filter Card */}
+        <Card className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-purple-200 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-purple-800">
+              <Filter className="h-5 w-5" />
+              Advanced Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Progress Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  📈 Progress Status
+                </label>
+                <select
+                  value={progressFilter}
+                  onChange={(e) => {
+                    setProgressFilter(
+                      e.target.value as "notstarted" | "inprogress" | "completed" | ""
+                    );
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-sm transition-all duration-200 hover:border-purple-400"
+                >
+                  <option value="">All Students</option>
+                  <option value="notstarted">Not Started</option>
+                  <option value="inprogress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
+              {/* Final Exam Status Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  🎯 Exam Status
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(
+                      e.target.value as
+                        | "notstarted"
+                        | "inprogress"
+                        | "failed"
+                        | "passed"
+                        | ""
+                    );
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-sm transition-all duration-200 hover:border-purple-400"
+                >
+                  <option value="">All Exams</option>
+                  <option value="notstarted">Not Started</option>
+                  <option value="inprogress">In Progress</option>
+                  <option value="failed">Failed</option>
+                  <option value="passed">Passed</option>
+                </select>
+              </div>
+
+              {/* Last Seen Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  ⏰ Last Active
+                </label>
+                <select
+                  value={lastSeenFilter}
+                  onChange={(e) => {
+                    setLastSeenFilter(
+                      e.target.value as
+                        | "today"
+                        | "1day"
+                        | "2days"
+                        | "3days"
+                        | "3plus"
+                        | ""
+                    );
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-sm transition-all duration-200 hover:border-purple-400"
+                >
+                  <option value="">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="1day">1 day ago</option>
+                  <option value="2days">2 days ago</option>
+                  <option value="3days">3 days ago</option>
+                  <option value="3plus">3+ days ago</option>
+                </select>
+              </div>
+
+              {/* Tefsir Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Tefsir Filter
+                </label>
+                <div className="relative">
+                  <select
+                    value={tefsirFilter ? "tefsir_only" : ""}
+                    onChange={(e) => {
+                      setTefsirFilter(e.target.value === "tefsir_only");
+                      setCurrentPage(1);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-sm transition-all duration-200 hover:border-purple-400 appearance-none"
+                  >
+                    <option value="">All Students (Default)</option>
+                    <option value="tefsir_only">Tefsir: {'"'}On Progress{'"'} Students Only</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Filter Actions */}
+              <div className="space-y-2 flex flex-col justify-end">
+                <Button
+                  onClick={() => {
+                    setProgressFilter("");
+                    setStatusFilter("");
+                    setLastSeenFilter("");
+                    setTefsirFilter(false);
+                    setCurrentPage(1);
+                  }}
+                  variant="outline"
+                  className="w-full py-2 text-sm border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 transition-all duration-200"
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+            </div>
+
+            {/* Active Filter Summary */}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(progressFilter || statusFilter || lastSeenFilter || tefsirFilter) && (
+                <>
+                  <span className="text-sm text-gray-600 font-medium">Active Filters:</span>
+                  {progressFilter && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
+                      Progress: {progressFilter}
+                    </Badge>
+                  )}
+                  {statusFilter && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                      Exam: {statusFilter}
+                    </Badge>
+                  )}
+                  {lastSeenFilter && (
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-xs">
+                      Last Seen: {lastSeenFilter}
+                    </Badge>
+                  )}
+                  {tefsirFilter && (
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs">
+                      <BookOpen className="h-3 w-3 mr-1" />
+                      Tefsir: On Progress Only
+                    </Badge>
+                  )}
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      <div className="m-1">
-        <label className="mr-2 font-medium">Filter by Final Exam Status:</label>
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(
-              e.target.value as
-                | "notstarted"
-                | "inprogress"
-                | "failed"
-                | "passed"
-                | ""
-            );
-            setCurrentPage(1); // Reset page to 1 when filter changes
-          }}
-          className="border border-gray-300 rounded px-2 py-1"
-        >
-          <option value="">All</option>
-          <option value="notstarted">Not Started</option>
-          <option value="inprogress">In Progress</option>
-          <option value="failed">Failed</option>
-          <option value="passed">Passed</option>
-        </select>
-      </div>
-      <div className="m-1">
-        <label className="mr-2 font-medium">Filter by Last Seen:</label>
-        <select
-          value={lastSeenFilter}
-          onChange={(e) => {
-            setLastSeenFilter(
-              e.target.value as
-                | "today"
-                | "1day"
-                | "2days"
-                | "3days"
-                | "3plus"
-                | ""
-            );
-            setCurrentPage(1); // Reset page to 1 when filter changes
-          }}
-          className="border border-gray-300 rounded px-2 py-1"
-        >
-          <option value="">All</option>
-          <option value="today">Today</option>
-          <option value="1day">1 day ago</option>
-          <option value="2days">2 days ago</option>
-          <option value="3days">3 days ago</option>
-          <option value="3plus">3+ days ago</option>
-        </select>
-      </div>
-      <div>
+      {/* Results Section */}
+      <div className="space-y-4">
+        {/* Results Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold text-gray-800">Student Results</h2>
+            {tefsirFilter && (
+              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-md">
+                <BookOpen className="h-3 w-3 mr-1" />
+                Tefsir: On Progress Only
+              </Badge>
+            )}
+          </div>
+          <div className="text-sm text-gray-600">
+            Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, data?.pagination?.totalRecords ?? 0)} of {data?.pagination?.totalRecords ?? 0} students
+          </div>
+        </div>
+
+        {/* Table */}
         <CustomViewAllTable
           columns={columns}
           rows={rows}

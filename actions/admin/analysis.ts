@@ -8,7 +8,13 @@ import {
 } from "../student/finalExamResult";
 import { getAttendanceofAllStudents } from "../student/attendance";
 import { differenceInDays } from "date-fns";
-import { hasMatchingSubject } from "@/lib/subject-matching";
+import { hasMatchingSubject as originalHasMatchingSubject } from "@/lib/subject-matching";
+
+// Wrapper function to handle null values
+const hasMatchingSubject = (studentSubjects: string, requiredSubject: string | null): boolean => {
+  if (!requiredSubject) return false;
+  return originalHasMatchingSubject(studentSubjects, requiredSubject);
+};
 
 export async function getStudentProgressStatus(
   studentId: number,
@@ -82,33 +88,19 @@ export async function filterStudentsByPackageandStatus(
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  // Get all students and filter by subject matching
-  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
+  const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet", "On progress"] },
+      status: { in: ["Active", "Not yet","On progress"] },
+      OR: subjectPackages.map((sp) => ({
+        subject: sp.subject,
+        package: sp.packageType,
+        isKid: sp.kidpackage,
+      })),
     },
     select: {
       wdt_ID: true,
       chat_id: true,
-      subject: true,
-      package: true,
-      isKid: true,
     },
-  });
-
-  // Filter students where their subjects match any of the required subjects
-  const students = allStudents.filter((student) => {
-    if (!student.subject || !student.package || student.isKid === null)
-      return false;
-
-    return subjectPackages.some(
-      (sp) =>
-        sp.packageType === student.package &&
-        sp.kidpackage === student.isKid &&
-        sp.subject &&
-        student.subject &&
-        hasMatchingSubject(student.subject, sp.subject)
-    );
   });
 
   // 3. For each student, check their progress for the chapters in the package
@@ -174,37 +166,23 @@ export async function getStudentsByPackage(
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  // Get all students with matching package type and kid status
-  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
+  // const studentMap = new Map<string, string>();
+
+  const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet", "On progress"] },
-    },
-    select: {
-      wdt_ID: true,
-      chat_id: true,
-      name: true,
-      subject: true,
-      package: true,
-      isKid: true,
+      status: { in: ["Active", "Not yet","On progress"] },
+      OR: subjectPackages.map((sp) => ({
+        subject: sp.subject,
+        package: sp.packageType,
+        isKid: sp.kidpackage,
+      })),
     },
   });
-
-  // Filter students where their subjects match any of the required subjects
-  const matchingStudents = allStudents.filter((student) => {
-    if (!student.subject || !student.package || student.isKid === null)
-      return false;
-
-    return subjectPackages.some(
-      (sp) =>
-        sp.packageType === student.package &&
-        sp.kidpackage === student.isKid &&
-        sp.subject &&
-        student.subject &&
-        hasMatchingSubject(student.subject, sp.subject)
-    );
-  });
-
-  return matchingStudents.map((student) => {
+  // for (const student of students) {
+  //   if (!student.chat_id) continue;
+  //   studentMap.set(student.chat_id, student.wdt_ID.toString());
+  // }
+  return students.map((student) => {
     return {
       chat_id: student.chat_id,
       wdt_ID: student.wdt_ID,
@@ -213,7 +191,7 @@ export async function getStudentsByPackage(
   });
 }
 
-// Only the teacher's students within a specific package
+// Only the teacher’s students within a specific package
 export async function getStudentsByPackageAndTeacher(
   packageId: string,
   ustazId: string
@@ -227,39 +205,24 @@ export async function getStudentsByPackageAndTeacher(
     },
     distinct: ["subject", "kidpackage", "packageType"],
   });
+  // const studentMap = new Map<string, string>();
 
-  // Get all students with matching ustaz, package type and kid status
-  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
+  const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet", "On progress"] },
+      status: { in: ["Active", "Not yet","On progress"] },
       ustaz: ustazId,
-    },
-    select: {
-      wdt_ID: true,
-      chat_id: true,
-      name: true,
-      subject: true,
-      package: true,
-      isKid: true,
+      OR: subjectPackages.map((sp) => ({
+        subject: sp.subject,
+        package: sp.packageType,
+        isKid: sp.kidpackage,
+      })),
     },
   });
-
-  // Filter students where their subjects match any of the required subjects
-  const matchingStudents = allStudents.filter((student) => {
-    if (!student.subject || !student.package || student.isKid === null)
-      return false;
-
-    return subjectPackages.some(
-      (sp) =>
-        sp.packageType === student.package &&
-        sp.kidpackage === student.isKid &&
-        sp.subject &&
-        student.subject &&
-        hasMatchingSubject(student.subject, sp.subject)
-    );
-  });
-
-  return matchingStudents.map((student) => {
+  // for (const student of students) {
+  //   if (!student.chat_id) continue;
+  //   studentMap.set(student.chat_id, student.wdt_ID.toString());
+  // }
+  return students.map((student) => {
     return {
       chat_id: student.chat_id,
       wdt_ID: student.wdt_ID,
@@ -299,7 +262,7 @@ export async function filterStudentsByPackageList(packageId: string) {
 
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet", "On progress"] },
+      status: { in: ["Active", "Not yet","On progress"] },
       OR: subjectPackages.map((sp) => ({
         subject: sp.subject,
         package: sp.packageType,
@@ -363,7 +326,7 @@ export async function filterStudentsByPackageList(packageId: string) {
 export async function getAllStudents() {
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet", "On progress"] },
+      status: { in: ["Active", "Not yet","On progress"] },
     },
     select: {
       wdt_ID: true,
@@ -435,7 +398,7 @@ export async function getTotalStudentsThatHaveacessthePacakges() {
       const packageName = sp.package?.name || "Unknown Package";
       const studentsCount = await prisma.wpos_wpdatatable_23.count({
         where: {
-          status: { in: ["Active", "Not yet", "On progress"] },
+          status: { in: ["Active", "Not yet","On progress"] },
           subject: sp.subject,
           package: sp.packageType,
           isKid: sp.kidpackage ?? undefined,
@@ -475,7 +438,7 @@ export async function getThePackagesWhichHasLargestStudent() {
       const packageName = sp.package?.name || "Unknown Package";
       const studentsCount = await prisma.wpos_wpdatatable_23.count({
         where: {
-          status: { in: ["Active", "Not yet", "On progress"] },
+          status: { in: ["Active", "Not yet","On progress"] },
           subject: sp.subject,
           package: sp.packageType,
           isKid: sp.kidpackage ?? undefined,
@@ -533,7 +496,7 @@ export async function getStudentsGroupedBySubjectKidType() {
       const packageName = sp.package?.name || "Unknown Package";
       const studentsCount = await prisma.wpos_wpdatatable_23.count({
         where: {
-          status: { in: ["Active", "Not yet", "On progress"] },
+          status: { in: ["Active", "Not yet","On progress"] },
           subject: sp.subject,
           package: sp.packageType,
           isKid: sp.kidpackage ?? undefined,
@@ -576,7 +539,7 @@ export async function getPackageAnalytics() {
       // Find all students matching any subjectPackage for this package
       const assignedStudents = await prisma.wpos_wpdatatable_23.findMany({
         where: {
-          status: { in: ["Active", "Not yet", "On progress"] },
+          status: { in: ["Active", "Not yet","On progress"] },
           OR: subjectPackages.map((sp) => ({
             subject: sp.subject ?? undefined,
             package: sp.packageType ?? undefined,
@@ -674,7 +637,7 @@ export async function getFinalExamOfPackageAnalytics() {
       // Find all students matching any subjectPackage for this package
       const assignedStudents = await prisma.wpos_wpdatatable_23.findMany({
         where: {
-          status: { in: ["Active", "Not yet", "On progress"] },
+          status: { in: ["Active", "Not yet","On progress"] },
           OR: subjectPackages.map((sp) => ({
             subject: sp.subject ?? undefined,
             package: sp.packageType ?? undefined,
@@ -830,7 +793,7 @@ export async function getStudentAnalyticsperchapter(
   // 5. Get ALL students (no skip/take here!)
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet", "On progress"] },
+      status: { in: ["Active", "Not yet","On progress"] },
       OR: subjectPackageFilters,
       ...searchFilter,
     },
@@ -1028,7 +991,8 @@ export async function getStudentAnalyticsperPackage(
   itemsPerPage: number = 10,
   progressFilter?: "notstarted" | "inprogress" | "completed" | "all",
   statusFilter?: "notstarted" | "inprogress" | "failed" | "passed" | "all",
-  lastSeenFilter?: "today" | "1day" | "2days" | "3days" | "3plus" | "all"
+  lastSeenFilter?: "today" | "1day" | "2days" | "3days" | "3plus" | "all",
+  tefsirFilter?: boolean
 ) {
   const skip = (currentPage - 1) * itemsPerPage;
 
@@ -1043,12 +1007,6 @@ export async function getStudentAnalyticsperPackage(
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  const subjectPackageFilters = subjectPackages.map((sp) => ({
-    subject: sp.subject,
-    package: sp.packageType,
-    isKid: sp.kidpackage,
-  }));
-
   // 2. Build search filter
   const searchFilter = searchTerm
     ? {
@@ -1062,11 +1020,10 @@ export async function getStudentAnalyticsperPackage(
       }
     : {};
 
-  // 3. Fetch students
-  const students = await prisma.wpos_wpdatatable_23.findMany({
+  // 3. Fetch all students first (without subject filtering)
+  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet", "On progress"] },
-      OR: subjectPackageFilters,
+      status: { in: ["Active", "Not yet","On progress"] },
       ...searchFilter,
     },
     orderBy: { wdt_ID: "asc" },
@@ -1079,16 +1036,42 @@ export async function getStudentAnalyticsperPackage(
       subject: true,
       package: true,
       chat_id: true,
+      status: true,
       youtubeSubject: true,
       ustazdata: { select: { ustazname: true } },
     },
+  });
+
+  // 4. Filter students using hasMatchingSubject for comma-separated subjects
+  const students = allStudents.filter((student) => {
+    if (!student.subject || !student.package || student.isKid === null) {
+      return false;
+    }
+
+    // Apply Tefsir filter logic
+    if (tefsirFilter) {
+      // When Tefsir filter is ON: Only show "On progress" students with Tefsir subjects
+      if (student.status !== "On progress") {
+        return false;
+      }
+      
+      // Check if student's subjects contain "Tefsir" (comma-separated handling)
+      return hasMatchingSubject(student.subject, "Tefsir");
+    } else {
+      // When Tefsir filter is OFF: Show all students with valid subject packages
+      return subjectPackages.some((sp) => 
+        sp.packageType === student.package &&
+        sp.kidpackage === student.isKid &&
+        hasMatchingSubject(student.subject??"", sp.subject??"")
+      );
+    }
   });
 
   const attendanceMap = await getAttendanceofAllStudents(
     students.map((s) => s.wdt_ID)
   );
 
-  // 4. Helper: Format phone number
+  // 5. Helper: Format phone number
   const formatPhoneNumber = (
     raw: string | null,
     country: string | null
@@ -1133,7 +1116,7 @@ export async function getStudentAnalyticsperPackage(
     students.map(async (student) => {
       const matchedPackage = subjectPackages.find(
         (sp) =>
-          sp.subject === student.subject &&
+          hasMatchingSubject(student.subject ?? "", sp.subject ?? "") &&
           sp.packageType === student.package &&
           sp.kidpackage === student.isKid
       );
@@ -1196,7 +1179,7 @@ export async function getStudentAnalyticsperPackage(
     })
   );
 
-  // 6. Filter by progress
+  // 6. Filter by progress  
   let filteredStudents = studentResults.filter(Boolean);
 
   if (progressFilter && progressFilter !== "all") {
@@ -1306,7 +1289,7 @@ export async function getAvailablePackagesForStudent(studentId: number) {
 
   // Filter packages where student's subjects match any of the required subjects
   const availablePackages = allSubjectPackages.filter((pkg) =>
-    hasMatchingSubject(student.subject || "", pkg.subject || "")
+    hasMatchingSubject(student.subject ?? "", pkg.subject ?? "")
   );
 
   // For each package, get the student's progress status and details
@@ -1383,7 +1366,7 @@ export async function sendProgressMessages() {
   // 3. Get ALL students (no skip/take here!)
   const students = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet", "On progress"] },
+      status: { in: ["Active", "Not yet","On progress"] },
       OR: subjectPackageFilters,
     },
     orderBy: { wdt_ID: "asc" },
@@ -1408,7 +1391,7 @@ export async function sendProgressMessages() {
       // Find the subjectPackage for this student
       const matchedSubjectPackage = subjectPackages.find(
         (sp) =>
-          sp.subject === student.subject &&
+          hasMatchingSubject(student.subject ?? "", sp.subject ?? "") &&
           sp.packageType === student.package &&
           sp.kidpackage === student.isKid
       );
