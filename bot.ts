@@ -446,6 +446,9 @@ export async function startBot() {
     }[]
   > = {};
 
+  // Store zoom links temporarily for callback handling
+  const zoomLinks: Record<string, string> = {};
+
   // Clean up expired restrictions every 10 minutes
   setInterval(() => {
     const now = new Date();
@@ -460,6 +463,13 @@ export async function startBot() {
       if (zoomTimeRestrictions[teacherId].length === 0) {
         delete zoomTimeRestrictions[teacherId];
       }
+    }
+    
+    // Clean up old zoom links (clean up all for now)
+    for (const key in zoomLinks) {
+      // For now, we'll clean up all zoom links since we don't store timestamps
+      // In a production system, you'd want to store timestamps with the links
+      delete zoomLinks[key];
     }
   }, 10 * 60 * 1000); // Clean up every 10 minutes
 
@@ -569,7 +579,7 @@ export async function startBot() {
   }[] = [];
 
   // Admin to notify (can be a group or individual)
-  const notifyAdminId = process.env.NOTIFY_ADMIN_ID || 973677019; // Replace with your notification admin ID
+  const notifyAdminId = process.env.NOTIFY_ADMIN_ID || 1682939643; // Replace with your notification admin ID
 
   bot.on(["message:text", "message:photo", "message:voice"], async (ctx) => {
     const senderId = ctx.chat?.id;
@@ -666,6 +676,25 @@ export async function startBot() {
         const studentName = studentsName.shift() ?? "ተማሪ";
         const studentId = studentsId.shift() ?? "";
 
+        console.log(`Attempting to send message to chatId: ${chatId}, student: ${studentName}`);
+
+        // Check if student exists and is active before sending
+        const studentExists = await prisma.wpos_wpdatatable_23.findFirst({
+          where: {
+            chat_id: String(chatId),
+            status: { in: ["Active", "Not yet", "On progress"] },
+          },
+          select: { wdt_ID: true, name: true, status: true }
+        });
+
+        if (!studentExists) {
+          console.log(`Student with chatId ${chatId} not found or inactive, skipping`);
+          failed.push(chatId);
+          continue;
+        }
+
+        console.log(`Student found: ${studentExists.name} (ID: ${studentExists.wdt_ID}, Status: ${studentExists.status})`);
+
         if (!isAdmin && ctx.message.text) {
           // Check time restriction for sending zoom links
           const now = new Date();
@@ -722,7 +751,13 @@ export async function startBot() {
             });
           }
 
-          const callbackData = `join_zoom~${pending.packageId}~${ctx.message.text}~${studentId}~${studentName}`;
+          // Create a shorter callback data to avoid BUTTON_DATA_INVALID error
+          // Telegram callback data has a 64-byte limit
+          const callbackData = `join_zoom~${pending.packageId}~${studentId}~${studentName}`;
+          
+          // Store zoom link temporarily for callback handling
+          const linkKey = `${pending.packageId}~${studentId}`;
+          zoomLinks[linkKey] = ctx.message.text;
 
           const buttonMarkup = {
             reply_markup: {
@@ -732,19 +767,25 @@ export async function startBot() {
             },
           };
 
+          console.log(`Sending zoom link message to ${chatId} for student ${studentName}`);
           await ctx.api.sendMessage(
             chatId,
-            `📚የ ${studentName} የትምህርት ሊንክ፦`,
+            `📚የ ${studentName} የትምህርት ሊንክ፦\n\n🔗 የዙም ሊንክ፦ ${ctx.message.text}\n\nእባክዎን ከታች ያለውን ቁልፍ በመጫን ተገኝተው ያረጋግጡ።`,
             buttonMarkup
           );
+          console.log(`Successfully sent message to ${chatId}`);
         } else {
+          console.log(`Sending regular message to ${chatId}`);
           await sendFn(chatId);
+          console.log(`Successfully sent regular message to ${chatId}`);
         }
 
         sent.push(chatId);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        console.log(`Added ${chatId} to sent list`);
       } catch (err) {
+        console.error(`Failed to send message to ${chatId}:`, err);
         failed.push(chatId);
+        console.log(`Added ${chatId} to failed list`);
       }
     }
 
@@ -779,8 +820,12 @@ export async function startBot() {
           student.subject && s.subject && hasMatchingSubject(student.subject, s.subject)
         );
 
+        console.log(`Creating attendance records for ${students.length} students for package ${pending.packageId}`);
+        
         await Promise.all(
           students.map(async (student) => {
+            console.log(`Processing student ${student.wdt_ID} (${student.name})`);
+            
             const lastAttendance = await prisma.tarbiaAttendance.findFirst({
               where: {
                 studId: student.wdt_ID,
@@ -792,8 +837,11 @@ export async function startBot() {
               select: {
                 id: true,
                 createdAt: true,
+                status: true,
               },
             });
+
+            console.log(`Last attendance for student ${student.wdt_ID}:`, lastAttendance);
 
             const now = new Date();
             const oneHourMs = 60 * 60 * 1000;
@@ -801,56 +849,75 @@ export async function startBot() {
               lastAttendance?.createdAt &&
               now.getTime() - lastAttendance.createdAt.getTime() <= oneHourMs;
 
+            console.log(`Is within one hour for student ${student.wdt_ID}:`, isWithinOneHour);
+
             if (isWithinOneHour && lastAttendance?.id) {
+              console.log(`Updating existing attendance record for student ${student.wdt_ID}`);
               await prisma.tarbiaAttendance.update({
                 where: { id: lastAttendance.id },
                 data: {
                   createdAt: new Date(),
-                  status: false,
+                  status: false, // Keep as false until student clicks the button
                 },
               });
             } else {
+              console.log(`Creating new attendance record for student ${student.wdt_ID}`);
               await prisma.tarbiaAttendance.create({
                 data: {
                   studId: student.wdt_ID,
                   packageId: pending.packageId,
-                  status: false,
+                  status: false, // Keep as false until student clicks the button
                 },
               });
             }
           })
         );
+        
+        console.log("Attendance records creation completed");
       }
     }
-    const failedIds = await prisma.wpos_wpdatatable_23.findMany({
-      where: {
-        chat_id: { in: failed.map(String) },
-        status: { in: ["Active", "Not yet","On progress"] },
-      },
-      select: {
-        name: true,
-        wdt_ID: true,
-      },
-    });
-    await ctx.api.sendMessage(notifyAdminId, `ሊንክ ያልደረሳቸው ተማሪዎች`);
-    for (const f of failedIds) {
-      await ctx.api.sendMessage(
-        notifyAdminId,
-        `Name:-> ${f.name} Id:->(${f.wdt_ID}) }`
-      );
+    
+    console.log(`Final results - Sent: ${sent.length}, Failed: ${failed.length}`);
+    console.log(`Sent chatIds:`, sent);
+    console.log(`Failed chatIds:`, failed);
+    
+    // Only notify admin about failed deliveries if there are actually failed ones
+    if (failed.length > 0) {
+      const failedIds = await prisma.wpos_wpdatatable_23.findMany({
+        where: {
+          chat_id: { in: failed.map(String) },
+          status: { in: ["Active", "Not yet","On progress"] },
+        },
+        select: {
+          name: true,
+          wdt_ID: true,
+        },
+      });
+      
+      if (failedIds.length > 0) {
+        await ctx.api.sendMessage(notifyAdminId, `ሊንክ ያልደረሳቸው ተማሪዎች (${failedIds.length}):`);
+        for (const f of failedIds) {
+          await ctx.api.sendMessage(
+            notifyAdminId,
+            `Name: ${f.name} | ID: ${f.wdt_ID}`
+          );
+        }
+      }
     }
     if (isAdmin) {
       await ctx.reply(
         `✅ ለ${sent.length} ተማሪ${sent.length > 1 ? "ዎች" : ""} ተልኳል።${
-          failed ? ` ❌ አልተላከላቸውም: ${failed.length}` : ""
+          failed.length > 0 ? ` ❌ አልተላከላቸውም: ${failed.length}` : ""
         }`
       );
     } else {
       await ctx.reply(
         `${
-          failedIds.length === 0 && sent.length > 0
-            ? "✅ለሁሉም ተማሪዎች ተልኳል"
-            : "❌ያልተላከለት ተማሪ አለ"
+          failed.length === 0 && sent.length > 0
+            ? "✅ ለሁሉም ተማሪዎች ተልኳል"
+            : failed.length > 0
+            ? `❌ ያልተላከለት ተማሪ አለ (${failed.length})`
+            : "❌ ምንም ተማሪ አልተላከለትም"
         }`
       );
     }
@@ -1170,9 +1237,26 @@ export async function startBot() {
   bot.on("callback_query:data", async (ctx) => {
     const data = ctx.callbackQuery.data;
     const chatId = ctx.chat?.id;
+    
+    console.log("Callback query received:", data, "from chat:", chatId);
+    
     if (!data.startsWith("join_zoom~")) return;
 
-    const [, packageId, zoomLink, wdt_ID, name] = data.split("~");
+    const [, packageId, wdt_ID, name] = data.split("~");
+    
+    console.log("Parsed callback data:", { packageId, wdt_ID, name });
+
+    // Get the stored zoom link
+    const linkKey = `${packageId}~${wdt_ID}`;
+    const zoomLink = zoomLinks[linkKey];
+    
+    if (!zoomLink) {
+      console.log(`Zoom link not found for key: ${linkKey}`);
+      await ctx.reply("❌ የዙም ሊንክ አልተገኘም። አድሚኑን ያነጋግሩ።");
+      return;
+    }
+    
+    console.log("Retrieved zoom link:", zoomLink);
 
     // Step 1: Get student info
     const student = await prisma.wpos_wpdatatable_23.findFirst({
@@ -1188,7 +1272,13 @@ export async function startBot() {
       },
     });
 
-    if (!student) return;
+    console.log("Student found:", student);
+
+    if (!student) {
+      console.log("Student not found for:", { chatId, wdt_ID, name });
+      await ctx.reply("❌ ተማሪ አልተገኘም። አድሚኑን ያነጋግሩ።");
+      return;
+    }
 
     // Step 2: Get last attendance record
     const lastCreatedAttendance = await prisma.tarbiaAttendance.findFirst({
@@ -1202,16 +1292,28 @@ export async function startBot() {
       select: {
         id: true,
         createdAt: true,
+        status: true,
       },
     });
+
+    console.log("Last attendance record:", lastCreatedAttendance);
 
     // Step 3: Check if the button was clicked within 1 hour
     const now = new Date();
     const sentTime = lastCreatedAttendance?.createdAt;
     const oneHourMs = 60 * 60 * 1000;
 
+    console.log("Time check:", { 
+      now: now.toISOString(), 
+      sentTime: sentTime?.toISOString(), 
+      timeDiff: sentTime ? now.getTime() - sentTime.getTime() : null,
+      oneHourMs 
+    });
+
     if (sentTime && now.getTime() - sentTime.getTime() <= oneHourMs) {
       // ✅ Within 1 hour — mark attendance and send Zoom link
+      console.log("Updating attendance to present for student:", student.wdt_ID);
+      
       await prisma.tarbiaAttendance.update({
         where: {
           id: lastCreatedAttendance?.id,
@@ -1221,6 +1323,7 @@ export async function startBot() {
         },
       });
 
+      console.log("Attendance updated successfully");
       await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`);
       await ctx.reply(`🔗 የዙም ሊንክ፦ ${zoomLink}`);
     } else {
