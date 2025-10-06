@@ -1171,8 +1171,8 @@ export async function startBot() {
     const keyboard = new InlineKeyboard()
       .row()
       .text(`✅ ፓኬጁን ለሚወስዱት በሙሉ`, `ustaz_status_${packageId}_all`)
-      .row()
-      .text(`✅ ፓኬጁን ለሚወስዱት የኔ ተማሪዎች ብቻ`, `ustaz_status_${packageId}_my`);
+      // .row()
+      // .text(`✅ ፓኬጁን ለሚወስዱት የኔ ተማሪዎች ብቻ`, `ustaz_status_${packageId}_my`);
 
     await ctx.reply("የተማሪዎችን ሁኔታ ይምረጡ:", { reply_markup: keyboard });
   });
