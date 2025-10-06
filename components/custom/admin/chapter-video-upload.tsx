@@ -1,10 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Video, Save, CheckCircle, Loader2 } from "lucide-react";
+import { Video, Save, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import VideoUploadButton from "@/components/VideoUploadButton";
 import Player from "@/components/stream/Player";
 import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -29,6 +37,7 @@ export function ChapterVideoUpload({
   const [isUploadComplete, setIsUploadComplete] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [playerKey, setPlayerKey] = useState(0);
   const router = useRouter();
 
@@ -62,12 +71,15 @@ export function ChapterVideoUpload({
     setIsUploading(false);
   };
 
-  const handleDeleteVideo = async () => {
+  const handleDeleteClick = () => {
     if (!initialData.customVideo) {
       toast.error("No custom video to delete");
       return;
     }
+    setDeleteModalOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/chapters/${chapterId}/video`, {
@@ -94,7 +106,12 @@ export function ChapterVideoUpload({
       toast.error("Failed to delete video");
     } finally {
       setIsDeleting(false);
+      setDeleteModalOpen(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
   };
 
   const handleSaveVideo = async () => {
@@ -290,22 +307,56 @@ export function ChapterVideoUpload({
             </span>
           </div>
           <Button
-            onClick={handleDeleteVideo}
+            onClick={handleDeleteClick}
             disabled={isDeleting}
             variant="destructive"
             size="sm"
           >
-            {isDeleting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Deleting...
-              </>
-            ) : (
-              "Delete Custom Video"
-            )}
+            Delete Custom Video
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Delete Custom Video
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the custom video? 
+              This action cannot be undone and will revert to the original database video.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDeleteCancel}
+              disabled={isDeleting}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="w-full sm:w-auto"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Video"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

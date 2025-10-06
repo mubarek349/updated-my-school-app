@@ -1,11 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Trash2, Brain, CheckCircle, Loader2 } from "lucide-react";
+import { Upload, Trash2, Brain, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { removeAiPdfData } from "@/actions/admin/ai-pdf-data";
@@ -21,6 +29,7 @@ interface AiPdfUploaderProps {
 export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState("");
   const router = useRouter();
@@ -91,9 +100,12 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
     }
   };
 
-  const handleRemove = async () => {
+  const handleRemoveClick = () => {
     if (!currentAiPdfData) return;
+    setDeleteModalOpen(true);
+  };
 
+  const handleRemoveConfirm = async () => {
     setIsRemoving(true);
 
     try {
@@ -110,7 +122,12 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
       toast.error(error instanceof Error ? error.message : 'Failed to remove AI PDF Data');
     } finally {
       setIsRemoving(false);
+      setDeleteModalOpen(false);
     }
+  };
+
+  const handleRemoveCancel = () => {
+    setDeleteModalOpen(false);
   };
 
   return (
@@ -144,12 +161,12 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
               <Button
                 size="sm"
                 variant="outline"
-                onClick={handleRemove}
+                onClick={handleRemoveClick}
                 disabled={isRemoving}
                 className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
               >
                 <Trash2 className="h-3 w-3 mr-1" />
-                {isRemoving ? 'Removing...' : 'Remove'}
+                Remove
               </Button>
             </div>
           </div>
@@ -207,8 +224,51 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
           </div>
         )}
 
-      
       </CardContent>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Remove AI PDF Data
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove the AI PDF Data? 
+              This action cannot be undone and will disable AI-powered course assistance.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={handleRemoveCancel}
+              disabled={isRemoving}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemoveConfirm}
+              disabled={isRemoving}
+              className="w-full sm:w-auto"
+            >
+              {isRemoving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remove AI PDF Data
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
