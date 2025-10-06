@@ -1,28 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bot } from "grammy";
-// import cron from "node-cron";
 import prisma from "./lib/db";
 import dotenv from "dotenv";
-
-// Extend global type for temporary callback data
-declare global {
-  var tempCallbackData:
-    | Record<
-        string,
-        {
-          zoomLink: string;
-          studentName: string;
-          packageId: string;
-          timestamp: number;
-        }
-      >
-    | undefined;
-}
 import { allPackages } from "./actions/admin/adminBot";
 import {
   getStudentsByPackage,
   getStudentsByPackageAndTeacher,
-  // sendProgressMessages,
 } from "./actions/admin/analysis";
 import { getStudentAnalyticsperPackage } from "./actions/admin/analysis";
 import { filterStudentsByPackageList } from "./actions/admin/analysis";
@@ -34,7 +16,6 @@ import { hasMatchingSubject } from "./lib/subject-matching";
 
 dotenv.config();
 const BASE_URL = process.env.FORWARD_URL || process.env.AUTH_URL;
-// const sentMessageIds: Record<string, number[]> = {};
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN || "");
 export { bot };
 
@@ -121,23 +102,21 @@ export async function startBot() {
       const kidPackage = channel.isKid;
       if (!packageType || !subject || kidPackage === null) continue;
 
-      // Get all subject packages for this package type and kid status
+      // Fetch all packages for the package type and kid package
       const allSubjectPackages = await prisma.subjectPackage.findMany({
         where: {
           packageType: packageType,
           kidpackage: kidPackage,
         },
         orderBy: { createdAt: "desc" },
-        select: {
-          packageId: true,
-          subject: true,
-        },
+        select: { packageId: true, subject: true },
       });
-
-      // Filter packages where student's subjects match any of the required subjects
-      const subjectPackage = allSubjectPackages.filter((pkg) =>
-        hasMatchingSubject(subject, pkg.subject || "")
+      
+      // Filter packages using subject matching logic for comma-separated subjects
+      const subjectPackage = allSubjectPackages.filter((pkg) => 
+        pkg.subject && hasMatchingSubject(subject, pkg.subject)
       );
+      
       if (!subjectPackage || subjectPackage.length === 0) continue;
       const lastPackageId = subjectPackage[0].packageId;
       // Check if the active package is already set
@@ -162,7 +141,7 @@ export async function startBot() {
     channels = await prisma.wpos_wpdatatable_23.findMany({
       where: {
         chat_id: chatId.toString(),
-        status: { in: ["Active", "Not yet", "On progress"] },
+        status: { in: ["Active", "Not yet","On progress"] },
       },
       select: {
         wdt_ID: true,
@@ -311,7 +290,7 @@ export async function startBot() {
       where: {
         chat_id: chatId?.toString(),
         wdt_ID: wdt_ID,
-        status: { in: ["Active", "Not yet", "On progress"] },
+        status: { in: ["Active", "Not yet","On progress"] },
       },
       data: {
         youtubeSubject: packageId,
@@ -458,6 +437,32 @@ export async function startBot() {
     }
   > = {};
 
+  // Store time restrictions for zoom link sending
+  const zoomTimeRestrictions: Record<
+    number, // teacherId  
+    {
+      packageId: string;
+      lastSentTime: Date;
+    }[]
+  > = {};
+
+  // Clean up expired restrictions every 10 minutes
+  setInterval(() => {
+    const now = new Date();
+    const timeRestrictionMs = 5 * 60 * 1000; // 5 minutes restriction
+    
+    for (const teacherId in zoomTimeRestrictions) {
+      zoomTimeRestrictions[teacherId] = zoomTimeRestrictions[teacherId].filter(
+        (restriction) => now.getTime() - restriction.lastSentTime.getTime() < timeRestrictionMs
+      );
+      
+      // Remove empty teacher entries
+      if (zoomTimeRestrictions[teacherId].length === 0) {
+        delete zoomTimeRestrictions[teacherId];
+      }
+    }
+  }, 10 * 60 * 1000); // Clean up every 10 minutes
+
   // Admin command
   bot.command("admin", async (ctx) => {
     const chatId = ctx.chat?.id;
@@ -574,17 +579,8 @@ export async function startBot() {
 
     const ADMIN_IDS = admins.map((a) => Number(a.chat_id)); // Replace with actual admin IDs
     const isAdmin = ADMIN_IDS.includes(senderId);
-
-    // Check if sender is an ustaz (teacher)
-    const isUstaz = await prisma.ustaz.findFirst({
-      where: { chat_id: senderId?.toString() },
-    });
-
-    console.log("Sender ID:", senderId);
-    console.log("Is Admin:", isAdmin);
-    console.log("Is Ustaz:", !!isUstaz);
-    // Restrict non-admins and non-ustaz to text only
-    if (!isAdmin && !isUstaz && !ctx.message.text) {
+    // Restrict non-admins to text only
+    if (!isAdmin && !ctx.message.text) {
       console.log("mubarek");
       const reason = "Attempted to send media";
       const content = JSON.stringify(ctx.message, null, 2);
@@ -608,8 +604,8 @@ export async function startBot() {
       return;
     }
 
-    // Restrict non-admins and non-ustaz from sending non-Zoom links
-    if (!isAdmin && !isUstaz && ctx.message.text) {
+    // Restrict non-admins from sending non-Zoom links
+    if (!isAdmin && ctx.message.text) {
       const text = ctx.message.text.trim();
       const containsLink = /https?:\/\/[^\s]+/i.test(text);
       const isZoomLink = /https?:\/\/(?:[\w-]+\.)?zoom\.us\/[^\s]*/i.test(text);
@@ -643,39 +639,21 @@ export async function startBot() {
 
     // Prepare content
     let sendFn;
-    console.log(
-      "Message type:",
-      ctx.message.text
-        ? "text"
-        : ctx.message.photo
-        ? "photo"
-        : ctx.message.voice
-        ? "voice"
-        : "unknown"
-    );
-    console.log("isAdmin:", isAdmin);
-    console.log("isUstaz:", !!isUstaz);
-
     if (ctx.message.text) {
       sendFn = (id: number) => ctx.api.sendMessage(id, ctx.message.text!);
-      console.log("✅ sendFn created for text message");
-    } else if (ctx.message.photo && (isAdmin || isUstaz)) {
+    } else if (ctx.message.photo && isAdmin) {
       const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
       sendFn = (id: number) =>
         ctx.api.sendPhoto(id, fileId, { caption: ctx.message.caption });
-      console.log("✅ sendFn created for photo message");
-    } else if (ctx.message.voice && (isAdmin || isUstaz)) {
+    } else if (ctx.message.voice && isAdmin) {
       const fileId = ctx.message.voice.file_id;
       sendFn = (id: number) =>
         ctx.api.sendVoice(id, fileId, { caption: ctx.message.caption });
-      console.log("✅ sendFn created for voice message");
     } else {
-      console.log("❌ Unsupported message type or not admin/ustaz");
       await ctx.reply("❌ የሚደገፍ ያልሆነ ዓይነት መልእክት።");
       return;
     }
     console.log("chatIds", pending.chatIds);
-    console.log("sendFn defined:", !!sendFn);
 
     // Send to all selected students
     const sent: number[] = [];
@@ -689,25 +667,62 @@ export async function startBot() {
         const studentId = studentsId.shift() ?? "";
 
         if (!isAdmin && ctx.message.text) {
-          // Create a shorter callback data to avoid Telegram's 64-byte limit
-          const callbackData = `zoom~${pending.packageId}~${studentId}`;
+          // Check time restriction for sending zoom links
+          const now = new Date();
+          const timeRestrictionMs = 5 * 60 * 1000; // 5 minutes restriction
+          const teacherId = senderId;
+          
+          // Check cached time restrictions for this teacher
+          const teacherRestrictions = zoomTimeRestrictions[teacherId] || [];
+          const packageRestriction = teacherRestrictions.find(
+            (restriction) => restriction.packageId === pending.packageId
+          );
+          
+          // If restriction exists and hasn't expired, show message but still send
+          if (packageRestriction) {
+            const timeElapsed = now.getTime() - packageRestriction.lastSentTime.getTime();
+            
+            if (timeElapsed < timeRestrictionMs) {
+              const remainingTime = timeRestrictionMs - timeElapsed;
+              const remainingMinutes = Math.ceil(remainingTime / (1000 * 60));
+              
+              // Show restriction message to teacher
+              await ctx.reply(
+                `⚠️ የዙም ሊንክ መላክ ከፍተኛ ነው። የሚያስታክተው ጊዜ: ${remainingMinutes} ደቂቃ${remainingMinutes > 1 ? 'ዎች' : ''}።\nለማይፈቅድ ይንረግረግ።`
+              );
+              
+              // Continue to send even with restriction message
+              // Recording time for next restriction
+              if (!zoomTimeRestrictions[teacherId]) {
+                zoomTimeRestrictions[teacherId] = [];
+              }
+              
+              const existingRestriction = zoomTimeRestrictions[teacherId].find(
+                (restriction) => restriction.packageId === pending.packageId
+              );
+              
+              if (existingRestriction) {
+                existingRestriction.lastSentTime = now;
+              } else {
+                zoomTimeRestrictions[teacherId].push({
+                  packageId: pending.packageId,
+                  lastSentTime: now
+                });
+              }
+            }
+          } else {
+            // Record time for first send
+            if (!zoomTimeRestrictions[teacherId]) {
+              zoomTimeRestrictions[teacherId] = [];
+            }
+            
+            zoomTimeRestrictions[teacherId].push({
+              packageId: pending.packageId,
+              lastSentTime: now
+            });
+          }
 
-          // Store the zoom link and student name in a temporary storage
-          const tempData = {
-            zoomLink: ctx.message.text,
-            studentName: studentName,
-            packageId: pending.packageId,
-          };
-
-          // Store in a simple in-memory cache (you might want to use Redis or database for production)
-          if (!(global as any).tempCallbackData)
-            (global as any).tempCallbackData = {};
-          (global as any).tempCallbackData[callbackData] = {
-            ...tempData,
-            timestamp: Date.now(),
-          };
-
-          // Note: No automatic cleanup - links never expire
+          const callbackData = `join_zoom~${pending.packageId}~${ctx.message.text}~${studentId}~${studentName}`;
 
           const buttonMarkup = {
             reply_markup: {
@@ -723,21 +738,12 @@ export async function startBot() {
             buttonMarkup
           );
         } else {
-          if (sendFn) {
-            console.log(`Attempting to send message to chatId: ${chatId}`);
-            await sendFn(chatId);
-            console.log(`✅ Message sent to chatId: ${chatId}`);
-          } else {
-            console.error("sendFn is not defined for chatId:", chatId);
-            failed.push(chatId);
-            continue;
-          }
+          await sendFn(chatId);
         }
 
         sent.push(chatId);
-        console.log(`✅ Message sent successfully to chatId: ${chatId}`);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
-        console.error(`❌ Failed to send message to chatId: ${chatId}`, err);
         failed.push(chatId);
       }
     }
@@ -753,19 +759,25 @@ export async function startBot() {
         },
       });
       for (const s of statsuOfStudent) {
-        const students = await prisma.wpos_wpdatatable_23.findMany({
+        // Fetch all students with matching package type and kid package
+        const allStudents = await prisma.wpos_wpdatatable_23.findMany({
           where: {
-            subject: s.subject,
             package: s.packageType,
             isKid: s.kidpackage,
             chat_id: { in: sent.map(String) },
-            status: { in: ["Active", "Not yet", "On progress"] },
+            status: { in: ["Active", "Not yet","On progress"] },
           },
           select: {
             wdt_ID: true,
             name: true,
+            subject: true,
           },
         });
+
+        // Filter students using subject matching logic for comma-separated subjects
+        const students = allStudents.filter((student) => 
+          student.subject && s.subject && hasMatchingSubject(student.subject, s.subject)
+        );
 
         await Promise.all(
           students.map(async (student) => {
@@ -783,9 +795,13 @@ export async function startBot() {
               },
             });
 
-            const isWithinTwentyFourHours = true; // Always true - no time limit
+            const now = new Date();
+            const oneHourMs = 60 * 60 * 1000;
+            const isWithinOneHour =
+              lastAttendance?.createdAt &&
+              now.getTime() - lastAttendance.createdAt.getTime() <= oneHourMs;
 
-            if (isWithinTwentyFourHours && lastAttendance?.id) {
+            if (isWithinOneHour && lastAttendance?.id) {
               await prisma.tarbiaAttendance.update({
                 where: { id: lastAttendance.id },
                 data: {
@@ -809,7 +825,7 @@ export async function startBot() {
     const failedIds = await prisma.wpos_wpdatatable_23.findMany({
       where: {
         chat_id: { in: failed.map(String) },
-        status: { in: ["Active", "Not yet", "On progress"] },
+        status: { in: ["Active", "Not yet","On progress"] },
       },
       select: {
         name: true,
@@ -1154,32 +1170,17 @@ export async function startBot() {
   bot.on("callback_query:data", async (ctx) => {
     const data = ctx.callbackQuery.data;
     const chatId = ctx.chat?.id;
-    if (!data.startsWith("zoom~")) return;
+    if (!data.startsWith("join_zoom~")) return;
 
-    const [, packageId, wdt_ID] = data.split("~");
-
-    // Get the stored data from temporary storage
-    const tempData = (global as any).tempCallbackData?.[data];
-    if (!tempData) {
-      await ctx.answerCallbackQuery(
-        "❌ Link not found. Please request a new one."
-      );
-      return;
-    }
-
-    const { zoomLink } = tempData;
-
-    // Clean up the temporary data after use
-    if ((global as any).tempCallbackData) {
-      delete (global as any).tempCallbackData[data];
-    }
+    const [, packageId, zoomLink, wdt_ID, name] = data.split("~");
 
     // Step 1: Get student info
     const student = await prisma.wpos_wpdatatable_23.findFirst({
       where: {
         chat_id: String(chatId),
-        status: { in: ["Active", "Not yet", "On progress"] },
+        status: { in: ["Active", "Not yet","On progress"] },
         wdt_ID: Number(wdt_ID),
+        name: String(name),
       },
       select: {
         wdt_ID: true,
@@ -1204,20 +1205,42 @@ export async function startBot() {
       },
     });
 
-    // Always send Zoom link and mark attendance (no time limit)
-    if (lastCreatedAttendance?.id) {
+    // Step 3: Check if the button was clicked within 1 hour
+    const now = new Date();
+    const sentTime = lastCreatedAttendance?.createdAt;
+    const oneHourMs = 60 * 60 * 1000;
+
+    if (sentTime && now.getTime() - sentTime.getTime() <= oneHourMs) {
+      // ✅ Within 1 hour — mark attendance and send Zoom link
       await prisma.tarbiaAttendance.update({
         where: {
-          id: lastCreatedAttendance.id,
+          id: lastCreatedAttendance?.id,
         },
         data: {
           status: true,
         },
       });
-    }
 
-    await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`);
-    await ctx.reply(`🔗 የዙም ሊንክ፦ ${zoomLink}`);
+      await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`);
+      await ctx.reply(`🔗 የዙም ሊንክ፦ ${zoomLink}`);
+    } else {
+      // ❌ Expired — send fallback message
+      const update = await updatePathProgressData(student.wdt_ID);
+      if (!update) {
+        return undefined;
+      }
+      const lang = "en";
+      const stud = "student";
+      const url = `${BASE_URL}/${lang}/${stud}/${student.wdt_ID}/${update[0]}/${update[1]}`;
+      const channelName = student.name || "ዳሩል-ኩብራ";
+      const keyboard = new InlineKeyboard().webApp(
+        `📚 የ${channelName}ን የትምህርት ገጽ ይክፈቱ`,
+        url
+      );
+      await ctx.reply(`⏰ ይቅርታ፣ የዙም ሊንኩ ጊዜው አልፎበታል።ት/ትዎን ይከታተሉ፡፡`, {
+        reply_markup: keyboard,
+      });
+    }
   });
 
   // Cancel handler

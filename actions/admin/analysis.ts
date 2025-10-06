@@ -10,9 +10,9 @@ import { getAttendanceofAllStudents } from "../student/attendance";
 import { differenceInDays } from "date-fns";
 import { hasMatchingSubject as originalHasMatchingSubject } from "@/lib/subject-matching";
 
-// Wrapper function to handle null values
-const hasMatchingSubject = (studentSubjects: string, requiredSubject: string | null): boolean => {
-  if (!requiredSubject) return false;
+// Wrapper function to handle null values for subject matching
+const hasMatchingSubject = (studentSubjects: string | null | undefined, requiredSubject: string | null): boolean => {
+  if (!studentSubjects || !requiredSubject) return false;
   return originalHasMatchingSubject(studentSubjects, requiredSubject);
 };
 
@@ -88,22 +88,37 @@ export async function filterStudentsByPackageandStatus(
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  const students = await prisma.wpos_wpdatatable_23.findMany({
+  // 3. Fetch all students with valid status first
+  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet","On progress"] },
-      OR: subjectPackages.map((sp) => ({
-        subject: sp.subject,
-        package: sp.packageType,
-        isKid: sp.kidpackage,
-      })),
+      status: { in: ["Active", "Not yet", "On progress"] },
     },
     select: {
       wdt_ID: true,
       chat_id: true,
+      subject: true,
+      package: true,
+      isKid: true,
     },
   });
 
-  // 3. For each student, check their progress for the chapters in the package
+  // 4. Filter students using hasMatchingSubject for comma-separated subjects
+  const students = allStudents.filter((student) => {
+    if (!student.subject || !student.package || student.isKid === null) {
+      return false;
+    }
+
+    // Check if student's subjects match any of the subject packages
+    return subjectPackages.some((sp) => {
+      const subject = sp.subject;
+      if (!subject) return false;
+      return sp.packageType === student.package &&
+        sp.kidpackage === student.isKid &&
+        hasMatchingSubject(student.subject, subject);
+    });
+  });
+
+  // 5. For each student, check their progress for the chapters in the package
   const filteredChatIds: string[] = [];
 
   for (const student of students) {
@@ -156,6 +171,7 @@ export async function filterStudentsByPackageandStatus(
 export async function getStudentsByPackage(
   packageId: string
 ): Promise<{ chat_id: string | null; wdt_ID: number; name: string | null }[]> {
+  // 1. Get all subject packages for this package
   const subjectPackages = await prisma.subjectPackage.findMany({
     where: { packageId },
     select: {
@@ -166,22 +182,37 @@ export async function getStudentsByPackage(
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  // const studentMap = new Map<string, string>();
-
-  const students = await prisma.wpos_wpdatatable_23.findMany({
+  // 2. Fetch all students with valid status first
+  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet","On progress"] },
-      OR: subjectPackages.map((sp) => ({
-        subject: sp.subject,
-        package: sp.packageType,
-        isKid: sp.kidpackage,
-      })),
+      status: { in: ["Active", "Not yet", "On progress"] },
+    },
+    select: {
+      chat_id: true,
+      wdt_ID: true,
+      name: true,
+      subject: true,
+      package: true,
+      isKid: true,
     },
   });
-  // for (const student of students) {
-  //   if (!student.chat_id) continue;
-  //   studentMap.set(student.chat_id, student.wdt_ID.toString());
-  // }
+
+  // 3. Filter students using hasMatchingSubject for comma-separated subjects
+  const students = allStudents.filter((student) => {
+    if (!student.subject || !student.package || student.isKid === null) {
+      return false;
+    }
+
+    // Check if student's subjects match any of the subject packages
+    return subjectPackages.some((sp) => {
+      const subject = sp.subject;
+      if (!subject) return false;
+      return sp.packageType === student.package &&
+        sp.kidpackage === student.isKid &&
+        hasMatchingSubject(student.subject, subject);
+    });
+  });
+
   return students.map((student) => {
     return {
       chat_id: student.chat_id,
@@ -191,11 +222,12 @@ export async function getStudentsByPackage(
   });
 }
 
-// Only the teacher’s students within a specific package
+// Only the teacher's students within a specific package
 export async function getStudentsByPackageAndTeacher(
   packageId: string,
   ustazId: string
 ): Promise<{ chat_id: string | null; wdt_ID: number; name: string | null }[]> {
+  // 1. Get all subject packages for this package
   const subjectPackages = await prisma.subjectPackage.findMany({
     where: { packageId },
     select: {
@@ -205,23 +237,39 @@ export async function getStudentsByPackageAndTeacher(
     },
     distinct: ["subject", "kidpackage", "packageType"],
   });
-  // const studentMap = new Map<string, string>();
 
-  const students = await prisma.wpos_wpdatatable_23.findMany({
+  // 2. Fetch all students for this teacher with valid status first
+  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet","On progress"] },
+      status: { in: ["Active", "Not yet", "On progress"] },
       ustaz: ustazId,
-      OR: subjectPackages.map((sp) => ({
-        subject: sp.subject,
-        package: sp.packageType,
-        isKid: sp.kidpackage,
-      })),
+    },
+    select: {
+      chat_id: true,
+      wdt_ID: true,
+      name: true,
+      subject: true,
+      package: true,
+      isKid: true,
     },
   });
-  // for (const student of students) {
-  //   if (!student.chat_id) continue;
-  //   studentMap.set(student.chat_id, student.wdt_ID.toString());
-  // }
+
+  // 3. Filter students using hasMatchingSubject for comma-separated subjects
+  const students = allStudents.filter((student) => {
+    if (!student.subject || !student.package || student.isKid === null) {
+      return false;
+    }
+
+    // Check if student's subjects match any of the subject packages
+    return subjectPackages.some((sp) => {
+      const subject = sp.subject;
+      if (!subject) return false;
+      return sp.packageType === student.package &&
+        sp.kidpackage === student.isKid &&
+        hasMatchingSubject(student.subject, subject);
+    });
+  });
+
   return students.map((student) => {
     return {
       chat_id: student.chat_id,
@@ -536,22 +584,37 @@ export async function getPackageAnalytics() {
     packages.map(async (pkg) => {
       // Get all students assigned to this package via subjectPackage
       const subjectPackages = pkg.subjectPackages;
-      // Find all students matching any subjectPackage for this package
-      const assignedStudents = await prisma.wpos_wpdatatable_23.findMany({
+      
+      // 1. Fetch all students with valid status first
+      const allStudents = await prisma.wpos_wpdatatable_23.findMany({
         where: {
-          status: { in: ["Active", "Not yet","On progress"] },
-          OR: subjectPackages.map((sp) => ({
-            subject: sp.subject ?? undefined,
-            package: sp.packageType ?? undefined,
-            isKid: sp.kidpackage ?? undefined,
-          })),
+          status: { in: ["Active", "Not yet", "On progress"] },
         },
         select: {
           wdt_ID: true,
           name: true,
           youtubeSubject: true,
           progress: true,
+          subject: true,
+          package: true,
+          isKid: true,
         },
+      });
+
+      // 2. Filter students using hasMatchingSubject for comma-separated subjects
+      const assignedStudents = allStudents.filter((student) => {
+        if (!student.subject || !student.package || student.isKid === null) {
+          return false;
+        }
+
+        // Check if student's subjects match any of the subject packages
+        return subjectPackages.some((sp) => {
+          const subject = sp.subject;
+          if (!subject || !sp.packageType || sp.kidpackage === null) return false;
+          return sp.packageType === student.package &&
+            sp.kidpackage === student.isKid &&
+            hasMatchingSubject(student.subject, subject);
+        });
       });
 
       // total Students assigned to this package
@@ -634,22 +697,36 @@ export async function getFinalExamOfPackageAnalytics() {
     packages.map(async (pkg) => {
       // Get all students assigned to this package via subjectPackage
       const subjectPackages = pkg.subjectPackages;
-      // Find all students matching any subjectPackage for this package
-      const assignedStudents = await prisma.wpos_wpdatatable_23.findMany({
+      // 1. Fetch all students with valid status first
+      const allStudents = await prisma.wpos_wpdatatable_23.findMany({
         where: {
-          status: { in: ["Active", "Not yet","On progress"] },
-          OR: subjectPackages.map((sp) => ({
-            subject: sp.subject ?? undefined,
-            package: sp.packageType ?? undefined,
-            isKid: sp.kidpackage ?? undefined,
-          })),
+          status: { in: ["Active", "Not yet", "On progress"] },
         },
         select: {
           wdt_ID: true,
           name: true,
           youtubeSubject: true,
           progress: true,
+          subject: true,
+          package: true,
+          isKid: true,
         },
+      });
+
+      // 2. Filter students using hasMatchingSubject for comma-separated subjects
+      const assignedStudents = allStudents.filter((student) => {
+        if (!student.subject || !student.package || student.isKid === null) {
+          return false;
+        }
+
+        // Check if student's subjects match any of the subject packages
+        return subjectPackages.some((sp) => {
+          const subject = sp.subject;
+          if (!subject || !sp.packageType || sp.kidpackage === null) return false;
+          return sp.packageType === student.package &&
+            sp.kidpackage === student.isKid &&
+            hasMatchingSubject(student.subject, subject);
+        });
       });
 
       // total Students assigned to this package
@@ -770,12 +847,6 @@ export async function getStudentAnalyticsperchapter(
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  // 3. Build OR filter for students matching any subjectPackage
-  const subjectPackageFilters = subjectPackages.map((sp) => ({
-    subject: sp.subject,
-    package: sp.packageType,
-    isKid: sp.kidpackage,
-  }));
 
   // 4. Build search filter
   const searchFilter = searchTerm
@@ -790,11 +861,10 @@ export async function getStudentAnalyticsperchapter(
       }
     : {};
 
-  // 5. Get ALL students (no skip/take here!)
-  const students = await prisma.wpos_wpdatatable_23.findMany({
+  // 4. Fetch all students with valid status first
+  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet","On progress"] },
-      OR: subjectPackageFilters,
+      status: { in: ["Active", "Not yet", "On progress"] },
       ...searchFilter,
     },
     orderBy: { wdt_ID: "asc" },
@@ -805,8 +875,26 @@ export async function getStudentAnalyticsperchapter(
       isKid: true,
       chat_id: true,
       country: true,
+      subject: true,
+      package: true,
       activePackage: { select: { name: true } },
     },
+  });
+
+  // 5. Filter students using hasMatchingSubject for comma-separated subjects
+  const students = allStudents.filter((student) => {
+    if (!student.subject || !student.package || student.isKid === null) {
+      return false;
+    }
+
+    // Check if student's subjects match any of the subject packages
+    return subjectPackages.some((sp) => {
+      const subject = sp.subject;
+      if (!subject || !sp.packageType || sp.kidpackage === null) return false;
+      return sp.packageType === student.package &&
+        sp.kidpackage === student.isKid &&
+        hasMatchingSubject(student.subject, subject);
+    });
   });
 
   // 6. For each student, get their progress for this chapter
@@ -1356,18 +1444,10 @@ export async function sendProgressMessages() {
     distinct: ["subject", "kidpackage", "packageType"],
   });
 
-  // 2. Build OR filter for students matching any subjectPackage
-  const subjectPackageFilters = subjectPackages.map((sp) => ({
-    subject: sp.subject,
-    package: sp.packageType,
-    isKid: sp.kidpackage,
-  }));
-
-  // 3. Get ALL students (no skip/take here!)
-  const students = await prisma.wpos_wpdatatable_23.findMany({
+  // 2. Fetch all students with valid status first
+  const allStudents = await prisma.wpos_wpdatatable_23.findMany({
     where: {
-      status: { in: ["Active", "Not yet","On progress"] },
-      OR: subjectPackageFilters,
+      status: { in: ["Active", "Not yet", "On progress"] },
     },
     orderBy: { wdt_ID: "asc" },
     select: {
@@ -1383,6 +1463,22 @@ export async function sendProgressMessages() {
         select: { ustazname: true },
       },
     },
+  });
+
+  // 3. Filter students using hasMatchingSubject for comma-separated subjects
+  const students = allStudents.filter((student) => {
+    if (!student.subject || !student.package || student.isKid === null) {
+      return false;
+    }
+
+    // Check if student's subjects match any of the subject packages
+    return subjectPackages.some((sp) => {
+      const subject = sp.subject;
+      if (!subject || !sp.packageType || sp.kidpackage === null) return false;
+      return sp.packageType === student.package &&
+        sp.kidpackage === student.isKid &&
+        hasMatchingSubject(student.subject, subject);
+    });
   });
 
   // 4. For each student, find their subjectPackage and get progress
