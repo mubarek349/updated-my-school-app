@@ -871,7 +871,7 @@ export async function startBot() {
     // }
     await ctx.reply(
       `✅ ለ${sent.length} ተማሪ${sent.length > 1 ? "ዎች" : ""} ተልኳል።${
-        failed.length > 0 ? ` ❌ ለ${failed.length} ተማሪ${failed.length > 1 ? "ዎች" : ""} አልተላከላቸውም` : "ያልተላከለት ተማሪ የለም"
+        failed.length > 0 ? ` ❌ ለ${failed.length} ተማሪ${failed.length > 1 ? "ዎች" : ""} አልተላከም` : "ያልተላከለት ተማሪ የለም"
       }`
     );
   });
