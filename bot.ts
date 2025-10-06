@@ -770,7 +770,7 @@ export async function startBot() {
           console.log(`Sending zoom link message to ${chatId} for student ${studentName}`);
           await ctx.api.sendMessage(
             chatId,
-            `📚የ ${studentName} የትምህርት ሊንክ፦\n\n🔗 የዙም ሊንክ፦ ${ctx.message.text}\n\nእባክዎን ከታች ያለውን ቁልፍ በመጫን ተገኝተው ያረጋግጡ።`,
+            `📚የ ${studentName} የትምህርት ሊንክ፦\n\nእባክዎን ከታች ያለውን ቁልፍ በመጫን ተገኝተው ያረጋግጡ።`,
             buttonMarkup
           );
           console.log(`Successfully sent message to ${chatId}`);
@@ -1323,9 +1323,22 @@ export async function startBot() {
         },
       });
 
-      console.log("Attendance updated successfully");
-      await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`);
-      await ctx.reply(`🔗 የዙም ሊንክ፦ ${zoomLink}`);
+        console.log("Attendance updated successfully");
+        
+        // Create a web app button for the zoom link
+        const zoomButtonMarkup = {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "🔗 Join Meeting", web_app: { url: zoomLink } }],
+            ],
+          },
+        };
+        
+        // Clean up the zoom link from memory after successful access
+        delete zoomLinks[linkKey];
+        console.log(`Cleaned up zoom link for key: ${linkKey}`);
+        
+        await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`, zoomButtonMarkup);
     } else {
       // ❌ Expired — send fallback message
       const update = await updatePathProgressData(student.wdt_ID);
