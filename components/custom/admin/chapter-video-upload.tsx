@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { updateChapterVideo } from "@/actions/admin/chapter-video";
 
 interface ChapterVideoUploadProps {
   coursesPackageId: string;
@@ -82,19 +83,15 @@ export function ChapterVideoUpload({
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/chapters/${chapterId}/video`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customVideo: null,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete video");
+      console.log("Deleting video:", { chapterId });
+      
+      const result = await updateChapterVideo(chapterId, null);
+      
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete video");
       }
+
+      console.log("Delete result:", result);
 
       initialData.customVideo = null;
       setPlayerKey((prev) => prev + 1);
@@ -103,7 +100,8 @@ export function ChapterVideoUpload({
       router.refresh();
     } catch (error) {
       console.error("Error deleting video:", error);
-      toast.error("Failed to delete video");
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete video";
+      toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
       setDeleteModalOpen(false);
@@ -122,21 +120,15 @@ export function ChapterVideoUpload({
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/chapters/${chapterId}/video`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customVideo: uploadedVideoUrl,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save video");
+      console.log("Saving video:", { chapterId, uploadedVideoUrl });
+      
+      const result = await updateChapterVideo(chapterId, uploadedVideoUrl);
+      
+      if (!result.success) {
+        throw new Error(result.error || "Failed to save video");
       }
 
-      const result = await response.json();
+      console.log("Save result:", result);
 
       if (result.chapter && result.chapter.customVideo) {
         initialData.customVideo = result.chapter.customVideo;
@@ -152,7 +144,8 @@ export function ChapterVideoUpload({
       router.refresh();
     } catch (error) {
       console.error("Error saving video:", error);
-      toast.error("Failed to save video");
+      const errorMessage = error instanceof Error ? error.message : "Failed to save video";
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
