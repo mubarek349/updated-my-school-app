@@ -697,59 +697,7 @@ export async function startBot() {
 
         if (!isAdmin && ctx.message.text) {
           // Check time restriction for sending zoom links
-          const now = new Date();
-          const timeRestrictionMs = 5 * 60 * 1000; // 5 minutes restriction
-          const teacherId = senderId;
-          
-          // Check cached time restrictions for this teacher
-          const teacherRestrictions = zoomTimeRestrictions[teacherId] || [];
-          const packageRestriction = teacherRestrictions.find(
-            (restriction) => restriction.packageId === pending.packageId
-          );
-          
-          // If restriction exists and hasn't expired, show message but still send
-          if (packageRestriction) {
-            const timeElapsed = now.getTime() - packageRestriction.lastSentTime.getTime();
-            
-            if (timeElapsed < timeRestrictionMs) {
-              const remainingTime = timeRestrictionMs - timeElapsed;
-              const remainingMinutes = Math.ceil(remainingTime / (1000 * 60));
-              
-              // Show restriction message to teacher
-              await ctx.reply(
-                `⚠️ የዙም ሊንክ መላክ ከፍተኛ ነው። የሚያስታክተው ጊዜ: ${remainingMinutes} ደቂቃ${remainingMinutes > 1 ? 'ዎች' : ''}።\nለማይፈቅድ ይንረግረግ።`
-              );
-              
-              // Continue to send even with restriction message
-              // Recording time for next restriction
-              if (!zoomTimeRestrictions[teacherId]) {
-                zoomTimeRestrictions[teacherId] = [];
-              }
-              
-              const existingRestriction = zoomTimeRestrictions[teacherId].find(
-                (restriction) => restriction.packageId === pending.packageId
-              );
-              
-              if (existingRestriction) {
-                existingRestriction.lastSentTime = now;
-              } else {
-                zoomTimeRestrictions[teacherId].push({
-                  packageId: pending.packageId,
-                  lastSentTime: now
-                });
-              }
-            }
-          } else {
-            // Record time for first send
-            if (!zoomTimeRestrictions[teacherId]) {
-              zoomTimeRestrictions[teacherId] = [];
-            }
-            
-            zoomTimeRestrictions[teacherId].push({
-              packageId: pending.packageId,
-              lastSentTime: now
-            });
-          }
+          // Time restriction removed - teachers can send zoom links freely
 
           // Create a shorter callback data to avoid BUTTON_DATA_INVALID error
           // Telegram callback data has a 64-byte limit
@@ -904,23 +852,28 @@ export async function startBot() {
         }
       }
     }
-    if (isAdmin) {
-      await ctx.reply(
-        `✅ ለ${sent.length} ተማሪ${sent.length > 1 ? "ዎች" : ""} ተልኳል።${
-          failed.length > 0 ? ` ❌ አልተላከላቸውም: ${failed.length}` : ""
-        }`
-      );
-    } else {
-      await ctx.reply(
-        `${
-          failed.length === 0 && sent.length > 0
-            ? "✅ ለሁሉም ተማሪዎች ተልኳል"
-            : failed.length > 0
-            ? `❌ ያልተላከለት ተማሪ አለ (${failed.length})`
-            : "❌ ምንም ተማሪ አልተላከለትም"
-        }`
-      );
-    }
+    // if (isAdmin) {
+    //   await ctx.reply(
+    //     `✅ ለ${sent.length} ተማሪ${sent.length > 1 ? "ዎች" : ""} ተልኳል።${
+    //       failed.length > 0 ? ` ❌ አልተላከላቸውም: ${failed.length}` : ""
+    //     }`
+    //   );
+    // } else {
+    //   await ctx.reply(
+    //     `${
+    //       failed.length === 0 && sent.length > 0
+    //         ? "✅ ለሁሉም ተማሪዎች ተልኳል"
+    //         : failed.length > 0
+    //         ? `❌ ያልተላከለት ተማሪ አለ (${failed.length})`
+    //         : "❌ ምንም ተማሪ አልተላከለትም"
+    //     }`
+    //   );
+    // }
+    await ctx.reply(
+      `✅ ለ${sent.length} ተማሪ${sent.length > 1 ? "ዎች" : ""} ተልኳል።${
+        failed.length > 0 ? ` ❌ ለ${failed.length} ተማሪ${failed.length > 1 ? "ዎች" : ""} አልተላከላቸውም` : "ያልተላከለት ተማሪ የለም"
+      }`
+    );
   });
 
   // Step 2: Show status options after package selection
