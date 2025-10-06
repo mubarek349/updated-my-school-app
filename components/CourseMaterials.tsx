@@ -84,10 +84,7 @@ export default function CourseMaterials({
     return `${url}?download=true`;
   };
 
-  const canInlinePreview = (type: string) => {
-    const t = type.toLowerCase();
-    return ["pdf", "jpg", "jpeg", "png", "gif", "txt"].includes(t);
-  };
+  
 
   const openViewer = (material: CourseMaterial) => {
     setViewing(material);
@@ -297,6 +294,15 @@ export default function CourseMaterials({
               </div>
               <div className="flex gap-2">
                 <a
+                  href={viewing.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                >
+                  <Eye className="w-3 h-3" />
+                  {lang === "en" ? "Direct Access" : "ቀጥተኛ መዳረሻ"}
+                </a>
+                <a
                   href={getDownloadUrl(viewing.url)}
                   download={viewing.name}
                   className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
@@ -304,17 +310,6 @@ export default function CourseMaterials({
                   <Download className="w-3 h-3" />
                   {lang === "en" ? "Download" : "አውርድ"}
                 </a>
-                {!canInlinePreview(viewing.type) && (
-                  <a
-                    href={officeViewerUrl(viewing.url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                  >
-                    <Eye className="w-3 h-3" />
-                    {lang === "en" ? "Open Online" : "በመስመር ክፈት"}
-                  </a>
-                )}
               </div>
             </div>
           </div>

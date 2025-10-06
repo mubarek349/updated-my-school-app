@@ -5,6 +5,14 @@ import { Upload, FileText, Eye, Trash2, CheckCircle, AlertCircle, Loader2 } from
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { updateCourseMaterials } from "@/actions/admin/course-materials";
@@ -33,6 +41,9 @@ export function CourseMaterialsManager({
   );
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [materialToDelete, setMaterialToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,9 +144,17 @@ export function CourseMaterialsManager({
     }
   };
 
-  const handleDeleteMaterial = async (filename: string) => {
+  const handleDeleteClick = (filename: string) => {
+    setMaterialToDelete(filename);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!materialToDelete) return;
+
+    setIsDeleting(true);
     try {
-      const updatedMaterials = materials.filter(m => m !== filename);
+      const updatedMaterials = materials.filter(m => m !== materialToDelete);
       setMaterials(updatedMaterials);
 
       const result = await updateCourseMaterials(packageId, updatedMaterials.join(','));
@@ -149,7 +168,16 @@ export function CourseMaterialsManager({
     } catch (error) {
       console.error('Delete error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to delete material');
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setMaterialToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setMaterialToDelete(null);
   };
 
   const getFileIcon = () => {
@@ -272,7 +300,7 @@ export function CourseMaterialsManager({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleDeleteMaterial(material)}
+                    onClick={() => handleDeleteClick(material)}
                     className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="h-3 w-3" />
@@ -288,6 +316,50 @@ export function CourseMaterialsManager({
           <p className="text-sm text-slate-500">No materials uploaded yet</p>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Delete Material
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>&quot;{materialToDelete}&quot;</strong>? 
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDeleteCancel}
+              disabled={isDeleting}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="w-full sm:w-auto"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
