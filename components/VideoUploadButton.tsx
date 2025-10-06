@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { Button } from "./ui/button";
 import { Upload, Video, X } from "lucide-react";
+import { uploadVideoChunk } from "@/actions/api/video-upload";
 
 const CHUNK_SIZE = 512 * 1024; // 512KB
 
@@ -61,13 +62,10 @@ export default function VideoUploadButton({
         formData.append("chunkIndex", i.toString());
         formData.append("totalChunks", total.toString());
 
-        const response = await fetch("/api/upload-video", {
-          method: "POST",
-          body: formData,
-        });
+        const response = await uploadVideoChunk(formData);
 
-        if (!response.ok) {
-          throw new Error(`Upload failed for chunk ${i}`);
+        if (!response.success) {
+          throw new Error(`Upload failed for chunk ${i}: ${response.error}`);
         }
 
         setUploadProgress(Math.round(((i + 1) / total) * 100));

@@ -18,7 +18,8 @@ import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { removeAiPdfData } from "@/actions/admin/ai-pdf-data";
 import { finalizeAiPdfUpload } from "@/actions/admin/ai-pdf-data-chunked";
-import { ChunkedUploader } from "@/lib/chunkedUploader";
+import { ChunkedUploader } from "@/lib/chunkedUploaderServerAction";
+import { uploadPdfChunk } from "@/actions/api/pdf-upload";
 
 interface AiPdfUploaderProps {
   packageId: string;
@@ -53,7 +54,7 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
     setUploadStatus("Preparing upload...");
 
     try {
-      const uploader = new ChunkedUploader("/api/upload-pdf-chunked", {
+      const uploader = new ChunkedUploader(uploadPdfChunk, {
         chunkSize: 5 * 1024 * 1024, // 5MB chunks
         maxRetries: 3,
         onProgress: (progress) => {

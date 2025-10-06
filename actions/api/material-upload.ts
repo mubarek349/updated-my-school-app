@@ -1,11 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+"use server";
+
 import { writeFile, mkdir, readFile } from "fs/promises";
 import { join } from "path";
 
+interface UploadResult {
+  success: boolean;
+  message?: string;
+  filename?: string;
+  error?: string;
+}
 
-export async function POST(request: NextRequest) {
+export async function uploadMaterialChunk(formData: FormData): Promise<UploadResult> {
   try {
-    const formData = await request.formData();
     const chunk = formData.get("chunk") as File;
     const filename = formData.get("filename") as string;
     const chunkIndex = parseInt(formData.get("chunkIndex") as string);
@@ -13,7 +19,7 @@ export async function POST(request: NextRequest) {
     const fileId = formData.get("fileId") as string; // Unique ID for the entire file
 
     if (!chunk || !filename || isNaN(chunkIndex) || isNaN(totalChunks) || !fileId) {
-      return NextResponse.json({ error: "Missing or invalid chunk data" }, { status: 400 });
+      return { success: false, error: "Missing or invalid chunk data" };
     }
 
     // Create a temporary directory for chunks using the fileId
@@ -48,12 +54,12 @@ export async function POST(request: NextRequest) {
         writeStream.on("error", reject);
       });
 
-      return NextResponse.json({ success: true, message: "File uploaded and combined successfully", filename });
+      return { success: true, message: "File uploaded and combined successfully", filename };
     }
 
-    return NextResponse.json({ success: true, message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded` });
+    return { success: true, message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded` };
   } catch (error) {
     console.error("Chunked material upload error:", error);
-    return NextResponse.json({ success: false, error: "Failed to upload chunk" }, { status: 500 });
+    return { success: false, error: "Failed to upload chunk" };
   }
 }

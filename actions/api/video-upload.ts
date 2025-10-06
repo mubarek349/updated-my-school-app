@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+"use server";
+
 import fs from "fs";
 import path from "path";
 
@@ -9,19 +10,23 @@ function getTimestampUUID(ext: string) {
   return `${Date.now()}-${Math.floor(Math.random() * 100000)}.${ext}`;
 }
 
-export async function POST(req: NextRequest) {
+interface UploadResult {
+  success: boolean;
+  filename?: string;
+  error?: string;
+}
+
+export async function uploadVideoChunk(
+  formData: FormData
+): Promise<UploadResult> {
   try {
-    const formData = await req.formData();
     const chunk = formData.get("chunk") as File;
     const filename = formData.get("filename") as string;
     const chunkIndex = formData.get("chunkIndex") as string;
     const totalChunks = formData.get("totalChunks") as string;
 
     if (!chunk) {
-      return NextResponse.json(
-        { error: "Chunk file missing" },
-        { status: 400 }
-      );
+      return { success: false, error: "Chunk file missing" };
     }
 
     let finalFilename = filename;
@@ -60,19 +65,16 @@ export async function POST(req: NextRequest) {
         fs.writeFileSync(videoPath, finalBuffer);
         fs.rmSync(chunkFolder, { recursive: true, force: true });
         
-        return NextResponse.json({ success: true, filename: `${baseName}.mp4` });
+        return { success: true, filename: `${baseName}.mp4` };
       } catch (err) {
         console.error("Error joining chunks:", err);
-        return NextResponse.json(
-          { error: "Error joining chunks" },
-          { status: 500 }
-        );
+        return { success: false, error: "Error joining chunks" };
       }
     }
     
-    return NextResponse.json({ success: true, filename: finalFilename });
+    return { success: true, filename: finalFilename };
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    return { success: false, error: "Upload failed" };
   }
 }

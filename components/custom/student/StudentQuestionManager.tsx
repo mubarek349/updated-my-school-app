@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import toast from "react-hot-toast";
+import { getStudentQuestions, updateStudentQuestion, deleteStudentQuestion } from "@/actions/student/questions";
 
 interface Question {
   id: string;
@@ -61,12 +62,11 @@ export default function StudentQuestionManager() {
 
   const fetchQuestions = async () => {
     try {
-      const response = await fetch("/api/student/questions");
-      if (response.ok) {
-        const data = await response.json();
-        setQuestions(data);
+      const result = await getStudentQuestions();
+      if (result.success) {
+        setQuestions(result.questions || []);
       } else {
-        toast.error("Failed to load questions");
+        toast.error(result.error || "Failed to load questions");
       }
     } catch (error) {
       console.error("Error fetching questions:", error);
@@ -84,22 +84,15 @@ export default function StudentQuestionManager() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(
-        `/api/student/questions/${editingQuestion.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: editText.trim() }),
-        }
-      );
+      const result = await updateStudentQuestion(editingQuestion.id, editText.trim());
 
-      if (response.ok) {
+      if (result.success) {
         toast.success("Question updated successfully!");
         setEditingQuestion(null);
         setEditText("");
         fetchQuestions();
       } else {
-        toast.error("Failed to update question");
+        toast.error(result.error || "Failed to update question");
       }
     } catch (error) {
       console.error("Error updating question:", error);
@@ -114,19 +107,14 @@ export default function StudentQuestionManager() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(
-        `/api/student/questions/${deletingQuestion.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const result = await deleteStudentQuestion(deletingQuestion.id);
 
-      if (response.ok) {
+      if (result.success) {
         toast.success("Question deleted successfully!");
         setDeletingQuestion(null);
         fetchQuestions();
       } else {
-        toast.error("Failed to delete question");
+        toast.error(result.error || "Failed to delete question");
       }
     } catch (error) {
       console.error("Error deleting question:", error);

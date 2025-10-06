@@ -16,7 +16,8 @@ import {
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { updateCourseMaterials } from "@/actions/admin/course-materials";
-import { ChunkedUploader } from "@/lib/chunkedUploader";
+import { ChunkedUploader } from "@/lib/chunkedUploaderServerAction";
+import { uploadMaterialChunk } from "@/actions/api/material-upload";
 
 interface CourseMaterialsManagerProps {
   packageId: string;
@@ -83,7 +84,7 @@ export function CourseMaterialsManager({
             : p
         ));
 
-        const uploader = new ChunkedUploader("/api/upload-material-chunked", {
+        const uploader = new ChunkedUploader(uploadMaterialChunk, {
           chunkSize: 5 * 1024 * 1024, // 5MB chunks
           maxRetries: 3,
           onProgress: (progress) => {

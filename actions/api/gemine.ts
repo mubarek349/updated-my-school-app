@@ -1,14 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
+"use server";
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import prisma from "@/lib/db";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 
-export async function POST(req: Request) {
-  try {
-    const { messages, packageId } = await req.json();
+interface GeminiResult {
+  success: boolean;
+  reply?: { role: string; content: string };
+  error?: string;
+}
 
+export async function generateGeminiResponse(
+  messages: any[],
+  packageId: string
+): Promise<GeminiResult> {
+  try {
     const jsonData = await prisma.coursePackage.findUnique({
       where: { id: packageId },
       select: { aiPdfData: true },
@@ -43,10 +51,12 @@ export async function POST(req: Request) {
     const response = await result.response;
     const text = response.text();
 
-    return NextResponse.json({
+    return {
+      success: true,
       reply: { role: "assistant", content: text },
-    });
+    };
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Gemini API error:", error);
+    return { success: false, error: error.message };
   }
 }
