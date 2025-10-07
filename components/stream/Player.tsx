@@ -76,15 +76,39 @@ PlayerProps) {
         setBuffered(video.buffered.end(video.buffered.length - 1));
       }
     };
+    
+    const handleCanSeek = () => {
+      console.log('Video is now seekable');
+    };
+    
+    const handleError = (e: Event) => {
+      console.error('Video error:', e);
+    };
+    
+    const handleLoadStart = () => {
+      console.log('Video load started');
+    };
+    
+    const handleLoadedData = () => {
+      console.log('Video data loaded');
+    };
 
     video.addEventListener("timeupdate", updateTime);
     video.addEventListener("loadedmetadata", updateDuration);
     video.addEventListener("progress", updateBuffered);
+    video.addEventListener("canplay", handleCanSeek);
+    video.addEventListener("error", handleError);
+    video.addEventListener("loadstart", handleLoadStart);
+    video.addEventListener("loadeddata", handleLoadedData);
 
     return () => {
       video.removeEventListener("timeupdate", updateTime);
       video.removeEventListener("loadedmetadata", updateDuration);
       video.removeEventListener("progress", updateBuffered);
+      video.removeEventListener("canplay", handleCanSeek);
+      video.removeEventListener("error", handleError);
+      video.removeEventListener("loadstart", handleLoadStart);
+      video.removeEventListener("loadeddata", handleLoadedData);
     };
   }, [currentSrc]);
 
@@ -136,7 +160,22 @@ PlayerProps) {
   const skipTime = (seconds: number) => {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime += seconds;
+    
+    // Check if video is seekable and has loaded metadata
+    if (!video.seekable || video.seekable.length === 0) {
+      console.warn('Video is not seekable yet');
+      return;
+    }
+    
+    // Ensure we don't seek beyond video bounds
+    const newTime = Math.max(0, Math.min(video.currentTime + seconds, video.duration || 0));
+    
+    try {
+      video.currentTime = newTime;
+      console.log(`Skipped ${seconds}s to ${newTime}s`);
+    } catch (error) {
+      console.error('Error seeking video:', error);
+    }
   };
 
   const changeSpeed = (newSpeed: number) => {
@@ -150,8 +189,24 @@ PlayerProps) {
 
   const handleSeek = (time: number) => {
     const video = videoRef.current;
-    if (video) video.currentTime = time;
-    setCurrentTime(time);
+    if (!video) return;
+    
+    // Check if video is seekable and has loaded metadata
+    if (!video.seekable || video.seekable.length === 0) {
+      console.warn('Video is not seekable yet');
+      return;
+    }
+    
+    // Ensure we don't seek beyond video bounds
+    const seekTime = Math.max(0, Math.min(time, video.duration || 0));
+    
+    try {
+      video.currentTime = seekTime;
+      setCurrentTime(seekTime);
+      console.log(`Seeked to ${seekTime}s`);
+    } catch (error) {
+      console.error('Error seeking video:', error);
+    }
   };
 
   const handleSelect = (idx: number) => {
@@ -174,6 +229,8 @@ PlayerProps) {
           src={currentSrc}
           width="100%"
           height="auto"
+          preload="metadata"
+          crossOrigin="anonymous"
           style={{
             // borderRadius: 8,
             width: "100%",
@@ -193,6 +250,18 @@ PlayerProps) {
           onClick={(e) => {
             e.stopPropagation();
             if (isMobile) setShowControls((v) => !v);
+          }}
+          onSeeking={() => {
+            console.log('Video seeking started');
+          }}
+          onSeeked={() => {
+            console.log('Video seeking completed');
+          }}
+          onWaiting={() => {
+            console.log('Video is waiting for data');
+          }}
+          onCanPlay={() => {
+            console.log('Video can start playing');
           }}
         />
 

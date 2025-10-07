@@ -24,24 +24,48 @@ export default async function handler(
   const videoSize = fs.statSync(videoPath).size;
   const range = req.headers.range;
 
-  if (!range) {
-    res.status(400).send("Requires Range header");
+  // Add CORS headers for production
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Range');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
     return;
   }
 
-  const CHUNK_SIZE = 10 ** 6;
-  const start = Number(range.replace(/\D/g, ""));
-  const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+  if (!range) {
+    // If no range header, send the entire file
+    const headers = {
+      "Content-Length": videoSize,
+      "Content-Type": "video/mp4",
+      "Accept-Ranges": "bytes",
+      "Cache-Control": "public, max-age=31536000",
+    };
+    res.writeHead(200, headers);
+    const videoStream = fs.createReadStream(videoPath);
+    videoStream.pipe(res);
+    return;
+  }
 
-  const contentLength = end - start + 1;
+  const CHUNK_SIZE = 10 ** 6; // 1MB chunks
+  const parts = range.replace(/bytes=/, "").split("-");
+  const start = parseInt(parts[0], 10);
+  const end = parts[1] ? parseInt(parts[1], 10) : Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+  // Ensure end doesn't exceed file size
+  const finalEnd = Math.min(end, videoSize - 1);
+  const contentLength = finalEnd - start + 1;
+
   const headers = {
-    "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+    "Content-Range": `bytes ${start}-${finalEnd}/${videoSize}`,
     "Accept-Ranges": "bytes",
     "Content-Length": contentLength,
     "Content-Type": "video/mp4",
+    "Cache-Control": "public, max-age=31536000",
   };
 
   res.writeHead(206, headers);
-  const videoStream = fs.createReadStream(videoPath, { start, end });
+  const videoStream = fs.createReadStream(videoPath, { start, end: finalEnd });
   videoStream.pipe(res);
 }
