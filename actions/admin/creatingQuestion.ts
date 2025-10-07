@@ -212,10 +212,13 @@ export async function assignQuestionToPackage(
       return { error: 'Question not found or missing title', status: 404 };
     }
 
+    // Check if question is already assigned to this package
+    const isCurrentlyAssigned = question.packageId === coursesPackageId;
+    
     const updatedQuestion = await prisma.question.update({
       where: { id: questionId },
       data: {
-        packageId: coursesPackageId,
+        packageId: isCurrentlyAssigned ? null : coursesPackageId,
         studentQuiz: {
           deleteMany: {
             questionId,
@@ -224,9 +227,10 @@ export async function assignQuestionToPackage(
       },
     });
 
+    const action = isCurrentlyAssigned ? 'removed from' : 'assigned to';
     return {
       data: updatedQuestion,
-      message: 'Question assigned to package successfully',
+      message: `Question ${action} package successfully`,
       status: 200,
     };
   } catch (error) {
