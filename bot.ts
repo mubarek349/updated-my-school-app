@@ -1130,15 +1130,28 @@ export async function startBot() {
     await ctx.answerCallbackQuery();
     const packageId = ctx.match[1];
     console.log("Selected package ID:", packageId);
+    
+    // Get ustaz ID first
+    const ustazChatId = ctx.from?.id;
+    const ustzId = await prisma.ustaz.findFirst({
+      where: { chat_id: ustazChatId + "" },
+    });
+    
+    if (!ustzId?.ustazid) return;
+    
     if (ctx.chat?.id) {
       // pendingAdminMessages[ctx.chat.id] = { packageId, status: "" };
     }
 
+    // Get student counts for both options
+    const allStudentsCount = await getStudentsByPackage(packageId).then(students => students.length);
+    // const myStudentsCount = await getStudentsByPackageAndTeacher(packageId, ustzId.ustazid + "").then(students => students.length);
+
     const keyboard = new InlineKeyboard()
       .row()
-      .text(`✅ ፓኬጁን ለሚወስዱት በሙሉ`, `ustaz_status_${packageId}_all`)
+      .text(`✅ ፓኬጁን ለሚወስዱት በሙሉ (${allStudentsCount} ተማሪዎች)`, `ustaz_status_${packageId}_all`)
       // .row()
-      // .text(`✅ ፓኬጁን ለሚወስዱት የኔ ተማሪዎች ብቻ`, `ustaz_status_${packageId}_my`);
+      // .text(`✅ ፓኬጁን ለሚወስዱት የኔ ተማሪዎች ብቻ (${myStudentsCount} ተማሪዎች)`, `ustaz_status_${packageId}_my`);
 
     await ctx.reply("የተማሪዎችን ሁኔታ ይምረጡ:", { reply_markup: keyboard });
   });
