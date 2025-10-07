@@ -28,7 +28,7 @@ export function ChapterVideoManager({
   const getInitialSource = (): VideoSourceType => {
     if (initialData.customVideo) return "upload";
     if (initialData.videoUrl) return "url";
-    return "url"; // Default to URL input
+    return "upload"; // Default to custom video upload
   };
 
   const [videoSource, setVideoSource] = useState<VideoSourceType>(getInitialSource());
