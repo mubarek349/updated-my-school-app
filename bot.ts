@@ -700,8 +700,21 @@ export async function startBot() {
           // Time restriction removed - teachers can send zoom links freely
 
           // Create a shorter callback data to avoid BUTTON_DATA_INVALID error
-          // Telegram callback data has a 64-byte limit
-          const callbackData = `join_zoom~${pending.packageId}~${studentId}~${studentName}`;
+          // Telegram callback data has a 64-byte limit and doesn't allow special characters
+          // Remove student name to avoid issues with special characters and length
+          const callbackData = `join_zoom~${pending.packageId}~${studentId}`;
+          
+          // Validate callback data length (Telegram limit is 64 bytes)
+          if (callbackData.length > 64) {
+            console.error(`Callback data too long: ${callbackData.length} bytes`);
+            // Fallback: send without button
+            await ctx.api.sendMessage(
+              chatId,
+              `📚የ ${studentName} የትምህርት ሊንክ፦\n\n${ctx.message.text}`
+            );
+            sent.push(chatId);
+            continue;
+          }
           
           // Store zoom link temporarily for callback handling
           const linkKey = `${pending.packageId}~${studentId}`;
@@ -1195,9 +1208,9 @@ export async function startBot() {
     
     if (!data.startsWith("join_zoom~")) return;
 
-    const [, packageId, wdt_ID, name] = data.split("~");
+    const [, packageId, wdt_ID] = data.split("~");
     
-    console.log("Parsed callback data:", { packageId, wdt_ID, name });
+    console.log("Parsed callback data:", { packageId, wdt_ID });
 
     // Get the stored zoom link
     const linkKey = `${packageId}~${wdt_ID}`;
@@ -1217,7 +1230,6 @@ export async function startBot() {
         chat_id: String(chatId),
         status: { in: ["Active", "Not yet","On progress"] },
         wdt_ID: Number(wdt_ID),
-        name: String(name),
       },
       select: {
         wdt_ID: true,
@@ -1228,7 +1240,7 @@ export async function startBot() {
     console.log("Student found:", student);
 
     if (!student) {
-      console.log("Student not found for:", { chatId, wdt_ID, name });
+      console.log("Student not found for:", { chatId, wdt_ID });
       await ctx.reply("❌ ተማሪ አልተገኘም። አድሚኑን ያነጋግሩ።");
       return;
     }
