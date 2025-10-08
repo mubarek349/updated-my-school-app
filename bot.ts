@@ -1231,7 +1231,7 @@ export async function startBot() {
     
     if (!zoomLink) {
       console.log(`Zoom link not found for key: ${linkKey}`);
-      await ctx.reply("❌ የዙም ሊንክ አልተገኘም። አድሚኑን ያነጋግሩ።");
+      // await ctx.reply("❌ የዙም ሊንክ አልተገኘም። አድሚኑን ያነጋግሩ።");
       return;
     }
     
