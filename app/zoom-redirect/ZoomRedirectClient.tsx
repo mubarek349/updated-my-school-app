@@ -44,18 +44,52 @@ export default function ZoomRedirectClient() {
       if (decodedUrl.includes('zoom.us') || decodedUrl.includes('zoommtg://')) {
         setStatus('redirecting');
         
-        // Always use the converted web URL to avoid scheme issues
+        // Try multiple approaches to open Zoom
         setTimeout(() => {
           try {
-            // Try to open in new tab first
-            const newWindow = window.open(convertedUrl, '_blank', 'noopener,noreferrer');
-            
-            if (newWindow) {
-              setStatus('success');
+            // Method 1: Try to open Zoom Workspace app first (for mobile)
+            if (decodedUrl.startsWith('zoommtg://')) {
+              // Try to open the original zoommtg:// URL first
+              const appWindow = window.open(decodedUrl, '_self');
+              
+              // If that doesn't work, try opening in new tab
+              setTimeout(() => {
+                if (!appWindow || appWindow.closed) {
+                  const newWindow = window.open(convertedUrl, '_blank', 'noopener,noreferrer');
+                  if (!newWindow) {
+                    // Fallback: redirect current window
+                    window.location.href = convertedUrl;
+                  }
+                }
+                setStatus('success');
+              }, 1000);
             } else {
-              // If popup blocked, try to redirect current window
-              window.location.href = convertedUrl;
-              setStatus('success');
+              // For web URLs, try to detect if we're in a mobile environment
+              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+              
+              if (isMobile) {
+                // On mobile, try to open Zoom app first
+                const appUrl = decodedUrl.replace('https://zoom.us/j/', 'zoommtg://zoom.us/j/');
+                const appWindow = window.open(appUrl, '_self');
+                
+                setTimeout(() => {
+                  if (!appWindow || appWindow.closed) {
+                    // Fallback to web version
+                    const newWindow = window.open(convertedUrl, '_blank', 'noopener,noreferrer');
+                    if (!newWindow) {
+                      window.location.href = convertedUrl;
+                    }
+                  }
+                  setStatus('success');
+                }, 1000);
+              } else {
+                // On desktop, open web version directly
+                const newWindow = window.open(convertedUrl, '_blank', 'noopener,noreferrer');
+                if (!newWindow) {
+                  window.location.href = convertedUrl;
+                }
+                setStatus('success');
+              }
             }
           } catch (error) {
             console.error('Error opening Zoom link:', error);
@@ -77,13 +111,30 @@ export default function ZoomRedirectClient() {
       setStatus('redirecting');
       
       try {
-        const newWindow = window.open(webUrl, '_blank', 'noopener,noreferrer');
+        // Detect mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        if (newWindow) {
-          setTimeout(() => setStatus('success'), 1000);
+        if (isMobile && zoomUrl) {
+          // Try to open Zoom app first on mobile
+          const appUrl = zoomUrl.startsWith('zoommtg://') ? zoomUrl : zoomUrl.replace('https://zoom.us/j/', 'zoommtg://zoom.us/j/');
+          const appWindow = window.open(appUrl, '_self');
+          
+          setTimeout(() => {
+            if (!appWindow || appWindow.closed) {
+              // Fallback to web version
+              const newWindow = window.open(webUrl, '_blank', 'noopener,noreferrer');
+              if (!newWindow) {
+                window.location.href = webUrl;
+              }
+            }
+            setStatus('success');
+          }, 1000);
         } else {
-          // Fallback: redirect current window
-          window.location.href = webUrl;
+          // Desktop or web fallback
+          const newWindow = window.open(webUrl, '_blank', 'noopener,noreferrer');
+          if (!newWindow) {
+            window.location.href = webUrl;
+          }
           setTimeout(() => setStatus('success'), 1000);
         }
       } catch (error) {
@@ -96,7 +147,17 @@ export default function ZoomRedirectClient() {
   const handleManualJoin = () => {
     if (webUrl) {
       try {
-        window.open(webUrl, '_blank', 'noopener,noreferrer');
+        // Detect mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile && zoomUrl) {
+          // Try to open Zoom app first on mobile
+          const appUrl = zoomUrl.startsWith('zoommtg://') ? zoomUrl : zoomUrl.replace('https://zoom.us/j/', 'zoommtg://zoom.us/j/');
+          window.open(appUrl, '_self');
+        } else {
+          // Desktop or web fallback
+          window.open(webUrl, '_blank', 'noopener,noreferrer');
+        }
       } catch (error) {
         // Fallback: redirect current window
         window.location.href = webUrl;
@@ -128,6 +189,19 @@ export default function ZoomRedirectClient() {
         
         document.body.removeChild(textArea);
       });
+    }
+  };
+
+  const handleOpenZoomApp = () => {
+    if (zoomUrl) {
+      try {
+        // Force open Zoom Workspace app
+        const appUrl = zoomUrl.startsWith('zoommtg://') ? zoomUrl : zoomUrl.replace('https://zoom.us/j/', 'zoommtg://zoom.us/j/');
+        window.location.href = appUrl;
+      } catch (error) {
+        console.error('Error opening Zoom app:', error);
+        alert('Unable to open Zoom Workspace app. Please try manual join.');
+      }
     }
   };
 
@@ -192,6 +266,13 @@ export default function ZoomRedirectClient() {
             
             <div className="space-y-3">
               <button
+                onClick={handleOpenZoomApp}
+                className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                📱 የዙም ዎርክስፔስ አፕ ይክፈቱ
+              </button>
+              
+              <button
                 onClick={handleRetry}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -219,10 +300,11 @@ export default function ZoomRedirectClient() {
         <div className="mt-8 p-4 bg-gray-50 rounded-lg text-left">
           <h3 className="font-semibold text-gray-800 mb-2">📋 መመሪያዎች:</h3>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• የዙም መተግበሪያ ካለዎት በራስ-ሰር ይከፈታል</li>
+            <li>• የዙም ዎርክስፔስ አፕ ካለዎት በራስ-ሰር ይከፈታል</li>
             <li>• ካልተጫነ ወደ የዙም ድረ-ገጽ ይዛወራል</li>
             <li>• ችግር ካጋጠመዎት ከላይ ያለውን ቁልፍ ይጫኑ</li>
             <li>• ሊንኩን ቅዱት እና በሌላ መሳሪያ ይጫኑ</li>
+            <li>• የዙም ዎርክስፔስ አፕ ለመጫን ከላይ ያለውን ቁልፍ ይጫኑ</li>
           </ul>
         </div>
 
