@@ -1303,11 +1303,12 @@ export async function startBot() {
 
         console.log("Attendance updated successfully");
         
-        // Create a web app button for the zoom link
+        // Create a web app button for the zoom link using our redirect page
+        const redirectUrl = `${BASE_URL}/zoom-redirect?url=${encodeURIComponent(zoomLink)}`;
         const zoomButtonMarkup = {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "🔗 Join Meeting", web_app: { url: zoomLink } }],
+              [{ text: "🔗 Join Meeting", web_app: { url: redirectUrl } }],
             ],
           },
         };
