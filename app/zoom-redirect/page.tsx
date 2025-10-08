@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+'use client';
+
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useSearchParams } from 'next/navigation';
 import Head from 'next/head';
 
-export default function ZoomRedirect() {
-  const router = useRouter();
-  const { url } = router.query;
+export default function ZoomRedirectPage() {
+  const searchParams = useSearchParams();
+  const url = searchParams.get('url');
   const [status, setStatus] = useState<'loading' | 'redirecting' | 'error' | 'success'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const [zoomUrl, setZoomUrl] = useState('');
@@ -30,10 +32,8 @@ export default function ZoomRedirect() {
   useEffect(() => {
     if (!url) return;
 
-    const rawUrl = Array.isArray(url) ? url[0] : url;
-    
     // Decode the URL
-    const decodedUrl = decodeURIComponent(rawUrl);
+    const decodedUrl = decodeURIComponent(url);
     setZoomUrl(decodedUrl);
     
     // Convert to web URL

@@ -1303,7 +1303,7 @@ export async function startBot() {
 
         console.log("Attendance updated successfully");
         
-        // Create a web app button for the zoom link using our redirect page
+        // Create a web app button for the zoom link using App Router
         const redirectUrl = `${BASE_URL}/zoom-redirect?url=${encodeURIComponent(zoomLink)}`;
         const zoomButtonMarkup = {
           reply_markup: {
