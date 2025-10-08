@@ -1303,12 +1303,11 @@ export async function startBot() {
 
         console.log("Attendance updated successfully");
         
-        // Create a web app button for the zoom link using App Router
-        const redirectUrl = `${BASE_URL}/zoom-redirect?url=${encodeURIComponent(zoomLink)}`;
+        // Create a direct Zoom Workspace button that opens the app
         const zoomButtonMarkup = {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "🔗 Join Meeting", web_app: { url: redirectUrl } }],
+              [{ text: "🔗 Join Meeting", url: zoomLink }],
             ],
           },
         };
