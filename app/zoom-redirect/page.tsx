@@ -7,7 +7,7 @@ import Head from 'next/head';
 
 export default function ZoomRedirectPage() {
   const searchParams = useSearchParams();
-  const url = searchParams.get('url');
+  const url = searchParams?.get('url');
   const [status, setStatus] = useState<'loading' | 'redirecting' | 'error' | 'success'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const [zoomUrl, setZoomUrl] = useState('');
