@@ -23,7 +23,6 @@ import { uploadPdfChunk } from "@/actions/api/pdf-upload";
 
 interface AiPdfUploaderProps {
   packageId: string;
-  packageName: string;
   currentAiPdfData: string | null;
 }
 

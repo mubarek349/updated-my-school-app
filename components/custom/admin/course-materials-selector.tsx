@@ -12,6 +12,7 @@ import {
 import { FileText, Brain } from "lucide-react";
 import { CourseMaterialsManager } from "./course-materials-manager";
 import { AiPdfUploader } from "./ai-pdf-uploader";
+import { AiAssistantSelector } from "./ai-selector";
 
 interface CoursePackage {
   id: string;
@@ -20,6 +21,7 @@ interface CoursePackage {
   courseMaterials: string | null;
   aiPdfData: string | null;
   isPublished: boolean;
+  aiProvider: string | null;
   _count: {
     courses: number;
   };
@@ -41,12 +43,11 @@ export function CourseMaterialsSelector({
 
   const [selectedAiPdfData, setSelectedAiPdfData] = useState<CoursePackage | undefined>();
   const [selectedMaterialsData, setSelectedMaterialsData] = useState<CoursePackage | undefined>();
-
+   
   useEffect(() => {
     const aiPdfData = coursePackages.find((pkg) => pkg.id === selectedAiPdfPackage);
     setSelectedAiPdfData(aiPdfData);
   }, [selectedAiPdfPackage, coursePackages]);
-
   useEffect(() => {
     const materialsData = coursePackages.find((pkg) => pkg.id === selectedMaterialsPackage);
     setSelectedMaterialsData(materialsData);
@@ -54,6 +55,7 @@ export function CourseMaterialsSelector({
 
   return (
     <div className="space-y-6">
+
       {/* AI PDF Data Section */}
       <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
         <CardHeader>
@@ -76,10 +78,16 @@ export function CourseMaterialsSelector({
         </CardHeader>
         <CardContent>
           {selectedAiPdfData && (
+            <AiAssistantSelector 
+              key={selectedAiPdfData.id}
+              packageId={selectedAiPdfData.id}
+              currentAIProvider={selectedAiPdfData.aiProvider}
+            />
+          )}
+          {selectedAiPdfData && (
             <AiPdfUploader
               key={selectedAiPdfData.id}
               packageId={selectedAiPdfData.id}
-              packageName={selectedAiPdfData.name}
               currentAiPdfData={selectedAiPdfData.aiPdfData}
             />
           )}
