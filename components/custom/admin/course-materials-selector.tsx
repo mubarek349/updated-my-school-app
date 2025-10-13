@@ -79,16 +79,17 @@ export function CourseMaterialsSelector({
         <CardContent>
           {selectedAiPdfData && (
             <AiAssistantSelector 
-              key={selectedAiPdfData.id}
+              key={`ai-selector-${selectedAiPdfData.id}`}
               packageId={selectedAiPdfData.id}
               currentAIProvider={selectedAiPdfData.aiProvider}
             />
           )}
           {selectedAiPdfData && (
             <AiPdfUploader
-              key={selectedAiPdfData.id}
+              key={`ai-uploader-${selectedAiPdfData.id}`}
               packageId={selectedAiPdfData.id}
               currentAiPdfData={selectedAiPdfData.aiPdfData}
+              aiProvider={selectedAiPdfData.aiProvider}
             />
           )}
         </CardContent>

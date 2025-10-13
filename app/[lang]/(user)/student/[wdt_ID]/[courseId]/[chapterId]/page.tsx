@@ -398,7 +398,7 @@ function Page() {
                                   className="lg:hidden"
                                 >
                                   {/* packageId={data?.packageId || ""}  */}
-                                  <ChatComponent />
+                                  <ChatComponent packageId={data?.packageId || ""} />
                                 </TabsContent>
                               </div>
                             </div>
@@ -452,7 +452,7 @@ function Page() {
                         <MainMenu data={packageData} />
                       ) : (
                         // packageId={data?.packageId || ""} 
-                        <ChatComponent />
+                        <ChatComponent packageId={data?.packageId || ""} />
                       )}
                     </div>
                   </div>

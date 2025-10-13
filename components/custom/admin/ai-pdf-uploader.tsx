@@ -17,16 +17,15 @@ import {
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { removeAiPdfData } from "@/actions/admin/ai-pdf-data";
-import { finalizeAiPdfUpload } from "@/actions/admin/ai-pdf-data-chunked";
-import { ChunkedUploader } from "@/lib/chunkedUploaderServerAction";
-import { uploadPdfChunk } from "@/actions/api/pdf-upload";
+import { uploadFile } from "@/lib/actions";
 
 interface AiPdfUploaderProps {
   packageId: string;
   currentAiPdfData: string | null;
+  aiProvider: string | null;
 }
 
-export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProps) {
+export function AiPdfUploader({ packageId, currentAiPdfData, aiProvider }: AiPdfUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -43,8 +42,8 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
       return;
     }
 
-    if (file.size > 1000 * 1024 * 1024) { // 1000MB limit
-      toast.error('File size must be less than 1000MB');
+    if (file.size > 15 * 1024 * 1024) { // 15MB limit for optimal AI processing
+      toast.error('File size must be less than 15MB for optimal AI processing');
       return;
     }
 
@@ -53,39 +52,32 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
     setUploadStatus("Preparing upload...");
 
     try {
-      const uploader = new ChunkedUploader(uploadPdfChunk, {
-        chunkSize: 5 * 1024 * 1024, // 5MB chunks
-        maxRetries: 3,
-        onProgress: (progress) => {
-          setUploadProgress(progress);
-          setUploadStatus(`Uploading... ${Math.round(progress)}%`);
-        },
-        onError: (error) => {
-          console.error('Chunked upload error:', error);
-          toast.error(error);
-          setIsUploading(false);
-        },
-        onSuccess: async () => {
-          setUploadStatus("Finalizing upload...");
-          setUploadProgress(95);
-          
-          // Update database with filename
-          const result = await finalizeAiPdfUpload(packageId, file.name);
-          
-          if (result.success) {
-            setUploadProgress(100);
-            setUploadStatus("Upload complete!");
-            toast.success('AI PDF Data uploaded successfully!');
-            router.refresh();
-          } else {
-            throw new Error(result.message);
-          }
-          
-          setIsUploading(false);
-        }
-      });
-
-      await uploader.uploadFile(file, packageId);
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('aiProvider', aiProvider || 'gemini');
+      formData.append('packageId', packageId);
+      
+      setUploadStatus("Converting to base64...");
+      setUploadProgress(30);
+      
+      // Upload using lib/actions.ts
+      const result = await uploadFile(formData);
+      
+      setUploadProgress(80);
+      setUploadStatus("Storing in database...");
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
+      
+      setUploadProgress(100);
+      setUploadStatus("Upload complete!");
+      toast.success(result.message || 'AI PDF Data uploaded successfully!');
+      
+      // Refresh to show the new file
+      router.refresh();
+      setIsUploading(false);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload AI PDF Data');
@@ -198,7 +190,7 @@ export function AiPdfUploader({ packageId, currentAiPdfData }: AiPdfUploaderProp
                     {isUploading ? 'Processing AI PDF Data...' : 'Upload AI PDF Data'}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    PDF files only • Max 1000MB
+                    PDF files only • Max 15MB • Using {aiProvider === 'openai' ? 'OpenAI' : 'Gemini'} AI
                   </p>
                 </div>
               </label>

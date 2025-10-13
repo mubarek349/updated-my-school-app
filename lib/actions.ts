@@ -10,7 +10,7 @@ import {
   setCachedResponse,
   getCachedContent,
   setCachedContent
-} from '@/lib/cache'
+} from '@/lib/cache copy'
 import { writeFile, readFile, readdir } from 'fs/promises'
 import { join } from 'path'
 import { createHash } from 'crypto'
@@ -24,10 +24,117 @@ function chunkText(text: string, chunkSize: number = 10000): string[] {
   return chunks
 }
 
-export async function askQuestion(question: string, aiProvider?: AIProvider) {
+export async function askQuestionFromPackage(question: string, packageId: string) {
+  try {
+    // Get package data from database
+    const prisma = (await import('@/lib/db')).default
+    const coursePackage = await prisma.coursePackage.findUnique({
+      where: { id: packageId },
+      select: { aiPdfData: true, aiProvider: true }
+    })
+    
+    if (!coursePackage || !coursePackage.aiPdfData) {
+      return { success: false, error: 'No AI PDF data found for this package. Please upload a file first.' }
+    }
+    
+    const aiProvider = (coursePackage.aiProvider as AIProvider) || 'gemini'
+    const aiPdfDataFileName = coursePackage.aiPdfData
+    
+    // Read the PDF data from file
+    const dataFolder = join(process.cwd(), 'docs/ai-pdfs')
+    const filePath = join(dataFolder, aiPdfDataFileName)
+    
+    try {
+      const fileContent = await readFile(filePath, 'utf-8')
+      let pdfData
+      
+      try {
+        pdfData = JSON.parse(fileContent)
+      } catch (parseError) {
+        console.error('Error parsing PDF data JSON:', parseError)
+        return { success: false, error: 'Failed to parse PDF data. The file may be corrupted.' }
+      }
+      
+      if (!pdfData.base64Data || !pdfData.fileName) {
+        return { success: false, error: 'Invalid PDF data format. Missing required fields.' }
+      }
+      
+      // Check base64 data size (approximate PDF size in MB)
+      const base64SizeMB = (pdfData.base64Data.length * 0.75) / (1024 * 1024) // base64 is ~33% larger than binary
+      console.log(`PDF size: ${base64SizeMB.toFixed(2)}MB`)
+      
+      if (base64SizeMB > 15) {
+        return { 
+          success: false, 
+          error: `PDF file is too large (${base64SizeMB.toFixed(2)}MB). Please upload a PDF smaller than 15MB for better performance.` 
+        }
+      }
+      
+      // Use the package's current AI provider (from database) - this takes priority over the stored file provider
+      // This allows admins to change AI provider without re-uploading PDFs
+      const finalAiProvider = aiProvider || pdfData.aiProvider
+      
+      // Generate content hash for caching
+      const contentHash = createHash('md5').update(pdfData.base64Data.substring(0, 100)).digest('hex')
+      
+      // Check cache first
+      const cachedResponse = await getCachedResponse(question, contentHash, finalAiProvider)
+      if (cachedResponse) {
+        console.log('Using cached response for question:', question.substring(0, 50) + '...')
+        return { success: true, answer: cachedResponse, aiProvider: finalAiProvider }
+      }
+      
+      // Validate base64 data
+      if (!pdfData.base64Data || pdfData.base64Data.length < 100) {
+        return { 
+          success: false, 
+          error: 'PDF data is empty or too small. The file may be corrupted. Please re-upload the PDF.' 
+        }
+      }
+      
+      // Create PDF file object
+      const pdfFile: PDFFile = {
+        fileName: pdfData.fileName,
+        mimeType: pdfData.mimeType,
+        base64Data: pdfData.base64Data,
+        aiProvider: finalAiProvider,
+        uploadedAt: pdfData.uploadedAt
+      }
+      
+      console.log(`Asking question to ${finalAiProvider} with PDF: ${pdfFile.fileName}`)
+      console.log(`PDF data length: ${pdfFile.base64Data.length} chars`)
+      
+      // Ask question with the PDF
+      const answer = await askLLMWithPDFs(question, [pdfFile], finalAiProvider)
+      
+      console.log(`Received answer from ${finalAiProvider}, length: ${answer.length} chars`)
+      
+      // Cache the response
+      await setCachedResponse(question, contentHash, finalAiProvider, answer)
+      
+      return { success: true, answer, aiProvider: finalAiProvider }
+    } catch (fileError) {
+      console.error('Error reading PDF file:', fileError)
+      console.error('File path attempted:', filePath)
+      console.error('File exists check needed for:', aiPdfDataFileName)
+      
+      // More specific error message
+      if ((fileError as NodeJS.ErrnoException).code === 'ENOENT') {
+        return { success: false, error: `PDF file not found: ${aiPdfDataFileName}. Please re-upload the PDF.` }
+      }
+      
+      return { success: false, error: `Failed to read AI PDF data file: ${(fileError as Error).message || 'Unknown error'}` }
+    }
+  } catch (error) {
+    console.error('Error asking question:', error)
+    return { success: false, error: 'Failed to process question' }
+  }
+}
+
+export async function askQuestion(question: string, aiProvider?: AIProvider, aiPdfData?: string) {
   try {
     // Read all files from data folder and process them
-    const dataFolder = join(process.cwd(), 'data')
+    const dataFolder = join(process.cwd(), 'docs/ai-pdfs')
     const files = await readdir(dataFolder)
     
     if (files.length === 0) {
@@ -36,6 +143,9 @@ export async function askQuestion(question: string, aiProvider?: AIProvider) {
     
     // Process all files and get their content
     let allContent = ''
+    if (aiPdfData) {
+      allContent = aiPdfData
+    }
     let detectedAiProvider: AIProvider = 'gemini' // default
     const pdfFiles: PDFFile[] = []
     let contentHash = ''
@@ -137,9 +247,14 @@ export async function uploadFile(formData: FormData) {
   try {
     const file = formData.get('file') as File
     const aiProvider = (formData.get('aiProvider') as AIProvider) || 'gemini'
+    const packageId = formData.get('packageId') as string
     
     if (!file) {
       return { success: false, error: 'No file provided' }
+    }
+    
+    if (!packageId) {
+      return { success: false, error: 'No package ID provided' }
     }
     
     let text: string
@@ -147,9 +262,22 @@ export async function uploadFile(formData: FormData) {
     
     // Handle PDF files - convert to base64 for both Gemini and OpenAI
     if (file.type === 'application/pdf') {
+      // Check file size before processing
+      const fileSizeMB = file.size / (1024 * 1024)
+      console.log(`Uploading PDF: ${file.name}, Size: ${fileSizeMB.toFixed(2)}MB`)
+      
+      if (fileSizeMB > 15) {
+        return { 
+          success: false, 
+          error: `PDF file is too large (${fileSizeMB.toFixed(2)}MB). Please upload a PDF smaller than 15MB for optimal AI processing.` 
+        }
+      }
+      
       // For both Gemini and OpenAI, we'll store the PDF as base64
       const arrayBuffer = await file.arrayBuffer()
       const base64 = Buffer.from(arrayBuffer).toString('base64')
+      
+      console.log(`Base64 size: ${(base64.length / (1024 * 1024)).toFixed(2)}MB`)
       
       // Store PDF metadata for processing
       const pdfMetadata = {
@@ -160,15 +288,33 @@ export async function uploadFile(formData: FormData) {
         uploadedAt: new Date().toISOString()
       }
       
-      const dataFolder = join(process.cwd(), 'data')
-      fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}.pdf.json`
+      const dataFolder = join(process.cwd(), 'docs/ai-pdfs')
+      // Remove .pdf extension from original filename to avoid .pdf.pdf.json
+      const cleanFileName = file.name.replace(/\.pdf$/i, '').replace(/[^a-zA-Z0-9.-]/g, '_')
+      fileName = `${Date.now()}-${cleanFileName}.pdf.json`
       const filePath = join(dataFolder, fileName)
+      
+      // Ensure directory exists
+      const { mkdir } = await import('fs/promises')
+      try {
+        await mkdir(dataFolder, { recursive: true })
+      } catch {
+        // Directory already exists
+      }
       
       await writeFile(filePath, JSON.stringify(pdfMetadata), 'utf-8')
       
+      // Update database with filename
+      const prisma = (await import('@/lib/db')).default
+      await prisma.coursePackage.update({
+        where: { id: packageId },
+        data: { aiPdfData: fileName }
+      })
+      
       return { 
         success: true, 
-        message: `PDF file saved successfully as ${fileName}. You can now ask questions about it using ${aiProvider === 'gemini' ? 'Gemini' : 'OpenAI'} AI.`
+        message: `PDF file saved successfully as ${fileName}. You can now ask questions about it using ${aiProvider === 'gemini' ? 'Gemini' : 'OpenAI'} AI.`,
+        fileName
       }
     }
     // Handle text files
@@ -197,7 +343,7 @@ export async function uploadFile(formData: FormData) {
       }
       
       // Save file to data folder with AI provider metadata
-      const dataFolder = join(process.cwd(), 'data')
+      const dataFolder = join(process.cwd(), 'docs/ai-pdfs')
       fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}.txt`
       const filePath = join(dataFolder, fileName)
       

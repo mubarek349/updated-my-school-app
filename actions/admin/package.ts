@@ -11,6 +11,7 @@ export async function getCoursesPackages() {
           name: true,
           description: true,
           aiPdfData: true,
+          aiProvider: true,
           courseMaterials: true,
           isPublished: true,
           createdAt: true,
