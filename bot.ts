@@ -448,6 +448,9 @@ export async function startBot() {
 
   // Store zoom links temporarily for callback handling
   const zoomLinks: Record<string, string> = {};
+  
+  // Store message IDs for each student to allow deletion of previous messages
+  const studentMessageIds: Record<number, number[]> = {};
 
   // Clean up expired restrictions every 10 minutes
   setInterval(() => {
@@ -696,6 +699,22 @@ export async function startBot() {
         console.log(`Student found: ${studentExists.name} (ID: ${studentExists.wdt_ID}, Status: ${studentExists.status})`);
 
         if (!isAdmin && ctx.message.text) {
+          // Delete all previous messages for this student before sending new link
+          if (studentMessageIds[chatId]) {
+            console.log(`Deleting ${studentMessageIds[chatId].length} previous messages for student ${chatId}`);
+            for (const msgId of studentMessageIds[chatId]) {
+              try {
+                await bot.api.deleteMessage(chatId, msgId);
+                console.log(`Deleted message ${msgId} from student ${chatId}`);
+              } catch (err) {
+                console.log(`Failed to delete message ${msgId} from student ${chatId}:`, err);
+                // Ignore errors (message might already be deleted)
+              }
+            }
+            // Clear the array after deletion
+            studentMessageIds[chatId] = [];
+          }
+
           // Check time restriction for sending zoom links
           // Time restriction removed - teachers can send zoom links freely
 
@@ -708,10 +727,13 @@ export async function startBot() {
           if (callbackData.length > 64) {
             console.error(`Callback data too long: ${callbackData.length} bytes`);
             // Fallback: send without button
-            await ctx.api.sendMessage(
+            const sentMsg = await ctx.api.sendMessage(
               chatId,
               `📚የ ${studentName} የትምህርት ሊንክ፦\n\n${ctx.message.text}`
             );
+            // Store the new message ID
+            if (!studentMessageIds[chatId]) studentMessageIds[chatId] = [];
+            studentMessageIds[chatId].push(sentMsg.message_id);
             sent.push(chatId);
             continue;
           }
@@ -729,11 +751,16 @@ export async function startBot() {
           };
 
           console.log(`Sending zoom link message to ${chatId} for student ${studentName}`);
-          await ctx.api.sendMessage(
+          const sentMsg = await ctx.api.sendMessage(
             chatId,
             `📚የ ${studentName} የትምህርት ሊንክ፦\n\nእባክዎን ከታች ያለውን ቁልፍ በመጫን ተገኝተው ያረጋግጡ።`,
             buttonMarkup
           );
+          
+          // Store the new message ID
+          if (!studentMessageIds[chatId]) studentMessageIds[chatId] = [];
+          studentMessageIds[chatId].push(sentMsg.message_id);
+          
           console.log(`Successfully sent message to ${chatId}`);
         } else {
           console.log(`Sending regular message to ${chatId}`);
@@ -805,14 +832,14 @@ export async function startBot() {
             console.log(`Last attendance for student ${student.wdt_ID}:`, lastAttendance);
 
             const now = new Date();
-            const oneHourMs = 60 * 60 * 1000;
-            const isWithinOneHour =
+            const twoHourMs = 120 * 60 * 1000;
+            const isWithinTwoHour =
               lastAttendance?.createdAt &&
-              now.getTime() - lastAttendance.createdAt.getTime() <= oneHourMs;
+                now.getTime() - lastAttendance.createdAt.getTime() <= twoHourMs;
 
-            console.log(`Is within one hour for student ${student.wdt_ID}:`, isWithinOneHour);
+            console.log(`Is within two hour for student ${student.wdt_ID}:`, isWithinTwoHour);
 
-            if (isWithinOneHour && lastAttendance?.id) {
+            if (isWithinTwoHour && lastAttendance?.id) {
               console.log(`Updating existing attendance record for student ${student.wdt_ID}`);
               await prisma.tarbiaAttendance.update({
                 where: { id: lastAttendance.id },
@@ -1220,6 +1247,7 @@ export async function startBot() {
     console.log("Callback query received:", data, "from chat:", chatId);
     
     if (!data.startsWith("join_zoom~")) return;
+    if (!chatId) return;
 
     const [, packageId, wdt_ID] = data.split("~");
     
@@ -1276,20 +1304,20 @@ export async function startBot() {
 
     console.log("Last attendance record:", lastCreatedAttendance);
 
-    // Step 3: Check if the button was clicked within 1 hour
+    // Step 3: Check if the button was clicked within 2 hour
     const now = new Date();
     const sentTime = lastCreatedAttendance?.createdAt;
-    const oneHourMs = 60 * 60 * 1000;
+    const twoHourMs = 120 * 60 * 1000;
 
     console.log("Time check:", { 
       now: now.toISOString(), 
       sentTime: sentTime?.toISOString(), 
       timeDiff: sentTime ? now.getTime() - sentTime.getTime() : null,
-      oneHourMs 
+      twoHourMs 
     });
 
-    if (sentTime && now.getTime() - sentTime.getTime() <= oneHourMs) {
-      // ✅ Within 1 hour — mark attendance and send Zoom link
+    if (sentTime && now.getTime() - sentTime.getTime() <= twoHourMs) {
+      // ✅ Within 2 hour — mark attendance and send Zoom link
       console.log("Updating attendance to present for student:", student.wdt_ID);
       
       await prisma.tarbiaAttendance.update({
@@ -1316,7 +1344,11 @@ export async function startBot() {
         delete zoomLinks[linkKey];
         console.log(`Cleaned up zoom link for key: ${linkKey}`);
         
-        await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`, zoomButtonMarkup);
+        const sentMsg = await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`, zoomButtonMarkup);
+        
+        // Store this message ID too so it can be deleted when a new link arrives
+        if (!studentMessageIds[chatId]) studentMessageIds[chatId] = [];
+        studentMessageIds[chatId].push(sentMsg.message_id);
     } else {
       // ❌ Expired — send fallback message
       const update = await updatePathProgressData(student.wdt_ID);
