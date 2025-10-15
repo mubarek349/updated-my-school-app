@@ -448,9 +448,56 @@ export async function startBot() {
 
   // Store zoom links temporarily for callback handling
   const zoomLinks: Record<string, string> = {};
-  
-  // Store message IDs for each student to allow deletion of previous messages
-  const studentMessageIds: Record<number, number[]> = {};
+
+  // Store scheduled message deletions by packageId
+  // Each package has an array of timeout IDs that can be cancelled when new links are sent
+  const scheduledDeletions: Record<string, {
+    chatId: number;
+    messageId: number;
+    timeoutId: NodeJS.Timeout;
+  }[]> = {};
+
+  // Function to schedule a message deletion after 3 hours
+  function scheduleMessageDeletion(chatId: number, messageId: number, packageId: string) {
+    const threeHours = 60 * 1000; // 3 hours in milliseconds
+    
+    const timeoutId = setTimeout(async () => {
+      try {
+        await bot.api.deleteMessage(chatId, messageId);
+        console.log(`[Auto-Delete] Deleted message ${messageId} from chat ${chatId} after 3 hours`);
+        
+        // Remove from scheduled deletions
+        if (scheduledDeletions[packageId]) {
+          scheduledDeletions[packageId] = scheduledDeletions[packageId].filter(
+            item => item.messageId !== messageId || item.chatId !== chatId
+          );
+        }
+      } catch (err) {
+        console.log(`[Auto-Delete] Failed to delete message ${messageId}:`, err);
+      }
+    }, threeHours);
+
+    // Store the scheduled deletion
+    if (!scheduledDeletions[packageId]) {
+      scheduledDeletions[packageId] = [];
+    }
+    scheduledDeletions[packageId].push({ chatId, messageId, timeoutId });
+    
+    console.log(`[Schedule] Message ${messageId} scheduled for deletion in 3 hours`);
+  }
+
+  // Function to cancel all scheduled deletions for a package
+  function cancelScheduledDeletions(packageId: string) {
+    if (scheduledDeletions[packageId]) {
+      console.log(`[Cancel] Cancelling ${scheduledDeletions[packageId].length} scheduled deletions for package ${packageId}`);
+      
+      scheduledDeletions[packageId].forEach(item => {
+        clearTimeout(item.timeoutId);
+      });
+      
+      delete scheduledDeletions[packageId];
+    }
+  }
 
   // Clean up expired restrictions every 10 minutes
   setInterval(() => {
@@ -470,8 +517,6 @@ export async function startBot() {
     
     // Clean up old zoom links (clean up all for now)
     for (const key in zoomLinks) {
-      // For now, we'll clean up all zoom links since we don't store timestamps
-      // In a production system, you'd want to store timestamps with the links
       delete zoomLinks[key];
     }
   }, 10 * 60 * 1000); // Clean up every 10 minutes
@@ -668,6 +713,12 @@ export async function startBot() {
     }
     console.log("chatIds", pending.chatIds);
 
+    // Cancel all previously scheduled deletions for this package when sending new links
+    if (!isAdmin && ctx.message.text) {
+      cancelScheduledDeletions(pending.packageId);
+      console.log(`[Package ${pending.packageId}] Cancelled all previous scheduled deletions before sending new links`);
+    }
+
     // Send to all selected students
     const sent: number[] = [];
     const failed: number[] = [];
@@ -699,22 +750,6 @@ export async function startBot() {
         console.log(`Student found: ${studentExists.name} (ID: ${studentExists.wdt_ID}, Status: ${studentExists.status})`);
 
         if (!isAdmin && ctx.message.text) {
-          // Delete all previous messages for this student before sending new link
-          if (studentMessageIds[chatId]) {
-            console.log(`Deleting ${studentMessageIds[chatId].length} previous messages for student ${chatId}`);
-            for (const msgId of studentMessageIds[chatId]) {
-              try {
-                await bot.api.deleteMessage(chatId, msgId);
-                console.log(`Deleted message ${msgId} from student ${chatId}`);
-              } catch (err) {
-                console.log(`Failed to delete message ${msgId} from student ${chatId}:`, err);
-                // Ignore errors (message might already be deleted)
-              }
-            }
-            // Clear the array after deletion
-            studentMessageIds[chatId] = [];
-          }
-
           // Check time restriction for sending zoom links
           // Time restriction removed - teachers can send zoom links freely
 
@@ -731,9 +766,8 @@ export async function startBot() {
               chatId,
               `📚የ ${studentName} የትምህርት ሊንክ፦\n\n${ctx.message.text}`
             );
-            // Store the new message ID
-            if (!studentMessageIds[chatId]) studentMessageIds[chatId] = [];
-            studentMessageIds[chatId].push(sentMsg.message_id);
+            // Schedule this message for deletion after 3 hours
+            scheduleMessageDeletion(chatId, sentMsg.message_id, pending.packageId);
             sent.push(chatId);
             continue;
           }
@@ -757,9 +791,8 @@ export async function startBot() {
             buttonMarkup
           );
           
-          // Store the new message ID
-          if (!studentMessageIds[chatId]) studentMessageIds[chatId] = [];
-          studentMessageIds[chatId].push(sentMsg.message_id);
+          // Schedule this message for deletion after 3 hours
+          scheduleMessageDeletion(chatId, sentMsg.message_id, pending.packageId);
           
           console.log(`Successfully sent message to ${chatId}`);
         } else {
@@ -1346,9 +1379,8 @@ export async function startBot() {
         
         const sentMsg = await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`, zoomButtonMarkup);
         
-        // Store this message ID too so it can be deleted when a new link arrives
-        if (!studentMessageIds[chatId]) studentMessageIds[chatId] = [];
-        studentMessageIds[chatId].push(sentMsg.message_id);
+        // Schedule this message for deletion after 3 hours
+        scheduleMessageDeletion(chatId, sentMsg.message_id, packageId);
     } else {
       // ❌ Expired — send fallback message
       const update = await updatePathProgressData(student.wdt_ID);
