@@ -452,7 +452,7 @@ export async function startBot() {
   // Function to cleanup zoom link messages older than 3 hours
   async function cleanupOldZoomMessages() {
     try {
-      const threeHoursAgo = new Date(Date.now() -  60 * 1000);
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
       
       console.log(`[Cleanup] Checking for zoom messages older than 3 hours (before ${threeHoursAgo.toISOString()})`);
       
@@ -502,7 +502,7 @@ export async function startBot() {
   }
 
   // Run cleanup every 30 minutes
-  setInterval(cleanupOldZoomMessages, 60 * 1000);
+  setInterval(cleanupOldZoomMessages, 30 * 60 * 1000);
   
   // Run cleanup on startup
   cleanupOldZoomMessages();
