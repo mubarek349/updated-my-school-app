@@ -449,55 +449,63 @@ export async function startBot() {
   // Store zoom links temporarily for callback handling
   const zoomLinks: Record<string, string> = {};
 
-  // Store scheduled message deletions by packageId
-  // Each package has an array of timeout IDs that can be cancelled when new links are sent
-  const scheduledDeletions: Record<string, {
-    chatId: number;
-    messageId: number;
-    timeoutId: NodeJS.Timeout;
-  }[]> = {};
-
-  // Function to schedule a message deletion after 3 hours
-  function scheduleMessageDeletion(chatId: number, messageId: number, packageId: string) {
-    const threeHours = 60 * 1000; // 3 hours in milliseconds
-    
-    const timeoutId = setTimeout(async () => {
-      try {
-        await bot.api.deleteMessage(chatId, messageId);
-        console.log(`[Auto-Delete] Deleted message ${messageId} from chat ${chatId} after 3 hours`);
-        
-        // Remove from scheduled deletions
-        if (scheduledDeletions[packageId]) {
-          scheduledDeletions[packageId] = scheduledDeletions[packageId].filter(
-            item => item.messageId !== messageId || item.chatId !== chatId
-          );
-        }
-      } catch (err) {
-        console.log(`[Auto-Delete] Failed to delete message ${messageId}:`, err);
-      }
-    }, threeHours);
-
-    // Store the scheduled deletion
-    if (!scheduledDeletions[packageId]) {
-      scheduledDeletions[packageId] = [];
-    }
-    scheduledDeletions[packageId].push({ chatId, messageId, timeoutId });
-    
-    console.log(`[Schedule] Message ${messageId} scheduled for deletion in 3 hours`);
-  }
-
-  // Function to cancel all scheduled deletions for a package
-  function cancelScheduledDeletions(packageId: string) {
-    if (scheduledDeletions[packageId]) {
-      console.log(`[Cancel] Cancelling ${scheduledDeletions[packageId].length} scheduled deletions for package ${packageId}`);
+  // Function to cleanup zoom link messages older than 3 hours
+  async function cleanupOldZoomMessages() {
+    try {
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
       
-      scheduledDeletions[packageId].forEach(item => {
-        clearTimeout(item.timeoutId);
+      console.log(`[Cleanup] Checking for zoom messages older than 3 hours (before ${threeHoursAgo.toISOString()})`);
+      
+      // Find all attendance records with messageId that are older than 3 hours
+      const oldAttendanceRecords = await prisma.tarbiaAttendance.findMany({
+        where: {
+          messageId: { not: null },
+          createdAt: { lt: threeHoursAgo },
+        },
+        select: {
+          id: true,
+          messageId: true,
+          student: {
+            select: {
+              chat_id: true,
+            },
+          },
+        },
       });
-      
-      delete scheduledDeletions[packageId];
+
+      console.log(`[Cleanup] Found ${oldAttendanceRecords.length} old zoom messages to delete`);
+
+      // Delete each message from Telegram
+      for (const record of oldAttendanceRecords) {
+        if (record.messageId && record.student?.chat_id) {
+          try {
+            await bot.api.deleteMessage(Number(record.student.chat_id), record.messageId);
+            console.log(`[Cleanup] Deleted message ${record.messageId} from chat ${record.student.chat_id}`);
+          } catch (err) {
+            console.log(`[Cleanup] Failed to delete message ${record.messageId}:`, err);
+          }
+        }
+
+        // Clear the messageId from the record (keep the attendance record)
+        await prisma.tarbiaAttendance.update({
+          where: { id: record.id },
+          data: { messageId: null },
+        });
+      }
+
+      if (oldAttendanceRecords.length > 0) {
+        console.log(`[Cleanup] Cleaned up ${oldAttendanceRecords.length} old message IDs from database`);
+      }
+    } catch (error) {
+      console.error('[Cleanup] Error during cleanup:', error);
     }
   }
+
+  // Run cleanup every 30 minutes
+  setInterval(cleanupOldZoomMessages, 30 * 60 * 1000);
+  
+  // Run cleanup on startup
+  cleanupOldZoomMessages();
 
   // Clean up expired restrictions every 10 minutes
   setInterval(() => {
@@ -713,12 +721,6 @@ export async function startBot() {
     }
     console.log("chatIds", pending.chatIds);
 
-    // Cancel all previously scheduled deletions for this package when sending new links
-    if (!isAdmin && ctx.message.text) {
-      cancelScheduledDeletions(pending.packageId);
-      console.log(`[Package ${pending.packageId}] Cancelled all previous scheduled deletions before sending new links`);
-    }
-
     // Send to all selected students
     const sent: number[] = [];
     const failed: number[] = [];
@@ -766,8 +768,25 @@ export async function startBot() {
               chatId,
               `📚የ ${studentName} የትምህርት ሊንክ፦\n\n${ctx.message.text}`
             );
-            // Schedule this message for deletion after 3 hours
-            scheduleMessageDeletion(chatId, sentMsg.message_id, pending.packageId);
+            
+            // Store messageId in the attendance record for automatic cleanup
+            const attendanceRecord = await prisma.tarbiaAttendance.findFirst({
+              where: {
+                studId: Number(studentId),
+                packageId: pending.packageId,
+              },
+              orderBy: {
+                createdAt: "desc",
+              },
+            });
+            
+            if (attendanceRecord) {
+              await prisma.tarbiaAttendance.update({
+                where: { id: attendanceRecord.id },
+                data: { messageId: sentMsg.message_id },
+              });
+            }
+            
             sent.push(chatId);
             continue;
           }
@@ -791,8 +810,23 @@ export async function startBot() {
             buttonMarkup
           );
           
-          // Schedule this message for deletion after 3 hours
-          scheduleMessageDeletion(chatId, sentMsg.message_id, pending.packageId);
+          // Store messageId in the attendance record for automatic cleanup
+          const attendanceRecord = await prisma.tarbiaAttendance.findFirst({
+            where: {
+              studId: Number(studentId),
+              packageId: pending.packageId,
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
+          
+          if (attendanceRecord) {
+            await prisma.tarbiaAttendance.update({
+              where: { id: attendanceRecord.id },
+              data: { messageId: sentMsg.message_id },
+            });
+          }
           
           console.log(`Successfully sent message to ${chatId}`);
         } else {
@@ -1379,8 +1413,23 @@ export async function startBot() {
         
         const sentMsg = await ctx.reply(`✅ እንኳን ደህና መጡ ${student.name}። ትምህርቱን በደህና ይከታተሉ።`, zoomButtonMarkup);
         
-        // Schedule this message for deletion after 3 hours
-        scheduleMessageDeletion(chatId, sentMsg.message_id, packageId);
+        // Store messageId in the attendance record for automatic cleanup
+        const attendanceRecord = await prisma.tarbiaAttendance.findFirst({
+          where: {
+            studId: student.wdt_ID,
+            packageId: packageId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
+        
+        if (attendanceRecord) {
+          await prisma.tarbiaAttendance.update({
+            where: { id: attendanceRecord.id },
+            data: { messageId: sentMsg.message_id },
+          });
+        }
     } else {
       // ❌ Expired — send fallback message
       const update = await updatePathProgressData(student.wdt_ID);
