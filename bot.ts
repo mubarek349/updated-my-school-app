@@ -502,7 +502,7 @@ export async function startBot() {
   }
 
   // Run cleanup every 30 minutes
-  setInterval(cleanupOldZoomMessages, 30 * 60 * 1000);
+  setInterval(cleanupOldZoomMessages, 60 * 1000);
   
   // Run cleanup on startup
   cleanupOldZoomMessages();
