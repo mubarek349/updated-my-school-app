@@ -7,12 +7,6 @@ interface ProgressBarProps {
   buffered?: number; // in seconds
 }
 
-const formatTime = (seconds: number) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-};
-
 const ProgressBar: React.FC<ProgressBarProps> = ({
   currentTime,
   duration,
@@ -31,72 +25,76 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
   return (
     <div
       className="progress-bar"
-      style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}
+      style={{
+        position: "relative",
+        flex: 1,
+        height: 8,
+        display: "flex",
+        alignItems: "center",
+      }}
     >
-      <span>{formatTime(currentTime)}</span>
-      <div style={{ position: "relative", flex: 1, height: 8 }}>
-        {/* Buffered bar (green, behind) */}
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 3,
-            height: 9,
-            width: "100%",
-            background: "#444", // background bar
-            borderRadius: 2,
-            zIndex: 0,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 3,
-            height: 8,
-            width: `${bufferedPercent}%`,
-            background: "white",
-            borderRadius: 2,
-            zIndex: 1,
-            opacity: 0.7,
-          }}
-        />
-        {/* Played bar (blue, in front of buffered) */}
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 3,
-            height: 8,
-            width: `${playedPercent}%`,
-            background: "#0070f3",
-            borderRadius: 2,
-            zIndex: 2,
-          }}
-        />
-        {/* Range input */}
-        <input
-          type="range"
-          min={0}
-          max={duration}
-          value={currentTime}
-          onChange={handleChange}
-          style={{
-            width: "100%",
-            background: "transparent",
-            position: "relative",
-            zIndex: 3,
-            height: 0,
-            margin: 0,
-            padding: 0,
-            cursor: "pointer",
-            outline: "none",
-            WebkitAppearance: "none",
-            appearance: "none",
-          }}
-        />
-      </div>
-      <span>{formatTime(duration)}</span>
+      {/* Background bar (darker sky blue) */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          height: 8,
+          width: "100%",
+          background: "rgba(59, 130, 246, 0.3)", // Darker sky blue background
+          borderRadius: 4,
+          zIndex: 0,
+        }}
+      />
+      {/* Buffered bar (sky blue) */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          height: 8,
+          width: `${bufferedPercent}%`,
+          background: "rgba(59, 130, 246, 0.6)", // Sky blue
+          borderRadius: 4,
+          zIndex: 1,
+        }}
+      />
+      {/* Played bar (bright sky blue) */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          height: 8,
+          width: `${playedPercent}%`,
+          background: "rgba(59, 130, 246, 0.9)", // Bright sky blue
+          borderRadius: 4,
+          zIndex: 2,
+        }}
+      />
+      {/* Range input */}
+      <input
+        type="range"
+        min={0}
+        max={duration}
+        value={currentTime}
+        onChange={handleChange}
+        style={{
+          width: "100%",
+          background: "transparent",
+          position: "relative",
+          zIndex: 3,
+          height: 8,
+          margin: 0,
+          padding: 0,
+          cursor: "pointer",
+          outline: "none",
+          WebkitAppearance: "none",
+          appearance: "none",
+          WebkitTapHighlightColor: "transparent", // Fix iPhone touch
+          touchAction: "manipulation", // Fix iPhone touch
+        }}
+      />
     </div>
   );
 };
